@@ -977,6 +977,25 @@
     .secAnoAano{border-top:1px solid var(--bdr);margin-top:24px;padding-top:20px}
     .secAnoAano-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
 
+    /* ── Sexo: split bar ── */
+    .sexo-wrap{display:flex;flex-direction:column;gap:14px;padding:2px 0}
+    .sexo-split{height:8px;border-radius:99px;overflow:hidden;display:flex;width:100%;background:var(--sur)}
+    .sexo-split-f{background:linear-gradient(90deg,#ec4899,#f472b6);border-radius:99px 0 0 99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+    .sexo-split-m{background:linear-gradient(90deg,#3b82f6,#60a5fa);border-radius:0 99px 99px 0;flex:1;transition:flex .6s cubic-bezier(.4,0,.2,1)}
+    .sexo-rows{display:flex;flex-direction:column;gap:10px}
+    .sexo-row{display:grid;grid-template-columns:8px 68px 1fr auto;align-items:center;gap:10px}
+    .sexo-dot{width:8px;height:8px;border-radius:50%;flex:none}
+    .sexo-rlabel{font-size:11px;color:var(--txt2);font-weight:500}
+    .sexo-rval{font-size:22px;font-weight:800;font-family:'Geist Mono',monospace;line-height:1;letter-spacing:-.03em}
+    .sexo-rpct{font-size:11px;color:var(--mut);font-family:'Geist Mono',monospace;text-align:right}
+    .sexo-note{font-size:9px;color:var(--mut);font-family:'Geist Mono',monospace;padding-top:10px;border-top:1px solid var(--bdr);line-height:1.5;letter-spacing:.01em}
+    .sexo-na{text-align:center;padding:24px 16px;color:var(--txt2);font-size:12px;line-height:1.6}
+
+    /* ── Upload: marca forte ── */
+    .vida-mark-svg{display:block;flex:none}
+    .up-brand-text .brand-title{font-size:13px;font-weight:700;font-family:'Geist Mono',monospace;letter-spacing:.18em;color:var(--txt)}
+    .up-brand-text .brand-sub{font-size:9px;color:var(--mut);font-family:'Geist Mono',monospace;margin-top:2px;letter-spacing:.04em}
+
   </style>
 </head>
 <body>
@@ -988,10 +1007,29 @@
 
       <!-- TOPO: marca compacta -->
       <div class="up-brand">
-        <div class="vida-logo">
-          <div class="vida-logo-dot"></div><div class="vida-logo-dot"></div>
-          <div class="vida-logo-dot"></div><div class="vida-logo-dot"></div>
-        </div>
+        <svg class="vida-mark-svg" width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="markBg" x1="0" y1="0" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#0f172a"/>
+              <stop offset="100%" stop-color="#0c1829"/>
+            </linearGradient>
+            <linearGradient id="markLine" x1="3" y1="19" x2="35" y2="19" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#38bdf8" stop-opacity=".5"/>
+              <stop offset="40%" stop-color="#38bdf8"/>
+              <stop offset="100%" stop-color="#818cf8" stop-opacity=".6"/>
+            </linearGradient>
+            <filter id="markGlow" x="-30%" y="-80%" width="160%" height="260%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <rect width="38" height="38" rx="9" fill="url(#markBg)"/>
+          <rect width="38" height="38" rx="9" fill="none" stroke="rgba(56,189,248,.18)" stroke-width="1"/>
+          <polyline points="3,19 8,19 11,11 14,27 17,15 20,23 23,19 35,19"
+            stroke="url(#markLine)" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round"
+            fill="none" filter="url(#markGlow)"/>
+        </svg>
         <div class="up-brand-text">
           <div class="brand-title">V.I.D.A.</div>
           <div class="brand-sub">Gestão assistencial · v2.0</div>
@@ -5110,49 +5148,28 @@
         const pctF = total?(fem/total*100).toFixed(1):'0';
         const pctM = total?(masc/total*100).toFixed(1):'0';
 
-        // SVG icon feminino
-        const svgF = `<svg viewBox="0 0 48 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="24" cy="10" r="9" fill="#f472b6"/>
-          <path d="M12 30c0-6.627 5.373-12 12-12s12 5.373 12 12v18H12V30z" fill="#f472b6"/>
-          <path d="M12 48l-6 20h36l-6-20H12z" fill="#f9a8d4"/>
-          <rect x="21" y="66" width="6" height="14" rx="3" fill="#f472b6"/>
-          <rect x="8" y="66" width="6" height="14" rx="3" fill="#f472b6"/>
-        </svg>`;
-
-        // SVG icon masculino
-        const svgM = `<svg viewBox="0 0 48 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="24" cy="10" r="9" fill="#60a5fa"/>
-          <path d="M12 28c0-6.627 5.373-12 12-12s12 5.373 12 12v22H12V28z" fill="#60a5fa"/>
-          <rect x="20" y="50" width="8" height="18" rx="4" fill="#3b82f6"/>
-          <rect x="8" y="64" width="6" height="16" rx="3" fill="#60a5fa"/>
-          <rect x="34" y="64" width="6" height="16" rx="3" fill="#60a5fa"/>
-        </svg>`;
-
         sexoEl.innerHTML = `
-          <div class="sexo-viz">
-            <div class="sexo-col">
-              <div class="sexo-icon">${svgF}</div>
-              <div class="sexo-num" style="color:#f472b6">${fmt(fem)}</div>
-              <div class="sexo-label">Feminino</div>
-              <div style="width:80px">
-                <div class="sexo-bar-wrap"><div class="sexo-bar" style="width:${pctF}%;background:#f472b6"></div></div>
-              </div>
-              <div style="font-size:11px;color:var(--mut);font-family:'Geist Mono',monospace">${pctF}%</div>
+          <div class="sexo-wrap">
+            <div class="sexo-split">
+              <div class="sexo-split-f" style="width:${pctF}%"></div>
+              <div class="sexo-split-m"></div>
             </div>
-            <div class="sexo-col">
-              <div class="sexo-icon">${svgM}</div>
-              <div class="sexo-num" style="color:#60a5fa">${fmt(masc)}</div>
-              <div class="sexo-label">Masculino</div>
-              <div style="width:80px">
-                <div class="sexo-bar-wrap"><div class="sexo-bar" style="width:${pctM}%;background:#60a5fa"></div></div>
+            <div class="sexo-rows">
+              <div class="sexo-row">
+                <div class="sexo-dot" style="background:#f472b6"></div>
+                <div class="sexo-rlabel">Feminino</div>
+                <div class="sexo-rval" style="color:#f472b6">${fmt(fem)}</div>
+                <div class="sexo-rpct">${pctF}%</div>
               </div>
-              <div style="font-size:11px;color:var(--mut);font-family:'Geist Mono',monospace">${pctM}%</div>
+              <div class="sexo-row">
+                <div class="sexo-dot" style="background:#60a5fa"></div>
+                <div class="sexo-rlabel">Masculino</div>
+                <div class="sexo-rval" style="color:#60a5fa">${fmt(masc)}</div>
+                <div class="sexo-rpct">${pctM}%</div>
+              </div>
             </div>
-          </div>
-          <div style="text-align:center">
-            <span class="sexo-total">Total inferido: ${fmt(total)} de ${fmt(d.length)} (${pct(total,d.length)})</span>
-            <div style="font-size:9px;color:var(--mut);margin-top:6px;font-family:'Geist Mono',monospace">
-              Inferência por nome — ${fmt(indDet)} registros indeterminados
+            <div class="sexo-note">
+              Inferido por nome &middot; ${fmt(total)} de ${fmt(d.length)} classificados (${pct(total,d.length)}) &middot; ${fmt(indDet)} indeterminados
             </div>
           </div>`;
 
