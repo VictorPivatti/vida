@@ -5342,11 +5342,12 @@
           setProgress((pagina/panes.length)*90, `Capturando: ${p.title}`, `${pagina+1}/${panes.length}`);
           const canvas = await html2canvas(el, {
             backgroundColor: getComputedStyle(document.body).backgroundColor,
-            scale: 1.5,
+            scale: 2.5,
             logging: false,
             useCORS: true,
+            imageTimeout: 0,
           });
-          const imgData = canvas.toDataURL('image/jpeg', 0.85);
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
           const ratio = canvas.width / canvas.height;
           let imgW = pdfW - margin*2;
           let imgH = imgW / ratio;
