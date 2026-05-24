@@ -8,7 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@300;400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     /* ─────────────────────────────────────────────────────────────
        TOKENS
@@ -45,7 +45,7 @@
     html{scroll-behavior:smooth}
     body{
       min-height:100vh;background:var(--bg);color:var(--txt);
-      font-family:'Geist',system-ui,sans-serif;
+      font-family:'Inter',system-ui,sans-serif;
       font-size:15px;line-height:1.55;
       -webkit-font-smoothing:antialiased;
       font-optical-sizing:auto
@@ -59,7 +59,7 @@
     /* ─────────────────────────────────────────────────────────────
        UTILS
     ───────────────────────────────────────────────────────────── */
-    .mono{font-family:'Geist Mono',monospace}
+    .mono{font-family:'IBM Plex Mono',monospace;font-feature-settings:"tnum","zero"}
     .muted{color:var(--mut)}
     .hidden{display:none!important}
     .okc{color:var(--ok)}
@@ -80,7 +80,6 @@
     /* ─────────────────────────────────────────────────────────────
        UPLOAD SCREEN — editorial médico / split layout
     ───────────────────────────────────────────────────────────── */
-    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&display=swap');
 
     #upload{
       min-height:100vh;display:grid;
@@ -150,12 +149,12 @@
     }
     .up-brand-text .brand-title{
       font-size:11px;font-weight:700;
-      font-family:'Geist Mono',monospace;
+      font-family:'IBM Plex Mono',monospace;
       letter-spacing:.2em;color:var(--txt)
     }
     .up-brand-text .brand-sub{
       font-size:9px;color:var(--mut);
-      font-family:'Geist Mono',monospace;
+      font-family:'IBM Plex Mono',monospace;
       margin-top:1px;letter-spacing:.04em
     }
 
@@ -167,7 +166,7 @@
       padding:clamp(24px,4vh,48px) 0
     }
     .upload-hero-eyebrow{
-      font-family:'Geist Mono',monospace;
+      font-family:'IBM Plex Mono',monospace;
       font-size:9px;letter-spacing:.28em;text-transform:uppercase;
       color:var(--ac);font-weight:600;
       margin-bottom:16px;opacity:.8
@@ -182,7 +181,7 @@
       line-height:1.05
     }
     .uhw-initial{
-      font-family:'Geist',sans-serif;
+      font-family:'Inter',sans-serif;
       font-size:clamp(36px,4.8vw,58px);
       font-weight:800;
       letter-spacing:-.03em;
@@ -191,7 +190,7 @@
       flex:none
     }
     .uhw-rest{
-      font-family:'Geist',sans-serif;
+      font-family:'Inter',sans-serif;
       font-size:clamp(36px,4.8vw,58px);
       font-weight:800;
       letter-spacing:-.03em;
@@ -218,7 +217,7 @@
     /* RODAPÉ: unidade configurada */
     .up-address{
       position:relative;z-index:1;
-      font-size:10px;font-family:'Geist Mono',monospace;
+      font-size:10px;font-family:'IBM Plex Mono',monospace;
       color:var(--mut);line-height:1.8;
       border-top:1px solid var(--bdr);
       padding-top:16px;letter-spacing:.01em
@@ -240,7 +239,7 @@
       align-items:center;gap:0
     }
     .vida-deco-letter{
-      font-family:'Geist Mono',monospace;
+      font-family:'IBM Plex Mono',monospace;
       font-size:clamp(52px,7vw,88px);
       font-weight:700;
       line-height:.95;
@@ -285,7 +284,7 @@
     @media(max-width:860px){.upload-right{padding:32px 24px}}
 
     .up-form-title{
-      font-size:11px;font-family:'Geist Mono',monospace;
+      font-size:11px;font-family:'IBM Plex Mono',monospace;
       letter-spacing:.14em;text-transform:uppercase;
       color:var(--mut);font-weight:600;
       margin-bottom:28px;
@@ -317,7 +316,7 @@
       width:32px;height:32px;border-radius:8px;
       background:var(--sur2);border:1px solid var(--bdr2);
       display:grid;place-items:center;flex:none;
-      font-size:11px;font-family:'Geist Mono',monospace;
+      font-size:11px;font-family:'IBM Plex Mono',monospace;
       font-weight:600;color:var(--mut);
       transition:background .2s,color .2s
     }
@@ -330,7 +329,7 @@
       color:var(--txt);margin-bottom:2px
     }
     .drop-body small{
-      font-size:11px;font-family:'Geist Mono',monospace;color:var(--mut)
+      font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--mut)
     }
     .drop-badge{
       font-size:9px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
@@ -353,14 +352,14 @@
     .bar{height:100%;width:0;background:var(--grad);transition:width .3s ease}
     .status{
       min-height:18px;margin-top:8px;
-      color:var(--txt2);font-size:11px;font-family:'Geist Mono',monospace;
+      color:var(--txt2);font-size:11px;font-family:'IBM Plex Mono',monospace;
       letter-spacing:.01em
     }
 
     /* Legenda dos formatos */
     .up-hint{
       margin-top:16px;
-      font-size:10px;font-family:'Geist Mono',monospace;
+      font-size:10px;font-family:'IBM Plex Mono',monospace;
       color:var(--mut);display:flex;align-items:center;gap:8px
     }
     .up-hint::before{content:"";width:12px;height:1px;background:var(--bdr3)}
@@ -407,10 +406,10 @@
     .brand-title{
       font-weight:600;font-size:12px;white-space:nowrap;
       color:var(--txt);line-height:1.2;
-      font-family:'Geist Mono',monospace;letter-spacing:.01em
+      font-family:'IBM Plex Mono',monospace;letter-spacing:.01em
     }
     .brand-sub{
-      font-size:10px;color:var(--mut);font-family:'Geist Mono',monospace;
+      font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace;
       letter-spacing:.01em;white-space:nowrap;
       overflow:hidden;text-overflow:ellipsis
     }
@@ -428,13 +427,13 @@
     .topbar-filters{display:contents}
     .flabel{
       font-size:9px;text-transform:uppercase;letter-spacing:.1em;
-      color:var(--mut);font-weight:600;font-family:'Geist Mono',monospace;
+      color:var(--mut);font-weight:600;font-family:'IBM Plex Mono',monospace;
       white-space:nowrap;flex:none
     }
     .field{
       background:var(--sur2);color:var(--txt);
       border:1px solid var(--bdr2);border-radius:4px;
-      padding:2px 7px;font-size:11px;font-family:'Geist Mono',monospace;
+      padding:2px 7px;font-size:11px;font-family:'IBM Plex Mono',monospace;
       transition:border-color .12s;flex:none
     }
     .field:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 2px var(--ac-glow)}
@@ -445,7 +444,7 @@
       border-radius:99px;padding:2px 10px;
       color:var(--mut);font-size:10px;font-weight:500;
       cursor:pointer;transition:all .15s;
-      font-family:'Geist Mono',monospace;white-space:nowrap;flex:none;
+      font-family:'IBM Plex Mono',monospace;white-space:nowrap;flex:none;
       letter-spacing:.04em
     }
     .pill:hover,.pill.active-pill{
@@ -456,7 +455,7 @@
     .badge{
       font-size:10px;color:var(--ac);background:var(--ac-glow);
       padding:3px 10px;border-radius:99px;font-weight:600;
-      border:1px solid rgba(124,110,249,.25);font-family:'Geist Mono',monospace;
+      border:1px solid rgba(124,110,249,.25);font-family:'IBM Plex Mono',monospace;
       white-space:nowrap;flex:none;
       letter-spacing:.02em;
       box-shadow:inset 0 0 8px rgba(124,110,249,.06);
@@ -469,7 +468,7 @@
       border-radius:6px;padding:4px 12px;font-size:11px;font-weight:500;
       cursor:pointer;transition:all .15s;white-space:nowrap;
       display:inline-flex;align-items:center;gap:5px;
-      font-family:'Geist',sans-serif;letter-spacing:.005em
+      font-family:'Inter',sans-serif;letter-spacing:.005em
     }
     .btn:hover{transform:translateY(-1px);box-shadow:var(--sh3)}
     .btn:hover{background:var(--sur3);color:var(--txt);border-color:var(--bdr3)}
@@ -484,7 +483,7 @@
     .btn-icon{padding:4px 7px}
     .file-name{
       max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-      font-size:10px;color:var(--mut);font-family:'Geist Mono',monospace;
+      font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace;
       background:var(--sur2);border:1px solid var(--bdr);border-radius:5px;
       padding:2px 8px
     }
@@ -551,7 +550,7 @@
       padding:5px 11px;border-radius:6px;
       white-space:nowrap;pointer-events:none;
       opacity:0;transition:opacity .15s,transform .15s;
-      font-family:'Geist',sans-serif;letter-spacing:.01em;
+      font-family:'Inter',sans-serif;letter-spacing:.01em;
       box-shadow:var(--sh2);z-index:100
     }
     .nav-item::before{
@@ -580,8 +579,8 @@
     .content-area{flex:1;overflow-y:auto;overflow-x:hidden}
     main{max-width:1440px;margin:0 auto;padding:14px 16px}
     .page-header{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--bdr)}
-    .page-title{font-size:20px;font-weight:500;letter-spacing:-.025em;margin-bottom:2px;font-family:'Fraunces',serif;font-variation-settings:"opsz" 20}
-    .page-desc{font-size:12px;color:var(--mut);font-family:'Geist Mono',monospace}
+    .page-title{font-size:20px;font-weight:700;letter-spacing:-.03em;margin-bottom:2px;font-family:'Inter',sans-serif}
+    .page-desc{font-size:12px;color:var(--mut);font-family:'IBM Plex Mono',monospace}
     .pane{display:none}
     .pane.active{display:block;animation:fadeUp .22s ease}
     @keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
@@ -619,7 +618,7 @@
     .modal-field{display:flex;flex-direction:column;gap:6px}
     .modal-label{
       font-size:11px;font-weight:600;color:var(--mut);
-      text-transform:uppercase;letter-spacing:.08em;font-family:'Geist Mono',monospace
+      text-transform:uppercase;letter-spacing:.08em;font-family:'IBM Plex Mono',monospace
     }
     .modal-input-row{
       display:flex;align-items:center;gap:7px;
@@ -630,10 +629,10 @@
     .modal-input-row span{font-size:13px;color:var(--mut)}
     .modal-input-row input{
       flex:1;background:transparent;border:none;outline:none;
-      font-family:'Geist Mono',monospace;font-size:13px;color:var(--txt);
+      font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--txt);
       min-width:0;text-align:right
     }
-    .modal-input-row small{font-size:11px;color:var(--mut);font-family:'Geist Mono',monospace}
+    .modal-input-row small{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace}
     .modal-footer{margin-top:22px;display:flex;justify-content:flex-end;gap:8px}
 
     /* ─────────────────────────────────────────────────────────────
@@ -665,7 +664,7 @@
     .k-label{
       font-size:9px;color:var(--mut);text-transform:uppercase;
       letter-spacing:.14em;font-weight:600;margin-bottom:14px;
-      font-family:'Geist Mono',monospace;
+      font-family:'IBM Plex Mono',monospace;
       display:flex;align-items:center;gap:8px
     }
     .k-label::before{
@@ -676,24 +675,23 @@
     .k-value{
       font-size:36px;font-weight:600;line-height:.95;
       letter-spacing:-.035em;color:var(--txt);
-      font-family:"Fraunces",serif;
-      font-variation-settings:"opsz" 36;
-      font-feature-settings:"ss01","tnum";
+      font-family:'IBM Plex Mono',monospace;
+      font-feature-settings:"tnum","zero";
       display:flex;align-items:baseline;gap:4px
     }
     .k-value-unit{
       font-size:14px;font-weight:400;color:var(--mut);
-      font-family:'Geist Mono',monospace;
+      font-family:'IBM Plex Mono',monospace;
       letter-spacing:.02em;margin-left:2px
     }
     .k-sub{
       font-size:11px;color:var(--txt2);margin-top:10px;
-      line-height:1.5;font-family:'Geist Mono',monospace;
+      line-height:1.5;font-family:'IBM Plex Mono',monospace;
       letter-spacing:.01em
     }
     .k-trend{
       font-size:10.5px;margin-top:6px;font-weight:600;
-      font-family:'Geist Mono',monospace;
+      font-family:'IBM Plex Mono',monospace;
       display:inline-flex;align-items:center;gap:4px;
       padding:2px 8px;border-radius:99px;
       background:var(--sur2);border:1px solid var(--bdr2)
@@ -705,7 +703,7 @@
     .card-title{
       font-size:11px;color:var(--txt2);text-transform:uppercase;
       letter-spacing:.14em;font-weight:600;margin-bottom:14px;
-      font-family:'Geist Mono',monospace;
+      font-family:'IBM Plex Mono',monospace;
       display:flex;align-items:center;gap:8px;
       padding-bottom:10px;border-bottom:1px solid var(--bdr);
       position:relative
@@ -734,7 +732,7 @@
       font-size:10px;color:var(--txt2);text-transform:uppercase;
       letter-spacing:.09em;text-align:left;padding:10px 12px 9px;
       border-bottom:1px solid var(--bdr2);z-index:1;font-weight:600;
-      font-family:'Geist Mono',monospace;white-space:nowrap
+      font-family:'IBM Plex Mono',monospace;white-space:nowrap
     }
     .table td{
       font-size:13px;padding:9px 12px;
@@ -743,12 +741,12 @@
     }
     /* Primeira coluna numérica (# index) com peso visual */
     .table td:first-child{
-      color:var(--mut);font-family:'Geist Mono',monospace;
+      color:var(--mut);font-family:'IBM Plex Mono',monospace;
       font-size:10px;font-weight:500;width:36px
     }
     /* Segunda coluna geralmente é nome — destacar */
     .table td:nth-child(2){
-      font-weight:600;color:var(--txt);font-family:'Geist',sans-serif;font-size:13px
+      font-weight:600;color:var(--txt);font-family:'Inter',sans-serif;font-size:13px
     }
     /* Células numéricas: alinhamento tabular para colunas comparáveis */
     .table td.mono{font-variant-numeric:tabular-nums;letter-spacing:0}
@@ -775,7 +773,7 @@
     .alert.err{border-color:rgba(239,68,68,.22);background:rgba(239,68,68,.05)}
     .alert.info{border-color:rgba(6,182,212,.22);background:rgba(6,182,212,.05)}
     .alert strong{display:block;margin-bottom:6px;font-size:14px;font-weight:600}
-    .alert p{margin:0;color:var(--txt2);line-height:1.6;font-size:12px;font-family:'Geist Mono',monospace}
+    .alert p{margin:0;color:var(--txt2);line-height:1.6;font-size:12px;font-family:'IBM Plex Mono',monospace}
 
     /* ─────────────────────────────────────────────────────────────
        QUALITY LIST
@@ -797,11 +795,11 @@
     .exec-score-row{display:flex;gap:20px;align-items:flex-start;margin-bottom:8px}
     .exec-score{
       font-size:48px;font-weight:700;line-height:1;letter-spacing:-.04em;
-      font-family:'Geist',sans-serif
+      font-family:'Inter',sans-serif
     }
     .exec-score-label{
       font-size:11px;font-weight:600;margin-top:4px;
-      letter-spacing:.08em;text-transform:uppercase;font-family:'Geist Mono',monospace
+      letter-spacing:.08em;text-transform:uppercase;font-family:'IBM Plex Mono',monospace
     }
     .exec-score-detail{flex:1;min-width:0}
     .exec-gauge-track{
@@ -817,7 +815,7 @@
     }
     .exec-gauge-labels{
       display:flex;justify-content:space-between;
-      font-size:9px;color:var(--mut);font-family:'Geist Mono',monospace
+      font-size:9px;color:var(--mut);font-family:'IBM Plex Mono',monospace
     }
     .exec-list{display:grid;gap:8px}
     .exec-alert{
@@ -827,14 +825,14 @@
     }
     .exec-alert:hover{background:var(--sur3)}
     .exec-alert strong{display:block;font-size:13px;font-weight:600}
-    .exec-alert span{font-size:12px;color:var(--txt2);line-height:1.55;font-family:'Geist Mono',monospace}
+    .exec-alert span{font-size:12px;color:var(--txt2);line-height:1.55;font-family:'IBM Plex Mono',monospace}
 
     /* ─────────────────────────────────────────────────────────────
        HEATMAP
     ───────────────────────────────────────────────────────────── */
     .heatmap{display:grid;grid-template-columns:42px repeat(24,minmax(16px,1fr));gap:2px;align-items:center}
     @media(max-width:900px){.heatmap{grid-template-columns:36px repeat(24,20px);overflow-x:auto}}
-    .hm-cell,.hm-head,.hm-row{min-height:24px;border-radius:4px;font-size:9px;text-align:center;font-family:'Geist Mono',monospace}
+    .hm-cell,.hm-head,.hm-row{min-height:24px;border-radius:4px;font-size:9px;text-align:center;font-family:'IBM Plex Mono',monospace}
     .hm-head,.hm-row{color:var(--mut);display:grid;place-items:center}
     .hm-cell{background:var(--sur2);border:1px solid var(--bdr);position:relative;cursor:default}
     .hm-cell:hover::after{
@@ -842,7 +840,7 @@
       transform:translateX(-50%);white-space:nowrap;
       background:var(--sur4);border:1px solid var(--bdr2);
       border-radius:7px;padding:5px 10px;color:var(--txt);
-      z-index:10;font-size:11px;font-family:'Geist',sans-serif;
+      z-index:10;font-size:11px;font-family:'Inter',sans-serif;
       box-shadow:var(--sh2)
     }
 
@@ -882,23 +880,23 @@
     }
 
     .compare-side{flex:1;min-width:260px;background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:16px 18px}
-    .compare-side-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-family:"Geist Mono",monospace;margin-bottom:12px}
+    .compare-side-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-family:"IBM Plex Mono",monospace;margin-bottom:12px}
     .compare-kpi-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--bdr)}
     .compare-kpi-row:last-child{border-bottom:none}
     .compare-kpi-name{font-size:12px;color:var(--txt2)}
-    .compare-kpi-val{font-size:13px;font-weight:600;font-family:"Geist Mono",monospace;color:var(--txt)}
+    .compare-kpi-val{font-size:13px;font-weight:600;font-family:"IBM Plex Mono",monospace;color:var(--txt)}
     #compareBar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
     .funnel-wrap{display:flex;flex-direction:column;gap:4px;padding:8px 0}
     .funnel-step{display:flex;align-items:center;gap:12px}
     .funnel-label{width:180px;font-size:12px;color:var(--txt2);text-align:right;flex:none}
     .funnel-bar-wrap{flex:1;height:36px;background:var(--sur3);border-radius:6px;overflow:hidden}
     .funnel-bar{height:100%;display:flex;align-items:center;padding-left:10px;border-radius:6px;min-width:2%}
-    .funnel-bar span{color:#fff;font-size:12px;font-weight:600;font-family:"Geist Mono",monospace;white-space:nowrap}
-    .funnel-pct{width:52px;font-size:12px;font-weight:700;font-family:"Geist Mono",monospace;flex:none}
-    .funnel-drop{font-size:10px;color:var(--er);font-family:"Geist Mono",monospace;padding:2px 0 2px 196px;opacity:.8}
+    .funnel-bar span{color:#fff;font-size:12px;font-weight:600;font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+    .funnel-pct{width:52px;font-size:12px;font-weight:700;font-family:"IBM Plex Mono",monospace;flex:none}
+    .funnel-drop{font-size:10px;color:var(--er);font-family:"IBM Plex Mono",monospace;padding:2px 0 2px 196px;opacity:.8}
     .heatmap-sazon{display:grid;gap:2px;align-items:center;overflow-x:auto}
-    .hm-sazon-head{font-size:9px;color:var(--mut);font-family:"Geist Mono",monospace;text-align:center;min-height:18px}
-    .hm-sazon-row{font-size:9px;color:var(--mut);font-family:"Geist Mono",monospace;text-align:right;padding-right:4px;min-width:32px}
+    .hm-sazon-head{font-size:9px;color:var(--mut);font-family:"IBM Plex Mono",monospace;text-align:center;min-height:18px}
+    .hm-sazon-row{font-size:9px;color:var(--mut);font-family:"IBM Plex Mono",monospace;text-align:right;padding-right:4px;min-width:32px}
     .hm-sazon-cell{min-height:20px;min-width:26px;border-radius:3px;border:1px solid var(--bdr);position:relative;cursor:default}
     .hm-sazon-cell:hover::after{content:attr(data-tip);position:absolute;left:50%;bottom:120%;transform:translateX(-50%);white-space:nowrap;background:var(--sur4);border:1px solid var(--bdr2);border-radius:7px;padding:5px 10px;color:var(--txt);z-index:10;font-size:11px;box-shadow:var(--sh2)}
     #toast-container{position:fixed;bottom:24px;right:24px;z-index:400;display:flex;flex-direction:column;gap:8px;pointer-events:none}
@@ -912,19 +910,19 @@
 
     /* ── METAS MANCHESTER ── */
     .manchester-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
-    .manchester-table th{background:var(--sur2);font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;padding:8px 12px;border-bottom:1px solid var(--bdr);font-family:"Geist Mono",monospace}
-    .manchester-table td{padding:8px 12px;border-bottom:1px solid var(--bdr);font-family:"Geist Mono",monospace}
+    .manchester-table th{background:var(--sur2);font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;padding:8px 12px;border-bottom:1px solid var(--bdr);font-family:"IBM Plex Mono",monospace}
+    .manchester-table td{padding:8px 12px;border-bottom:1px solid var(--bdr);font-family:"IBM Plex Mono",monospace}
     .manchester-table tr:last-child td{border-bottom:none}
     /* ── PACIENTES ── */
     .pront-card{background:var(--sur2);border:1px solid var(--bdr);border-radius:10px;padding:16px 18px;margin-bottom:10px}
-    .pront-visit{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--bdr);align-items:center;font-size:12px;font-family:"Geist Mono",monospace}
+    .pront-visit{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--bdr);align-items:center;font-size:12px;font-family:"IBM Plex Mono",monospace}
     .pront-visit:last-child{border-bottom:none}
     .pront-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.05em}
     /* ── ANOTAÇÕES ── */
     .anot-item{background:var(--sur2);border:1px solid var(--bdr);border-radius:9px;padding:12px 14px;position:relative}
     .anot-item:hover{border-color:var(--bdr2)}
     .anot-header{display:flex;gap:8px;align-items:center;margin-bottom:6px}
-    .anot-mes{font-size:11px;font-weight:700;color:var(--txt);font-family:"Geist Mono",monospace}
+    .anot-mes{font-size:11px;font-weight:700;color:var(--txt);font-family:"IBM Plex Mono",monospace}
     .anot-cat{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
     .anot-cat.operacional{background:rgba(59,130,246,.12);color:#3b82f6}
     .anot-cat.clinico{background:rgba(34,197,94,.12);color:#22c55e}
@@ -960,18 +958,18 @@
     .risco-kpis{display:flex;flex-wrap:wrap;gap:20px}
     .risco-kpi{display:flex;flex-direction:column}
     .risco-kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin-bottom:2px}
-    .risco-kpi-value{font-size:22px;font-weight:800;font-family:'Geist Mono',monospace;line-height:1.1}
+    .risco-kpi-value{font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;line-height:1.1}
     .risco-alert-note{font-size:11px;color:var(--mut)}
     .proj-card{border:1.5px solid var(--bdr);border-radius:10px;padding:14px 18px;background:var(--sur2)}
     .proj-hd{display:flex;align-items:baseline;gap:8px;margin-bottom:12px}
     .proj-kpis{display:flex;flex-wrap:wrap;gap:24px;margin-bottom:12px}
     .proj-kpi{display:flex;flex-direction:column}
     .proj-kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin-bottom:2px}
-    .proj-kpi-value{font-size:22px;font-weight:800;font-family:'Geist Mono',monospace;line-height:1.1}
+    .proj-kpi-value{font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;line-height:1.1}
     .proj-kpi-sub{font-size:11px;margin-top:2px}
     .proj-bar-track{background:var(--sur);border-radius:4px;height:8px;overflow:hidden;margin-top:2px}
     .proj-bar-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#22c55e);border-radius:4px;transition:width .4s}
-    .proj-note{font-size:10px;color:var(--mut);font-family:'Geist Mono',monospace;margin-top:4px}
+    .proj-note{font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-top:4px}
     .proj-notice{padding:10px 16px;background:var(--sur2);border:1px solid var(--bdr);border-radius:8px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;font-size:12px}
     .proj-notice-label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);flex:none}
     .secAnoAano{border-top:1px solid var(--bdr);margin-top:24px;padding-top:20px}
@@ -986,15 +984,15 @@
     .sexo-row{display:grid;grid-template-columns:8px 68px 1fr auto;align-items:center;gap:10px}
     .sexo-dot{width:8px;height:8px;border-radius:50%;flex:none}
     .sexo-rlabel{font-size:11px;color:var(--txt2);font-weight:500}
-    .sexo-rval{font-size:22px;font-weight:800;font-family:'Geist Mono',monospace;line-height:1;letter-spacing:-.03em}
-    .sexo-rpct{font-size:11px;color:var(--mut);font-family:'Geist Mono',monospace;text-align:right}
-    .sexo-note{font-size:9px;color:var(--mut);font-family:'Geist Mono',monospace;padding-top:10px;border-top:1px solid var(--bdr);line-height:1.5;letter-spacing:.01em}
+    .sexo-rval{font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;line-height:1;letter-spacing:-.03em}
+    .sexo-rpct{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;text-align:right}
+    .sexo-note{font-size:9px;color:var(--mut);font-family:'IBM Plex Mono',monospace;padding-top:10px;border-top:1px solid var(--bdr);line-height:1.5;letter-spacing:.01em}
     .sexo-na{text-align:center;padding:24px 16px;color:var(--txt2);font-size:12px;line-height:1.6}
 
     /* ── Upload: marca forte ── */
     .vida-mark-svg{display:block;flex:none}
-    .up-brand-text .brand-title{font-size:13px;font-weight:700;font-family:'Geist Mono',monospace;letter-spacing:.18em;color:var(--txt)}
-    .up-brand-text .brand-sub{font-size:9px;color:var(--mut);font-family:'Geist Mono',monospace;margin-top:2px;letter-spacing:.04em}
+    .up-brand-text .brand-title{font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:.18em;color:var(--txt)}
+    .up-brand-text .brand-sub{font-size:9px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-top:2px;letter-spacing:.04em}
 
   </style>
 </head>
@@ -1135,7 +1133,7 @@
       </div>
 
       <div class="up-hint">Aceita .xlsx · .xls · .csv — arraste ou clique para selecionar</div>
-      <div id="autoLoadHint" style="margin-top:10px;font-size:11px;color:var(--mut);font-family:'Geist Mono',monospace;min-height:16px"></div>
+      <div id="autoLoadHint" style="margin-top:10px;font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;min-height:16px"></div>
     </div>
 
   </section>
@@ -1180,7 +1178,7 @@
           </div>
         </div>
         <div style="grid-column:1/-1;margin-top:8px;border-top:1px solid var(--bdr);padding-top:12px">
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-weight:700;font-family:'Geist Mono',monospace;margin-bottom:10px">Metas Manchester por classificação de risco</div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-weight:700;font-family:'IBM Plex Mono',monospace;margin-bottom:10px">Metas Manchester por classificação de risco</div>
           <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
             <div class="modal-field"><div class="modal-label" style="color:#ef4444">🔴 Vermelho — imediato</div><div class="modal-input-row"><span>≤</span><input id="metaVermelho" type="number" min="0" value="0"><small>min</small></div></div>
             <div class="modal-field"><div class="modal-label" style="color:#f97316">🟠 Laranja — muito urgente</div><div class="modal-input-row"><span>≤</span><input id="metaLaranja" type="number" min="1" value="15"><small>min</small></div></div>
@@ -1191,7 +1189,7 @@
           </div>
         </div>
         <div style="grid-column:1/-1;margin-top:8px;border-top:1px solid var(--bdr);padding-top:12px" id="recepSection">
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-weight:700;font-family:'Geist Mono',monospace;margin-bottom:4px">Pacientes recepcionados por mes</div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-weight:700;font-family:'IBM Plex Mono',monospace;margin-bottom:4px">Pacientes recepcionados por mes</div>
           <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">Informe o total de pacientes registrados na recepcao (do relatorio separado). Brancos e atendimentos sao derivados automaticamente.</div>
           <div id="recepTableWrap" style="max-height:220px;overflow-y:auto">
             <table class="table" style="font-size:12px" id="recepInputTable">
@@ -1549,7 +1547,7 @@
                 <button class="btn" id="auditExportBtn" style="font-size:10px">⬇ Exportar log</button>
               </span>
             </div>
-            <div style="font-size:11px;color:var(--mut);font-family:'Geist Mono',monospace;margin-bottom:10px" id="auditLogCount"></div>
+            <div style="font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-bottom:10px" id="auditLogCount"></div>
             <div class="table-wrap" style="max-height:420px">
               <table class="table" id="tableAuditLog"></table>
             </div>
@@ -1567,7 +1565,7 @@
 
       <section class="pane" id="pane-comparativo">
         <div class="page-header"><h1 class="page-title">Comparativo de Períodos</h1><p class="page-desc">Contraste entre dois períodos distintos e comparativo ano a ano</p></div>
-        <div style="margin-bottom:12px;padding:10px 14px;background:var(--sur2);border:1px solid var(--bdr);border-radius:10px;font-size:12px;color:var(--txt2);font-family:'Geist Mono',monospace">
+        <div style="margin-bottom:12px;padding:10px 14px;background:var(--sur2);border:1px solid var(--bdr);border-radius:10px;font-size:12px;color:var(--txt2);font-family:'IBM Plex Mono',monospace">
           <strong style="color:var(--txt);display:block;margin-bottom:4px">ℹ Como funciona</strong>
           O período selecionado no filtro é dividido ao meio: a primeira metade é o "Período A" e a segunda o "Período B". Idealmente, selecione dois meses completos para comparar.
         </div>
@@ -1954,7 +1952,7 @@
     const shortName=n=>String(n||"").split(/\s+/).filter(Boolean).slice(0,2).join(" ");
     const meta=id=>Number($(id).value)||0;
 
-    Chart.defaults.font.family="'Geist Mono',monospace";Chart.defaults.font.size=10.5;Chart.defaults.font.weight=400;
+    Chart.defaults.font.family="'IBM Plex Mono',monospace";Chart.defaults.font.size=10.5;Chart.defaults.font.weight=400;
     Chart.defaults.font.size=11;
     Chart.defaults.color="#9ca3af";
     Chart.defaults.borderColor="rgba(255,255,255,.08)";
@@ -3400,8 +3398,8 @@
       $("quality").innerHTML=`
         <div style="margin-bottom:12px;padding:10px 14px;background:var(--sur2);border-radius:8px;border:1px solid var(--bdr)">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin-bottom:4px">Índice geral de completude</div>
-          <div style="font-size:28px;font-weight:800;color:${completude>=90?"var(--ok)":completude>=70?"var(--wn)":"var(--er)"};font-family:'Geist Mono',monospace">${completude}%</div>
-          <div style="font-size:10px;color:var(--mut);font-family:'Geist Mono',monospace">${fmt(n)} registros no período filtrado</div>
+          <div style="font-size:28px;font-weight:800;color:${completude>=90?"var(--ok)":completude>=70?"var(--wn)":"var(--er)"};font-family:'IBM Plex Mono',monospace">${completude}%</div>
+          <div style="font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace">${fmt(n)} registros no período filtrado</div>
         </div>
         <table class="table" style="font-size:11px">
           <thead><tr><th>Campo</th><th>Fonte</th><th>Preenchidos</th><th>Faltantes</th><th>Completude</th></tr></thead>
@@ -3413,7 +3411,7 @@
               <td class="muted mono">${esc(f.fonte)}</td>
               <td>${fmt(ok)}</td>
               <td style="color:${f.falta>0?"var(--er)":"var(--ok)"}">${fmt(f.falta)}</td>
-              <td><span style="color:${color};font-weight:700;font-family:'Geist Mono',monospace">${pct_ok}%</span></td>
+              <td><span style="color:${color};font-weight:700;font-family:'IBM Plex Mono',monospace">${pct_ok}%</span></td>
             </tr>`;
           }).join("")}</tbody>
         </table>
@@ -4261,7 +4259,7 @@
         });
       });
       sazonHtml += '</div>';
-      sazonHtml += `<div style="font-size:9px;color:var(--mut);margin-top:6px;font-family:'Geist Mono',monospace">
+      sazonHtml += `<div style="font-size:9px;color:var(--mut);margin-top:6px;font-family:'IBM Plex Mono',monospace">
         Grade: dia da semana × mês. Intensidade = volume de atendimentos.
       </div>`;
       $('heatmapSazon').innerHTML = sazonHtml;
@@ -4954,7 +4952,7 @@
           <td class="mono">${esc(r?.pront||'—')}</td>
           <td>${esc(shortName(r?.prof||'—'))}</td>
           <td><span class="audit-tag ${i.tipo}">${esc(i.tipo)}</span></td>
-          <td style="color:${sevColor};font-weight:700;font-size:11px;font-family:'Geist Mono',monospace">${esc(i.sev)}</td>
+          <td style="color:${sevColor};font-weight:700;font-size:11px;font-family:'IBM Plex Mono',monospace">${esc(i.sev)}</td>
           <td class="mono muted">${esc(i.campo||'—')}</td>
           <td style="font-size:11px;color:var(--txt2);max-width:300px">${esc(i.motivo||'—')}</td>
         </tr>`;
@@ -5126,7 +5124,7 @@
             y:{
               grid:{display:false},
               ticks:{color:tickColor(),font:{size:11,weight:'600'},
-                font:{family:"'Geist Mono',monospace",size:11}}
+                font:{family:"'IBM Plex Mono',monospace",size:11}}
             }
           }
         }
@@ -5763,7 +5761,7 @@
         </div>
       </div>
       <div style="margin-top:16px;padding:12px 14px;background:var(--sur2);border:1px solid var(--bdr);border-radius:8px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--mut);font-weight:700;font-family:'Geist Mono',monospace;margin-bottom:6px">⛁ Banco de dados local</div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--mut);font-weight:700;font-family:'IBM Plex Mono',monospace;margin-bottom:6px">⛁ Banco de dados local</div>
         <div style="font-size:11px;color:var(--txt2);line-height:1.55;margin-bottom:10px">Os dados ficam salvos no navegador entre sessões. Use o botão abaixo para limpar tudo.</div>
         <button class="btn" onclick="limparBanco()" style="color:var(--er);border-color:rgba(239,68,68,.3)">🗑 Limpar banco de dados</button>
       </div>
