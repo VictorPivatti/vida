@@ -5301,8 +5301,29 @@
         // Garante que cada pane é renderizada antes da captura
         const originalActive = document.querySelector('.nav-item.active')?.dataset?.pane;
 
+        // Patch temporario: html2canvas 1.4.1 nao suporta color(srgb ...) que
+        // o Chrome moderno retorna em getComputedStyle. Converte para rgb().
+        const _patchColor = v => typeof v !== 'string' ? v :
+          v.replace(/\bcolor\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\)/gi,
+            (_, r, g, b, a) => {
+              const ri = Math.round(r * 255), gi = Math.round(g * 255), bi = Math.round(b * 255);
+              return a != null ? `rgba(${ri},${gi},${bi},${parseFloat(a)})` : `rgb(${ri},${gi},${bi})`;
+            });
+        const _origGCS = window.getComputedStyle;
+        window.getComputedStyle = (...args) => {
+          const s = _origGCS.apply(window, args);
+          return new Proxy(s, {
+            get(t, p) {
+              const v = t[p];
+              if (typeof v === 'string') return _patchColor(v);
+              if (typeof v === 'function') return v.bind(t);
+              return v;
+            }
+          });
+        };
+
         let pagina = 0;
-        for(const p of panes){
+        try{ for(const p of panes){
           const el = document.getElementById(p.id);
           if(!el) continue;
 
@@ -5346,7 +5367,7 @@
 
           pdf.addImage(imgData, 'JPEG', margin, margin+13, imgW, imgH);
           pagina++;
-        }
+        }} finally { window.getComputedStyle = _origGCS; }
 
         // Restaurar tab original
         if(originalActive){
