@@ -4,11 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>V.I.D.A. — Visualização Integrada de Dados Assistenciais</title>
+  <script>
+    (function(){
+      try{
+        var key="upa_dash_prefs", raw=null;
+        try{raw=window.localStorage&&window.localStorage.getItem(key)}catch(e){}
+        if(!raw){
+          var hit=document.cookie.split("; ").find(function(row){return row.indexOf(key+"=")===0});
+          raw=hit?decodeURIComponent(hit.split("=").slice(1).join("=")):null;
+        }
+        var theme=raw&&JSON.parse(raw).theme;
+        if(theme==="light"||theme==="dark")document.documentElement.dataset.theme=theme;
+      }catch(e){}
+    })();
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@300;400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     /* ─────────────────────────────────────────────────────────────
        TOKENS
@@ -45,7 +59,7 @@
     html{scroll-behavior:smooth}
     body{
       min-height:100vh;background:var(--bg);color:var(--txt);
-      font-family:'Geist',system-ui,sans-serif;
+      font-family:'Inter',system-ui,sans-serif;
       font-size:15px;line-height:1.55;
       -webkit-font-smoothing:antialiased;
       font-optical-sizing:auto
@@ -59,7 +73,7 @@
     /* ─────────────────────────────────────────────────────────────
        UTILS
     ───────────────────────────────────────────────────────────── */
-    .mono{font-family:'Geist Mono',monospace}
+    .mono{font-family:'IBM Plex Mono',monospace;font-feature-settings:"tnum","zero"}
     .muted{color:var(--mut)}
     .hidden{display:none!important}
     .okc{color:var(--ok)}
@@ -80,7 +94,6 @@
     /* ─────────────────────────────────────────────────────────────
        UPLOAD SCREEN — editorial médico / split layout
     ───────────────────────────────────────────────────────────── */
-    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&display=swap');
 
     #upload{
       min-height:100vh;display:grid;
@@ -150,12 +163,12 @@
     }
     .up-brand-text .brand-title{
       font-size:11px;font-weight:700;
-      font-family:'Geist Mono',monospace;
+      font-family:'IBM Plex Mono',monospace;
       letter-spacing:.2em;color:var(--txt)
     }
     .up-brand-text .brand-sub{
       font-size:9px;color:var(--mut);
-      font-family:'Geist Mono',monospace;
+      font-family:'IBM Plex Mono',monospace;
       margin-top:1px;letter-spacing:.04em
     }
 
@@ -167,7 +180,7 @@
       padding:clamp(24px,4vh,48px) 0
     }
     .upload-hero-eyebrow{
-      font-family:'Geist Mono',monospace;
+      font-family:'IBM Plex Mono',monospace;
       font-size:9px;letter-spacing:.28em;text-transform:uppercase;
       color:var(--ac);font-weight:600;
       margin-bottom:16px;opacity:.8
@@ -182,7 +195,7 @@
       line-height:1.05
     }
     .uhw-initial{
-      font-family:'Geist',sans-serif;
+      font-family:'Inter',sans-serif;
       font-size:clamp(36px,4.8vw,58px);
       font-weight:800;
       letter-spacing:-.03em;
@@ -191,7 +204,7 @@
       flex:none
     }
     .uhw-rest{
-      font-family:'Geist',sans-serif;
+      font-family:'Inter',sans-serif;
       font-size:clamp(36px,4.8vw,58px);
       font-weight:800;
       letter-spacing:-.03em;
@@ -218,7 +231,7 @@
     /* RODAPÉ: unidade configurada */
     .up-address{
       position:relative;z-index:1;
-      font-size:10px;font-family:'Geist Mono',monospace;
+      font-size:10px;font-family:'IBM Plex Mono',monospace;
       color:var(--mut);line-height:1.8;
       border-top:1px solid var(--bdr);
       padding-top:16px;letter-spacing:.01em
@@ -240,7 +253,7 @@
       align-items:center;gap:0
     }
     .vida-deco-letter{
-      font-family:'Geist Mono',monospace;
+      font-family:'IBM Plex Mono',monospace;
       font-size:clamp(52px,7vw,88px);
       font-weight:700;
       line-height:.95;
@@ -285,7 +298,7 @@
     @media(max-width:860px){.upload-right{padding:32px 24px}}
 
     .up-form-title{
-      font-size:11px;font-family:'Geist Mono',monospace;
+      font-size:11px;font-family:'IBM Plex Mono',monospace;
       letter-spacing:.14em;text-transform:uppercase;
       color:var(--mut);font-weight:600;
       margin-bottom:28px;
@@ -296,6 +309,32 @@
     }
 
     /* Drop zones — novo layout vertical com numeração */
+    .theme-start{
+      display:flex;align-items:center;justify-content:space-between;gap:14px;
+      margin:-10px 0 18px;padding:12px 14px;
+      border:1px solid var(--bdr);border-radius:8px;background:var(--sur);
+      box-shadow:var(--sh3)
+    }
+    .theme-start-label{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .theme-start-label strong{font-size:12px;font-weight:700;color:var(--txt)}
+    .theme-start-label span{font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--mut)}
+    .theme-choice{
+      display:flex;gap:4px;padding:3px;border:1px solid var(--bdr2);
+      border-radius:7px;background:var(--sur2);flex:none
+    }
+    .theme-choice-btn{
+      width:34px;height:30px;border:0;border-radius:5px;
+      display:grid;place-items:center;cursor:pointer;
+      color:var(--txt2);background:transparent;transition:background .15s,color .15s,box-shadow .15s
+    }
+    .theme-choice-btn:hover{color:var(--txt);background:var(--sur3)}
+    .theme-choice-btn.active{color:#fff;background:var(--ac);box-shadow:0 0 0 1px rgba(255,255,255,.08) inset}
+    @media(max-width:520px){
+      .theme-start{align-items:flex-start;flex-direction:column}
+      .theme-choice{width:100%}
+      .theme-choice-btn{flex:1;width:auto}
+    }
+
     .drop-stack{display:flex;flex-direction:column;gap:10px}
     .drop{
       position:relative;border:1px solid var(--bdr2);border-radius:12px;
@@ -317,7 +356,7 @@
       width:32px;height:32px;border-radius:8px;
       background:var(--sur2);border:1px solid var(--bdr2);
       display:grid;place-items:center;flex:none;
-      font-size:11px;font-family:'Geist Mono',monospace;
+      font-size:11px;font-family:'IBM Plex Mono',monospace;
       font-weight:600;color:var(--mut);
       transition:background .2s,color .2s
     }
@@ -330,7 +369,7 @@
       color:var(--txt);margin-bottom:2px
     }
     .drop-body small{
-      font-size:11px;font-family:'Geist Mono',monospace;color:var(--mut)
+      font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--mut)
     }
     .drop-badge{
       font-size:9px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
@@ -353,14 +392,14 @@
     .bar{height:100%;width:0;background:var(--grad);transition:width .3s ease}
     .status{
       min-height:18px;margin-top:8px;
-      color:var(--txt2);font-size:11px;font-family:'Geist Mono',monospace;
+      color:var(--txt2);font-size:11px;font-family:'IBM Plex Mono',monospace;
       letter-spacing:.01em
     }
 
     /* Legenda dos formatos */
     .up-hint{
       margin-top:16px;
-      font-size:10px;font-family:'Geist Mono',monospace;
+      font-size:10px;font-family:'IBM Plex Mono',monospace;
       color:var(--mut);display:flex;align-items:center;gap:8px
     }
     .up-hint::before{content:"";width:12px;height:1px;background:var(--bdr3)}
@@ -407,10 +446,10 @@
     .brand-title{
       font-weight:600;font-size:12px;white-space:nowrap;
       color:var(--txt);line-height:1.2;
-      font-family:'Geist Mono',monospace;letter-spacing:.01em
+      font-family:'IBM Plex Mono',monospace;letter-spacing:.01em
     }
     .brand-sub{
-      font-size:10px;color:var(--mut);font-family:'Geist Mono',monospace;
+      font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace;
       letter-spacing:.01em;white-space:nowrap;
       overflow:hidden;text-overflow:ellipsis
     }
@@ -428,19 +467,16 @@
     .topbar-filters{display:contents}
     .flabel{
       font-size:9px;text-transform:uppercase;letter-spacing:.1em;
-      color:var(--mut);font-weight:600;font-family:'Geist Mono',monospace;
+      color:var(--mut);font-weight:600;font-family:'IBM Plex Mono',monospace;
       white-space:nowrap;flex:none
     }
     .field{
       background:var(--sur2);color:var(--txt);
       border:1px solid var(--bdr2);border-radius:4px;
-      padding:2px 7px;font-size:11px;font-family:'Geist Mono',monospace;
+      padding:2px 7px;font-size:11px;font-family:'IBM Plex Mono',monospace;
       transition:border-color .12s;flex:none
     }
     .field:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 2px var(--ac-glow)}
-    .field-active{border-color:var(--ac)!important;background:var(--ac-glow)!important}
-    .filter-count{font-size:10px;font-family:'Geist Mono',monospace;color:var(--ac);background:var(--ac-glow);border:1px solid var(--ac);border-radius:99px;padding:1px 7px;margin-left:2px;white-space:nowrap;display:none}
-    .filter-count.visible{display:inline-block}
     input[type="date"].field{min-width:96px}
     select.field{min-width:0}
     .pill{
@@ -448,7 +484,7 @@
       border-radius:99px;padding:2px 10px;
       color:var(--mut);font-size:10px;font-weight:500;
       cursor:pointer;transition:all .15s;
-      font-family:'Geist Mono',monospace;white-space:nowrap;flex:none;
+      font-family:'IBM Plex Mono',monospace;white-space:nowrap;flex:none;
       letter-spacing:.04em
     }
     .pill:hover,.pill.active-pill{
@@ -459,7 +495,7 @@
     .badge{
       font-size:10px;color:var(--ac);background:var(--ac-glow);
       padding:3px 10px;border-radius:99px;font-weight:600;
-      border:1px solid rgba(124,110,249,.25);font-family:'Geist Mono',monospace;
+      border:1px solid rgba(124,110,249,.25);font-family:'IBM Plex Mono',monospace;
       white-space:nowrap;flex:none;
       letter-spacing:.02em;
       box-shadow:inset 0 0 8px rgba(124,110,249,.06);
@@ -472,7 +508,7 @@
       border-radius:6px;padding:4px 12px;font-size:11px;font-weight:500;
       cursor:pointer;transition:all .15s;white-space:nowrap;
       display:inline-flex;align-items:center;gap:5px;
-      font-family:'Geist',sans-serif;letter-spacing:.005em
+      font-family:'Inter',sans-serif;letter-spacing:.005em
     }
     .btn:hover{transform:translateY(-1px);box-shadow:var(--sh3)}
     .btn:hover{background:var(--sur3);color:var(--txt);border-color:var(--bdr3)}
@@ -487,7 +523,7 @@
     .btn-icon{padding:4px 7px}
     .file-name{
       max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-      font-size:10px;color:var(--mut);font-family:'Geist Mono',monospace;
+      font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace;
       background:var(--sur2);border:1px solid var(--bdr);border-radius:5px;
       padding:2px 8px
     }
@@ -554,7 +590,7 @@
       padding:5px 11px;border-radius:6px;
       white-space:nowrap;pointer-events:none;
       opacity:0;transition:opacity .15s,transform .15s;
-      font-family:'Geist',sans-serif;letter-spacing:.01em;
+      font-family:'Inter',sans-serif;letter-spacing:.01em;
       box-shadow:var(--sh2);z-index:100
     }
     .nav-item::before{
@@ -579,19 +615,122 @@
     /* ─────────────────────────────────────────────────────────────
        CONTENT AREA
     ───────────────────────────────────────────────────────────── */
+    .sidebar{
+      width:244px;gap:2px;padding:14px 12px 16px;
+      overflow-y:auto;overflow-x:hidden;
+      background:linear-gradient(180deg,var(--sur) 0%,var(--sur2) 100%)
+    }
+    .sidebar::before{
+      height:140px;background:radial-gradient(ellipse at 50% 0%,var(--ac-glow),transparent 68%);
+      opacity:.8
+    }
+    .sidebar-brand{
+      display:flex;align-items:center;gap:10px;
+      padding:6px 6px 14px;margin-bottom:4px;
+      border-bottom:1px solid var(--bdr)
+    }
+    .sidebar-mark{
+      width:32px;height:32px;border-radius:8px;display:grid;place-items:center;flex:none;
+      background:var(--grad);color:#fff;box-shadow:0 8px 22px rgba(124,110,249,.22)
+    }
+    .sidebar-brand-text{display:flex;flex-direction:column;gap:1px;min-width:0}
+    .sidebar-brand-title{
+      font-size:13px;font-weight:800;color:var(--txt);
+      font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;line-height:1.1
+    }
+    .sidebar-brand-sub{
+      font-size:10px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+    }
+    .nav-group{
+      display:block;margin:16px 8px 7px;
+      font-size:9px;font-weight:700;line-height:1;
+      font-family:'IBM Plex Mono',monospace;text-transform:uppercase;
+      letter-spacing:.12em;color:var(--mut)
+    }
+    .nav-divider{display:none}
+    .nav-item{
+      justify-content:flex-start;gap:10px;
+      width:100%;min-height:36px;height:auto;
+      margin:1px 0;padding:8px 10px;
+      border-radius:7px;text-align:left;
+      font-family:'Inter',sans-serif
+    }
+    .nav-item:hover{transform:translateX(2px)}
+    .nav-item.active{
+      background:linear-gradient(90deg,var(--ac-glow),rgba(124,110,249,.06));
+      box-shadow:inset 0 0 0 1px rgba(124,110,249,.14)
+    }
+    .nav-item svg{stroke-width:1.7}
+    .nav-item span:not(.nav-indicator){
+      display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+      font-size:12px;font-weight:600;letter-spacing:0
+    }
+    .nav-item::after,.nav-item::before{display:none}
+    .nav-item.active span.nav-indicator{left:0;top:8px;bottom:8px}
+    @media(max-width:1120px){
+      .sidebar{width:58px;padding:10px 8px 14px;overflow:visible}
+      .sidebar-brand{justify-content:center;padding:4px 0 10px}
+      .sidebar-brand-text,.nav-group{display:none}
+      .nav-divider{display:block;height:1px;background:var(--bdr);margin:8px 10px}
+      .nav-item{width:40px;height:40px;min-height:40px;margin:1px auto;padding:0;justify-content:center}
+      .nav-item span:not(.nav-indicator){display:none}
+      .nav-item::after{
+        content:attr(data-label);display:block;
+        position:absolute;left:calc(100% + 12px);top:50%;
+        transform:translateY(-50%) translateX(-4px);
+        background:var(--sur4);border:1px solid var(--bdr2);
+        color:var(--txt);font-size:11px;font-weight:500;
+        padding:5px 11px;border-radius:6px;
+        white-space:nowrap;pointer-events:none;
+        opacity:0;transition:opacity .15s,transform .15s;
+        font-family:'Inter',sans-serif;letter-spacing:.01em;
+        box-shadow:var(--sh2);z-index:100
+      }
+      .nav-item:hover::after{opacity:1;transform:translateY(-50%) translateX(0)}
+      .nav-item.active span.nav-indicator{left:-8px;top:25%;bottom:25%}
+    }
     .app-body{display:flex;flex:1;overflow:hidden}
     .content-area{flex:1;overflow-y:auto;overflow-x:hidden}
     main{max-width:1440px;margin:0 auto;padding:14px 16px}
     .page-header{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--bdr)}
-    .page-title{font-size:20px;font-weight:500;letter-spacing:-.025em;margin-bottom:2px;font-family:'Fraunces',serif;font-variation-settings:"opsz" 20}
-    .page-desc{font-size:12px;color:var(--mut);font-family:'Geist Mono',monospace}
+    .page-title{font-size:20px;font-weight:700;letter-spacing:-.03em;margin-bottom:2px;font-family:'Inter',sans-serif}
+    .page-desc{font-size:12px;color:var(--mut);font-family:'IBM Plex Mono',monospace}
     .pane{display:none}
     .pane.active{display:block;animation:fadeUp .22s ease}
     @keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-    :root{--kpi-min:215px;--chart-min:380px;--card-gap:12px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--kpi-min),1fr));gap:var(--card-gap);margin-bottom:var(--card-gap)}
-    .chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--chart-min),1fr));gap:var(--card-gap);margin-bottom:var(--card-gap)}
-    @media(max-width:760px){.chart-grid{grid-template-columns:1fr}main{padding:12px 14px}}
+    :root{--kpi-min:190px;--chart-min:360px;--card-gap:12px}
+    .grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--kpi-min)),1fr));
+      gap:var(--card-gap);margin-bottom:var(--card-gap);grid-auto-flow:dense
+    }
+    .chart-grid{
+      display:grid;grid-template-columns:repeat(12,minmax(0,1fr));
+      gap:var(--card-gap);margin-bottom:var(--card-gap);grid-auto-flow:dense;
+      align-items:start
+    }
+    .chart-grid>.card{grid-column:span 6}
+    .chart-grid>.card.full{grid-column:1/-1}
+    @media(min-width:1280px){
+      #pane-geral .chart-grid>.card:nth-child(1){grid-column:span 8}
+      #pane-geral .chart-grid>.card:nth-child(2),
+      #pane-geral .chart-grid>.card:nth-child(3){grid-column:span 4}
+      #pane-geral .chart-grid>.card:nth-child(4){grid-column:span 8}
+      #pane-retornos .chart-grid>.card:nth-child(1){grid-column:span 8}
+      #pane-retornos .chart-grid>.card:nth-child(2),
+      #pane-retornos .chart-grid>.card:nth-child(3){grid-column:span 4}
+      #pane-retornos .chart-grid>.card:nth-child(4),
+      #pane-retornos .chart-grid>.card:nth-child(5){grid-column:span 6}
+      #pane-retornos .chart-grid>.card:nth-child(6){grid-column:1/-1}
+      #pane-gargalos .chart-grid>.card:nth-child(1){grid-column:span 8}
+      #pane-gargalos .chart-grid>.card:nth-child(2){grid-column:span 4}
+      #pane-gargalos .chart-grid>.card:nth-child(3),
+      #pane-gargalos .chart-grid>.card:nth-child(4){grid-column:span 6}
+    }
+    @media(max-width:980px){
+      .chart-grid{grid-template-columns:1fr}
+      .chart-grid>.card,.chart-grid>.card.full{grid-column:1/-1}
+    }
+    @media(max-width:760px){main{padding:12px 14px}}
 
     /* ─────────────────────────────────────────────────────────────
        MODAL
@@ -622,7 +761,7 @@
     .modal-field{display:flex;flex-direction:column;gap:6px}
     .modal-label{
       font-size:11px;font-weight:600;color:var(--mut);
-      text-transform:uppercase;letter-spacing:.08em;font-family:'Geist Mono',monospace
+      text-transform:uppercase;letter-spacing:.08em;font-family:'IBM Plex Mono',monospace
     }
     .modal-input-row{
       display:flex;align-items:center;gap:7px;
@@ -633,10 +772,10 @@
     .modal-input-row span{font-size:13px;color:var(--mut)}
     .modal-input-row input{
       flex:1;background:transparent;border:none;outline:none;
-      font-family:'Geist Mono',monospace;font-size:13px;color:var(--txt);
+      font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--txt);
       min-width:0;text-align:right
     }
-    .modal-input-row small{font-size:11px;color:var(--mut);font-family:'Geist Mono',monospace}
+    .modal-input-row small{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace}
     .modal-footer{margin-top:22px;display:flex;justify-content:flex-end;gap:8px}
 
     /* ─────────────────────────────────────────────────────────────
@@ -668,7 +807,7 @@
     .k-label{
       font-size:9px;color:var(--mut);text-transform:uppercase;
       letter-spacing:.14em;font-weight:600;margin-bottom:14px;
-      font-family:'Geist Mono',monospace;
+      font-family:'IBM Plex Mono',monospace;
       display:flex;align-items:center;gap:8px
     }
     .k-label::before{
@@ -679,24 +818,23 @@
     .k-value{
       font-size:36px;font-weight:600;line-height:.95;
       letter-spacing:-.035em;color:var(--txt);
-      font-family:"Fraunces",serif;
-      font-variation-settings:"opsz" 36;
-      font-feature-settings:"ss01","tnum";
+      font-family:'IBM Plex Mono',monospace;
+      font-feature-settings:"tnum","zero";
       display:flex;align-items:baseline;gap:4px
     }
     .k-value-unit{
       font-size:14px;font-weight:400;color:var(--mut);
-      font-family:'Geist Mono',monospace;
+      font-family:'IBM Plex Mono',monospace;
       letter-spacing:.02em;margin-left:2px
     }
     .k-sub{
       font-size:11px;color:var(--txt2);margin-top:10px;
-      line-height:1.5;font-family:'Geist Mono',monospace;
+      line-height:1.5;font-family:'IBM Plex Mono',monospace;
       letter-spacing:.01em
     }
     .k-trend{
       font-size:10.5px;margin-top:6px;font-weight:600;
-      font-family:'Geist Mono',monospace;
+      font-family:'IBM Plex Mono',monospace;
       display:inline-flex;align-items:center;gap:4px;
       padding:2px 8px;border-radius:99px;
       background:var(--sur2);border:1px solid var(--bdr2)
@@ -708,7 +846,7 @@
     .card-title{
       font-size:11px;color:var(--txt2);text-transform:uppercase;
       letter-spacing:.14em;font-weight:600;margin-bottom:14px;
-      font-family:'Geist Mono',monospace;
+      font-family:'IBM Plex Mono',monospace;
       display:flex;align-items:center;gap:8px;
       padding-bottom:10px;border-bottom:1px solid var(--bdr);
       position:relative
@@ -722,14 +860,15 @@
     /* ─────────────────────────────────────────────────────────────
        CHARTS
     ───────────────────────────────────────────────────────────── */
-    .chart{height:260px;position:relative}
-    .chart.small{height:220px}
-    .chart.tall{height:320px}
+    .chart{height:270px;position:relative}
+    .chart.small{height:236px}
+    .chart.tall{height:330px}
 
     /* ─────────────────────────────────────────────────────────────
        TABLES
     ───────────────────────────────────────────────────────────── */
-    .table-wrap{overflow:auto;max-height:520px;border-radius:10px;border:1px solid var(--bdr)}
+    .table-wrap{overflow:auto;max-height:440px;border-radius:10px;border:1px solid var(--bdr)}
+    .card.full .table-wrap{max-height:520px}
     #tableRetMed{min-width:700px}
     .table{width:100%;border-collapse:collapse}
     .table th{
@@ -737,7 +876,7 @@
       font-size:10px;color:var(--txt2);text-transform:uppercase;
       letter-spacing:.09em;text-align:left;padding:10px 12px 9px;
       border-bottom:1px solid var(--bdr2);z-index:1;font-weight:600;
-      font-family:'Geist Mono',monospace;white-space:nowrap
+      font-family:'IBM Plex Mono',monospace;white-space:nowrap
     }
     .table td{
       font-size:13px;padding:9px 12px;
@@ -746,12 +885,12 @@
     }
     /* Primeira coluna numérica (# index) com peso visual */
     .table td:first-child{
-      color:var(--mut);font-family:'Geist Mono',monospace;
+      color:var(--mut);font-family:'IBM Plex Mono',monospace;
       font-size:10px;font-weight:500;width:36px
     }
     /* Segunda coluna geralmente é nome — destacar */
     .table td:nth-child(2){
-      font-weight:600;color:var(--txt);font-family:'Geist',sans-serif;font-size:13px
+      font-weight:600;color:var(--txt);font-family:'Inter',sans-serif;font-size:13px
     }
     /* Células numéricas: alinhamento tabular para colunas comparáveis */
     .table td.mono{font-variant-numeric:tabular-nums;letter-spacing:0}
@@ -763,7 +902,7 @@
     .table tbody tr:hover td:first-child{color:var(--ac);font-weight:700}
     /* Linhas pares ficam levemente recuadas visualmente */
     .table tbody tr:nth-child(even) td{
-      background:color-mix(in srgb,var(--sur2) 40%,transparent)
+      background:var(--sur2)
     }
     .search{width:min(300px,100%);margin-bottom:12px}
     .search input{width:100%}
@@ -778,7 +917,7 @@
     .alert.err{border-color:rgba(239,68,68,.22);background:rgba(239,68,68,.05)}
     .alert.info{border-color:rgba(6,182,212,.22);background:rgba(6,182,212,.05)}
     .alert strong{display:block;margin-bottom:6px;font-size:14px;font-weight:600}
-    .alert p{margin:0;color:var(--txt2);line-height:1.6;font-size:12px;font-family:'Geist Mono',monospace}
+    .alert p{margin:0;color:var(--txt2);line-height:1.6;font-size:12px;font-family:'IBM Plex Mono',monospace}
 
     /* ─────────────────────────────────────────────────────────────
        QUALITY LIST
@@ -800,11 +939,11 @@
     .exec-score-row{display:flex;gap:20px;align-items:flex-start;margin-bottom:8px}
     .exec-score{
       font-size:48px;font-weight:700;line-height:1;letter-spacing:-.04em;
-      font-family:'Geist',sans-serif
+      font-family:'Inter',sans-serif
     }
     .exec-score-label{
       font-size:11px;font-weight:600;margin-top:4px;
-      letter-spacing:.08em;text-transform:uppercase;font-family:'Geist Mono',monospace
+      letter-spacing:.08em;text-transform:uppercase;font-family:'IBM Plex Mono',monospace
     }
     .exec-score-detail{flex:1;min-width:0}
     .exec-gauge-track{
@@ -820,7 +959,7 @@
     }
     .exec-gauge-labels{
       display:flex;justify-content:space-between;
-      font-size:9px;color:var(--mut);font-family:'Geist Mono',monospace
+      font-size:9px;color:var(--mut);font-family:'IBM Plex Mono',monospace
     }
     .exec-list{display:grid;gap:8px}
     .exec-alert{
@@ -830,14 +969,14 @@
     }
     .exec-alert:hover{background:var(--sur3)}
     .exec-alert strong{display:block;font-size:13px;font-weight:600}
-    .exec-alert span{font-size:12px;color:var(--txt2);line-height:1.55;font-family:'Geist Mono',monospace}
+    .exec-alert span{font-size:12px;color:var(--txt2);line-height:1.55;font-family:'IBM Plex Mono',monospace}
 
     /* ─────────────────────────────────────────────────────────────
        HEATMAP
     ───────────────────────────────────────────────────────────── */
     .heatmap{display:grid;grid-template-columns:42px repeat(24,minmax(16px,1fr));gap:2px;align-items:center}
     @media(max-width:900px){.heatmap{grid-template-columns:36px repeat(24,20px);overflow-x:auto}}
-    .hm-cell,.hm-head,.hm-row{min-height:24px;border-radius:4px;font-size:9px;text-align:center;font-family:'Geist Mono',monospace}
+    .hm-cell,.hm-head,.hm-row{min-height:24px;border-radius:4px;font-size:9px;text-align:center;font-family:'IBM Plex Mono',monospace}
     .hm-head,.hm-row{color:var(--mut);display:grid;place-items:center}
     .hm-cell{background:var(--sur2);border:1px solid var(--bdr);position:relative;cursor:default}
     .hm-cell:hover::after{
@@ -845,7 +984,7 @@
       transform:translateX(-50%);white-space:nowrap;
       background:var(--sur4);border:1px solid var(--bdr2);
       border-radius:7px;padding:5px 10px;color:var(--txt);
-      z-index:10;font-size:11px;font-family:'Geist',sans-serif;
+      z-index:10;font-size:11px;font-family:'Inter',sans-serif;
       box-shadow:var(--sh2)
     }
 
@@ -885,23 +1024,23 @@
     }
 
     .compare-side{flex:1;min-width:260px;background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:16px 18px}
-    .compare-side-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-family:"Geist Mono",monospace;margin-bottom:12px}
+    .compare-side-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-family:"IBM Plex Mono",monospace;margin-bottom:12px}
     .compare-kpi-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--bdr)}
     .compare-kpi-row:last-child{border-bottom:none}
     .compare-kpi-name{font-size:12px;color:var(--txt2)}
-    .compare-kpi-val{font-size:13px;font-weight:600;font-family:"Geist Mono",monospace;color:var(--txt)}
+    .compare-kpi-val{font-size:13px;font-weight:600;font-family:"IBM Plex Mono",monospace;color:var(--txt)}
     #compareBar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
     .funnel-wrap{display:flex;flex-direction:column;gap:4px;padding:8px 0}
     .funnel-step{display:flex;align-items:center;gap:12px}
     .funnel-label{width:180px;font-size:12px;color:var(--txt2);text-align:right;flex:none}
     .funnel-bar-wrap{flex:1;height:36px;background:var(--sur3);border-radius:6px;overflow:hidden}
     .funnel-bar{height:100%;display:flex;align-items:center;padding-left:10px;border-radius:6px;min-width:2%}
-    .funnel-bar span{color:#fff;font-size:12px;font-weight:600;font-family:"Geist Mono",monospace;white-space:nowrap}
-    .funnel-pct{width:52px;font-size:12px;font-weight:700;font-family:"Geist Mono",monospace;flex:none}
-    .funnel-drop{font-size:10px;color:var(--er);font-family:"Geist Mono",monospace;padding:2px 0 2px 196px;opacity:.8}
+    .funnel-bar span{color:#fff;font-size:12px;font-weight:600;font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+    .funnel-pct{width:52px;font-size:12px;font-weight:700;font-family:"IBM Plex Mono",monospace;flex:none}
+    .funnel-drop{font-size:10px;color:var(--er);font-family:"IBM Plex Mono",monospace;padding:2px 0 2px 196px;opacity:.8}
     .heatmap-sazon{display:grid;gap:2px;align-items:center;overflow-x:auto}
-    .hm-sazon-head{font-size:9px;color:var(--mut);font-family:"Geist Mono",monospace;text-align:center;min-height:18px}
-    .hm-sazon-row{font-size:9px;color:var(--mut);font-family:"Geist Mono",monospace;text-align:right;padding-right:4px;min-width:32px}
+    .hm-sazon-head{font-size:9px;color:var(--mut);font-family:"IBM Plex Mono",monospace;text-align:center;min-height:18px}
+    .hm-sazon-row{font-size:9px;color:var(--mut);font-family:"IBM Plex Mono",monospace;text-align:right;padding-right:4px;min-width:32px}
     .hm-sazon-cell{min-height:20px;min-width:26px;border-radius:3px;border:1px solid var(--bdr);position:relative;cursor:default}
     .hm-sazon-cell:hover::after{content:attr(data-tip);position:absolute;left:50%;bottom:120%;transform:translateX(-50%);white-space:nowrap;background:var(--sur4);border:1px solid var(--bdr2);border-radius:7px;padding:5px 10px;color:var(--txt);z-index:10;font-size:11px;box-shadow:var(--sh2)}
     #toast-container{position:fixed;bottom:24px;right:24px;z-index:400;display:flex;flex-direction:column;gap:8px;pointer-events:none}
@@ -915,19 +1054,19 @@
 
     /* ── METAS MANCHESTER ── */
     .manchester-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
-    .manchester-table th{background:var(--sur2);font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;padding:8px 12px;border-bottom:1px solid var(--bdr);font-family:"Geist Mono",monospace}
-    .manchester-table td{padding:8px 12px;border-bottom:1px solid var(--bdr);font-family:"Geist Mono",monospace}
+    .manchester-table th{background:var(--sur2);font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;padding:8px 12px;border-bottom:1px solid var(--bdr);font-family:"IBM Plex Mono",monospace}
+    .manchester-table td{padding:8px 12px;border-bottom:1px solid var(--bdr);font-family:"IBM Plex Mono",monospace}
     .manchester-table tr:last-child td{border-bottom:none}
     /* ── PACIENTES ── */
     .pront-card{background:var(--sur2);border:1px solid var(--bdr);border-radius:10px;padding:16px 18px;margin-bottom:10px}
-    .pront-visit{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--bdr);align-items:center;font-size:12px;font-family:"Geist Mono",monospace}
+    .pront-visit{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--bdr);align-items:center;font-size:12px;font-family:"IBM Plex Mono",monospace}
     .pront-visit:last-child{border-bottom:none}
     .pront-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.05em}
     /* ── ANOTAÇÕES ── */
     .anot-item{background:var(--sur2);border:1px solid var(--bdr);border-radius:9px;padding:12px 14px;position:relative}
     .anot-item:hover{border-color:var(--bdr2)}
     .anot-header{display:flex;gap:8px;align-items:center;margin-bottom:6px}
-    .anot-mes{font-size:11px;font-weight:700;color:var(--txt);font-family:"Geist Mono",monospace}
+    .anot-mes{font-size:11px;font-weight:700;color:var(--txt);font-family:"IBM Plex Mono",monospace}
     .anot-cat{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
     .anot-cat.operacional{background:rgba(59,130,246,.12);color:#3b82f6}
     .anot-cat.clinico{background:rgba(34,197,94,.12);color:#22c55e}
@@ -963,22 +1102,41 @@
     .risco-kpis{display:flex;flex-wrap:wrap;gap:20px}
     .risco-kpi{display:flex;flex-direction:column}
     .risco-kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin-bottom:2px}
-    .risco-kpi-value{font-size:22px;font-weight:800;font-family:'Geist Mono',monospace;line-height:1.1}
+    .risco-kpi-value{font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;line-height:1.1}
     .risco-alert-note{font-size:11px;color:var(--mut)}
     .proj-card{border:1.5px solid var(--bdr);border-radius:10px;padding:14px 18px;background:var(--sur2)}
     .proj-hd{display:flex;align-items:baseline;gap:8px;margin-bottom:12px}
     .proj-kpis{display:flex;flex-wrap:wrap;gap:24px;margin-bottom:12px}
     .proj-kpi{display:flex;flex-direction:column}
     .proj-kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin-bottom:2px}
-    .proj-kpi-value{font-size:22px;font-weight:800;font-family:'Geist Mono',monospace;line-height:1.1}
+    .proj-kpi-value{font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;line-height:1.1}
     .proj-kpi-sub{font-size:11px;margin-top:2px}
     .proj-bar-track{background:var(--sur);border-radius:4px;height:8px;overflow:hidden;margin-top:2px}
     .proj-bar-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#22c55e);border-radius:4px;transition:width .4s}
-    .proj-note{font-size:10px;color:var(--mut);font-family:'Geist Mono',monospace;margin-top:4px}
+    .proj-note{font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-top:4px}
     .proj-notice{padding:10px 16px;background:var(--sur2);border:1px solid var(--bdr);border-radius:8px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;font-size:12px}
     .proj-notice-label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);flex:none}
     .secAnoAano{border-top:1px solid var(--bdr);margin-top:24px;padding-top:20px}
     .secAnoAano-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+
+    /* ── Sexo: split bar ── */
+    .sexo-wrap{display:flex;flex-direction:column;gap:14px;padding:2px 0}
+    .sexo-split{height:8px;border-radius:99px;overflow:hidden;display:flex;width:100%;background:var(--sur)}
+    .sexo-split-f{background:linear-gradient(90deg,#ec4899,#f472b6);border-radius:99px 0 0 99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+    .sexo-split-m{background:linear-gradient(90deg,#3b82f6,#60a5fa);border-radius:0 99px 99px 0;flex:1;transition:flex .6s cubic-bezier(.4,0,.2,1)}
+    .sexo-rows{display:flex;flex-direction:column;gap:10px}
+    .sexo-row{display:grid;grid-template-columns:8px 68px 1fr auto;align-items:center;gap:10px}
+    .sexo-dot{width:8px;height:8px;border-radius:50%;flex:none}
+    .sexo-rlabel{font-size:11px;color:var(--txt2);font-weight:500}
+    .sexo-rval{font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;line-height:1;letter-spacing:-.03em}
+    .sexo-rpct{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;text-align:right}
+    .sexo-note{font-size:9px;color:var(--mut);font-family:'IBM Plex Mono',monospace;padding-top:10px;border-top:1px solid var(--bdr);line-height:1.5;letter-spacing:.01em}
+    .sexo-na{text-align:center;padding:24px 16px;color:var(--txt2);font-size:12px;line-height:1.6}
+
+    /* ── Upload: marca forte ── */
+    .vida-mark-svg{display:block;flex:none}
+    .up-brand-text .brand-title{font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:.18em;color:var(--txt)}
+    .up-brand-text .brand-sub{font-size:9px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-top:2px;letter-spacing:.04em}
 
   </style>
 </head>
@@ -991,10 +1149,29 @@
 
       <!-- TOPO: marca compacta -->
       <div class="up-brand">
-        <div class="vida-logo">
-          <div class="vida-logo-dot"></div><div class="vida-logo-dot"></div>
-          <div class="vida-logo-dot"></div><div class="vida-logo-dot"></div>
-        </div>
+        <svg class="vida-mark-svg" width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="markBg" x1="0" y1="0" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#0f172a"/>
+              <stop offset="100%" stop-color="#0c1829"/>
+            </linearGradient>
+            <linearGradient id="markLine" x1="3" y1="19" x2="35" y2="19" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#38bdf8" stop-opacity=".5"/>
+              <stop offset="40%" stop-color="#38bdf8"/>
+              <stop offset="100%" stop-color="#818cf8" stop-opacity=".6"/>
+            </linearGradient>
+            <filter id="markGlow" x="-30%" y="-80%" width="160%" height="260%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <rect width="38" height="38" rx="9" fill="url(#markBg)"/>
+          <rect width="38" height="38" rx="9" fill="none" stroke="rgba(56,189,248,.18)" stroke-width="1"/>
+          <polyline points="3,19 8,19 11,11 14,27 17,15 20,23 23,19 35,19"
+            stroke="url(#markLine)" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round"
+            fill="none" filter="url(#markGlow)"/>
+        </svg>
         <div class="up-brand-text">
           <div class="brand-title">V.I.D.A.</div>
           <div class="brand-sub">Gestão assistencial · v2.0</div>
@@ -1053,6 +1230,21 @@
     <div class="upload-right">
       <div class="up-form-title">Carregar dados</div>
 
+      <div class="theme-start" aria-label="Preferencia de tema">
+        <div class="theme-start-label">
+          <strong>Tema da ferramenta</strong>
+          <span>A escolha fica salva neste navegador</span>
+        </div>
+        <div class="theme-choice" role="group" aria-label="Escolher tema">
+          <button class="theme-choice-btn" type="button" data-theme-choice="light" title="Modo claro" aria-label="Modo claro">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          </button>
+          <button class="theme-choice-btn" type="button" data-theme-choice="dark" title="Modo escuro" aria-label="Modo escuro">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+        </div>
+      </div>
+
       <div class="drop-stack">
         <label class="drop" id="histDrop">
           <input id="histFile" type="file" accept=".xlsx,.xls,.csv" multiple>
@@ -1100,10 +1292,7 @@
       </div>
 
       <div class="up-hint">Aceita .xlsx · .xls · .csv — arraste ou clique para selecionar</div>
-      <div id="autoLoadHint" style="margin-top:10px;font-size:11px;color:var(--mut);font-family:'Geist Mono',monospace;min-height:16px"></div>
-      <div style="margin-top:16px;display:flex;justify-content:flex-end">
-        <button id="uploadThemeBtn" onclick="toggleTheme()" style="background:none;border:1px solid var(--bdr);border-radius:6px;padding:5px 12px;font-size:11px;font-family:'Geist Mono',monospace;color:var(--mut);cursor:pointer;transition:border-color .15s" onmouseenter="this.style.borderColor='var(--ac)'" onmouseleave="this.style.borderColor='var(--bdr)'">☾ Escuro</button>
-      </div>
+      <div id="autoLoadHint" style="margin-top:10px;font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;min-height:16px"></div>
     </div>
 
   </section>
@@ -1148,7 +1337,7 @@
           </div>
         </div>
         <div style="grid-column:1/-1;margin-top:8px;border-top:1px solid var(--bdr);padding-top:12px">
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-weight:700;font-family:'Geist Mono',monospace;margin-bottom:10px">Metas Manchester por classificação de risco</div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-weight:700;font-family:'IBM Plex Mono',monospace;margin-bottom:10px">Metas Manchester por classificação de risco</div>
           <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
             <div class="modal-field"><div class="modal-label" style="color:#ef4444">🔴 Vermelho — imediato</div><div class="modal-input-row"><span>≤</span><input id="metaVermelho" type="number" min="0" value="0"><small>min</small></div></div>
             <div class="modal-field"><div class="modal-label" style="color:#f97316">🟠 Laranja — muito urgente</div><div class="modal-input-row"><span>≤</span><input id="metaLaranja" type="number" min="1" value="15"><small>min</small></div></div>
@@ -1159,7 +1348,7 @@
           </div>
         </div>
         <div style="grid-column:1/-1;margin-top:8px;border-top:1px solid var(--bdr);padding-top:12px" id="recepSection">
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-weight:700;font-family:'Geist Mono',monospace;margin-bottom:4px">Pacientes recepcionados por mes</div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-weight:700;font-family:'IBM Plex Mono',monospace;margin-bottom:4px">Pacientes recepcionados por mes</div>
           <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">Informe o total de pacientes registrados na recepcao (do relatorio separado). Brancos e atendimentos sao derivados automaticamente.</div>
           <div id="recepTableWrap" style="max-height:220px;overflow-y:auto">
             <table class="table" style="font-size:12px" id="recepInputTable">
@@ -1203,12 +1392,12 @@
         <div class="topbar-actions">
           <input id="triFile" class="hidden" type="file" accept=".xlsx,.xls,.csv">
           <input id="cidFile" class="hidden" type="file" accept=".xlsx,.xls,.csv" multiple>
-          <input id="procFile" class="hidden" type="file" accept=".xls,.xlsx,.csv">
           <input id="histFileSwitch" class="hidden" type="file" accept=".xlsx,.xls,.csv" multiple>
           <div class="file-name" id="fileName" style="display:flex;align-items:center;gap:6px;max-width:220px;overflow:hidden"></div>
           <button class="btn" id="triBtn">+ Triagem</button>
           <button class="btn" id="cidBtn">+ CID</button>
           <button class="btn" id="procBtn">+ Procedimentos</button>
+          <input id="procFile" class="hidden" type="file" accept=".xls,.xlsx,.csv">
           <button class="btn btn-icon" onclick="openUnitConfig()" title="Configurar unidade" aria-label="Configurar unidade"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></button>
           <button class="btn btn-icon" id="metasBtn" title="Configurar metas" aria-label="Configurar metas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
           <button class="btn btn-icon" id="themeBtn" title="Alternar tema" aria-label="Alternar tema"><svg id="themeBtnIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
@@ -1240,7 +1429,6 @@
         <span class="flabel">Médico</span>
         <input class="field" id="filtroMedico" list="filtroMedicoList" placeholder="Todos…" autocomplete="off" style="max-width:150px">
         <datalist id="filtroMedicoList"></datalist>
-        <span id="filtroMedicoCount" class="filter-count"></span>
         <span class="flabel">Risco</span>
         <select class="field" id="filtroRisco" style="max-width:88px">
           <option value="all">Todos</option>
@@ -1269,6 +1457,15 @@
 
       <!-- Sidebar de navegação -->
       <nav class="sidebar" role="navigation" aria-label="Navegação principal">
+        <div class="sidebar-brand">
+          <div class="sidebar-mark" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13h3l2-6 4 12 2-6h5"/></svg>
+          </div>
+          <div class="sidebar-brand-text">
+            <div class="sidebar-brand-title">V.I.D.A.</div>
+            <div class="sidebar-brand-sub">Painéis de análise</div>
+          </div>
+        </div>
         <div class="nav-group">Operação</div>
         <button class="nav-item active" data-label="Visão geral" data-pane="geral" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Visão geral</span></button>
         <button class="nav-item" data-label="Indicadores" data-pane="indicadores"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Indicadores</span></button>
@@ -1278,6 +1475,7 @@
         <div class="nav-group">Equipe</div>
         <button class="nav-item" data-label="Médicos" data-pane="medicos"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>Médicos</span></button>
         <button class="nav-item" data-label="Triagem" data-pane="triagem"><svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Triagem</span></button>
+        <button class="nav-item" data-label="Procedimentos" data-pane="procedimentos"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M3 7h10"/><path d="M3 12h5"/><path d="M3 17h10"/></svg><span>Procedimentos</span></button>
         <button class="nav-item" data-label="Retornos ≤72h" data-pane="retornos"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg><span>Retornos ≤72h</span></button>
         <div class="nav-divider"></div>
         <div class="nav-group">Análise</div>
@@ -1297,8 +1495,7 @@
         <div class="nav-divider"></div>
         <div class="nav-group">Sistema</div>
         <button class="nav-item" data-label="Auditoria" data-pane="auditoria"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Auditoria</span></button>
-        <button class="nav-item" data-label="Produtividade / Procedimentos" data-pane="procedimentos"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-          <button class="nav-item" data-label="Qualidade" data-pane="qualidade"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Qualidade</span></button>
+        <button class="nav-item" data-label="Qualidade" data-pane="qualidade"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Qualidade</span></button>
       </nav>
 
       <!-- Área de conteúdo -->
@@ -1351,8 +1548,6 @@
           <div class="card full"><div class="card-title">VERMELHO fora do protocolo (&gt;10 min) por mês</div><div class="chart small"><canvas id="chartVermelhoMes"></canvas></div></div>
           <div class="card"><div class="card-title">Espera médica por faixa crítica</div><div class="chart small"><canvas id="chartGargMed"></canvas></div></div>
           <div class="card"><div class="card-title">Carga assistencial estimada</div><div class="chart small"><canvas id="chartCarga"></canvas></div></div>
-          <div class="card full"><div class="card-title">Comparativo por dia da semana</div><div class="chart small"><canvas id="chartDowGarg"></canvas></div></div>
-          <div class="card full"><div class="card-title">Resumo por dia da semana</div><div class="table-wrap"><table class="table" id="tableDow"></table></div></div>
         </div>
       </section>
 
@@ -1363,6 +1558,38 @@
           <div class="card"><div class="card-title">Top médicos</div><div class="chart tall"><canvas id="chartMed"></canvas></div></div>
           <div class="card"><div class="card-title">Risco por médico — top 12</div><div class="chart tall"><canvas id="chartMedRisco"></canvas></div></div>
           <div class="card full"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center">Ranking médico<button class="btn export" id="exportMedBtn" style="font-size:11px;padding:4px 10px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>XLSX</button></div><div class="search"><input class="field mono" id="searchMed" placeholder="Buscar médico…"></div><div class="table-wrap"><table class="table" id="tableMed"></table></div></div>
+        </div>
+      </section>
+
+      <section class="pane" id="pane-procedimentos">
+        <div class="page-header"><h1 class="page-title">Procedimentos por Profissional</h1><p class="page-desc">Produtividade assistencial do relatório Vivver</p></div>
+        <div id="procEmpty" class="card" style="padding:34px;text-align:center;margin-bottom:12px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Nenhum relatório de procedimentos carregado</div>
+          <div class="mono muted" style="font-size:12px;margin-bottom:16px;line-height:1.6">Carregue o arquivo "Procedimentos realizados por profissional" exportado pelo Vivver.</div>
+          <button class="btn primary" onclick="$('procFile').click()" style="margin:0 auto">+ Carregar procedimentos</button>
+        </div>
+        <div id="procContent" class="hidden">
+          <div class="card" style="margin-bottom:12px">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <select class="field" id="procFiltroEsp" style="min-width:180px"><option value="all">Todas as especialidades</option></select>
+              <select class="field" id="procFiltroProf" style="min-width:220px"><option value="all">Todos os profissionais</option></select>
+              <select class="field" id="procFiltroProc" style="min-width:240px"><option value="all">Todos os procedimentos</option></select>
+              <select class="field" id="procFiltroFat" style="min-width:120px">
+                <option value="all">Faturamento</option>
+                <option value="S">Faturável</option>
+                <option value="N">Não faturável</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid" id="kpisProc"></div>
+          <div class="chart-grid">
+            <div class="card"><div class="card-title">Top profissionais</div><div class="chart tall"><canvas id="chartProcProf"></canvas></div></div>
+            <div class="card"><div class="card-title">Top procedimentos</div><div class="chart tall"><canvas id="chartProcTop"></canvas></div></div>
+            <div class="card"><div class="card-title">Produção por especialidade</div><div class="chart small"><canvas id="chartProcEsp"></canvas></div></div>
+            <div class="card"><div class="card-title">Faturável vs. não faturável</div><div class="chart small"><canvas id="chartProcFat"></canvas></div></div>
+            <div class="card full"><div class="card-title">Ranking por profissional</div><div class="table-wrap"><table class="table" id="tableProcProf"></table></div></div>
+            <div class="card full"><div class="card-title">Detalhamento profissional × procedimento</div><div class="table-wrap"><table class="table" id="tableProcDetalhe"></table></div></div>
+          </div>
         </div>
       </section>
 
@@ -1523,7 +1750,7 @@
                 <button class="btn" id="auditExportBtn" style="font-size:10px">⬇ Exportar log</button>
               </span>
             </div>
-            <div style="font-size:11px;color:var(--mut);font-family:'Geist Mono',monospace;margin-bottom:10px" id="auditLogCount"></div>
+            <div style="font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-bottom:10px" id="auditLogCount"></div>
             <div class="table-wrap" style="max-height:420px">
               <table class="table" id="tableAuditLog"></table>
             </div>
@@ -1541,7 +1768,7 @@
 
       <section class="pane" id="pane-comparativo">
         <div class="page-header"><h1 class="page-title">Comparativo de Períodos</h1><p class="page-desc">Contraste entre dois períodos distintos e comparativo ano a ano</p></div>
-        <div style="margin-bottom:12px;padding:10px 14px;background:var(--sur2);border:1px solid var(--bdr);border-radius:10px;font-size:12px;color:var(--txt2);font-family:'Geist Mono',monospace">
+        <div style="margin-bottom:12px;padding:10px 14px;background:var(--sur2);border:1px solid var(--bdr);border-radius:10px;font-size:12px;color:var(--txt2);font-family:'IBM Plex Mono',monospace">
           <strong style="color:var(--txt);display:block;margin-bottom:4px">ℹ Como funciona</strong>
           O período selecionado no filtro é dividido ao meio: a primeira metade é o "Período A" e a segunda o "Período B". Idealmente, selecione dois meses completos para comparar.
         </div>
@@ -1698,34 +1925,6 @@
         </div>
       </section>
 
-      <section class="pane" id="pane-procedimentos">
-        <div class="page-header">
-          <h1 class="page-title">Produtividade / Procedimentos</h1>
-          <p class="page-desc">Análise de produção por profissional cruzada com atendimentos do histórico</p>
-        </div>
-        <div id="procEmpty" class="hidden" style="text-align:center;padding:60px 20px">
-          <div style="font-size:40px;margin-bottom:16px">📋</div>
-          <p style="color:var(--mut);font-family:'Geist Mono',monospace;font-size:13px;margin-bottom:16px">Nenhuma planilha de procedimentos carregada.</p>
-          <button class="btn primary" onclick="document.getElementById('procFile').click()">+ Carregar planilha de procedimentos</button>
-        </div>
-        <div id="procContent" class="hidden">
-
-          <div id="kpisProc" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px"></div>
-          <div class="chart-grid">
-            <div class="card"><div class="card-title">Procedimentos por categoria profissional</div><div class="chart small"><canvas id="chartProcCategoria"></canvas></div></div>
-            <div class="card"><div class="card-title">Top 15 procedimentos</div><div class="chart small"><canvas id="chartProcTop"></canvas></div></div>
-            <div class="card full"><div class="card-title">Produtividade por profissional</div>
-              <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
-                <select id="procFiltEsp" class="field"><option value="">Todas as especialidades</option></select>
-                <span id="procTableCount" style="font-size:11px;color:var(--mut);font-family:'Geist Mono',monospace"></span>
-              </div>
-              <div class="table-wrap"><table class="table" id="tableProcProf"></table></div>
-            </div>
-            <div class="card full"><div class="card-title">Procedimentos realizados — ranking</div><div class="table-wrap"><table class="table" id="tableProcRanking"></table></div></div>
-          </div>
-        </div>
-      </section>
-
     </main>
     </div><!-- /content-area -->
     </div><!-- /app-body -->
@@ -1809,7 +2008,7 @@
       cid:{idAtend:4,cid:5,data:6,medico:8,desc:9}
     };
 
-    const state={raw:[],filt:[],triRaw:[],triFilt:[],cidRaw:[],cidFilt:[],procRaw:[],charts:{},quality:[],files:{hist:"",tri:"",cid:"",proc:""},pending:{tri:null,cid:null},theme:"dark",triSource:"none",_retCache:null,_retCacheKey:"",recepcionados:{}}; // triSource: "none"|"hist"|"file"
+    const state={raw:[],filt:[],triRaw:[],triFilt:[],cidRaw:[],cidFilt:[],procRaw:[],procFilt:[],charts:{},quality:[],files:{hist:"",tri:"",cid:"",proc:""},pending:{tri:null,cid:null,proc:null},theme:"dark",triSource:"none",_retCache:null,_retCacheKey:"",recepcionados:{}}; // triSource: "none"|"hist"|"file"
     const RECEP_KEY="upa_dash_recepcionados";
 
     // Parsing assíncrono direto
@@ -1956,20 +2155,13 @@
     const shortName=n=>String(n||"").split(/\s+/).filter(Boolean).slice(0,2).join(" ");
     const meta=id=>Number($(id).value)||0;
 
-    Chart.defaults.font.family="'Geist Mono',monospace";Chart.defaults.font.size=10.5;Chart.defaults.font.weight=400;
+    Chart.defaults.font.family="'IBM Plex Mono',monospace";Chart.defaults.font.size=10.5;Chart.defaults.font.weight=400;
     Chart.defaults.font.size=11;
     Chart.defaults.color="#9ca3af";
     Chart.defaults.borderColor="rgba(255,255,255,.08)";
     const UC_KEY="upa_dash_unit_config";
     let UC={nome:"",tipo:"UPA",cnes:"",endereco:"",telefone:"",gestao:"",rt:"",coren:""};
     function loadUnitConfig(){try{const r=localStorage.getItem(UC_KEY);if(r)Object.assign(UC,JSON.parse(r))}catch(e){}}
-        loadPrefs();
-    // Sincronizar texto dos botões de tema com o tema carregado
-    (function syncThemeBtns(){
-      const isDark=state.theme==="dark";
-      const tb=$("themeBtn"); if(tb)tb.textContent=isDark?"☀ Claro":"☾ Escuro";
-      const utb=$("uploadThemeBtn"); if(utb)utb.textContent=isDark?"☀ Claro":"☾ Escuro";
-    })();
     loadUnitConfig();
     loadRecepcionados();
     // Sync theme icon on page load
@@ -2583,6 +2775,75 @@
       }
       return rows.sort((a,b)=>a.dh-b.dh);
     }
+    function splitDelimitedLine(line,sep=';'){
+      const out=[];let cur='',q=false;
+      for(let i=0;i<line.length;i++){
+        const ch=line[i];
+        if(ch==='"'){if(q&&line[i+1]==='"'){cur+='"';i++;}else q=!q;}
+        else if(ch===sep&&!q){out.push(cur);cur='';}
+        else cur+=ch;
+      }
+      out.push(cur);
+      return out;
+    }
+    function parseProcedimentosText(text){
+      const lines=String(text||"").split(/\r?\n/).filter(l=>l.trim());
+      if(!lines.length)return[];
+      const header=splitDelimitedLine(lines[0]).map(h=>norm(fixMojibake(h)));
+      const idx=name=>header.findIndex(h=>h===norm(name));
+      const col={
+        codProf:idx('codprofissional'),prof:idx('NomProfissional'),codEsp:idx('codespecialidade'),
+        esp:idx('nomespecialidade'),codProc:idx('CodProcedimento'),proc:idx('NomProcedimento'),
+        fat:idx('Faturavel'),qde:idx('qdeprocedimento'),tip:idx('TipLancamento'),inst:idx('CodInstrumento')
+      };
+      if(col.prof<0||col.proc<0||col.qde<0)throw new Error('Arquivo de procedimentos sem colunas esperadas do Vivver.');
+      const rows=[];
+      for(let i=1;i<lines.length;i++){
+        const p=splitDelimitedLine(lines[i]);
+        const qde=Number(String(p[col.qde]||'0').replace(',','.'));
+        if(!Number.isFinite(qde)||qde<=0)continue;
+        const prof=fixMojibake(String(p[col.prof]||'').trim());
+        const proc=fixMojibake(String(p[col.proc]||'').trim());
+        if(!prof||!proc)continue;
+        const faturavel=String(p[col.fat]||'').trim().toUpperCase();
+        rows.push({
+          sourceLine:i+1,
+          codProf:String(p[col.codProf]||'').trim(),
+          prof,profKey:norm(prof),
+          codEsp:String(p[col.codEsp]||'').trim(),
+          esp:fixMojibake(String(p[col.esp]||'').trim())||'Sem especialidade',
+          codProc:String(p[col.codProc]||'').trim(),
+          proc,procKey:norm(proc),
+          faturavel,
+          faturavelFlag:faturavel.startsWith('S')?'S':'N',
+          qde,
+          tip:String(p[col.tip]||'').trim(),
+          instrumento:String(p[col.inst]||'').trim()
+        });
+      }
+      return rows;
+    }
+    async function loadProcedimentos(file){
+      if(!file)return;
+      showLoading('Lendo procedimentos...');
+      try{
+        const text=smartDecode(await file.arrayBuffer());
+        const rows=parseProcedimentosText(text);
+        if(!rows.length)throw new Error('Nenhum procedimento válido encontrado.');
+        state.procRaw=rows;
+        state.files.proc=file.name;
+        const btn=$('procBtn');
+        if(btn){btn.textContent='Proced.: '+fmt(sum(rows,r=>r.qde));btn.classList.add('ok');}
+        showToast('Procedimentos carregados: '+fmt(sum(rows,r=>r.qde))+' registros de produção.','ok');
+        hideLoading();
+        markDirty();
+        renderProcedimentos();
+      }catch(err){
+        hideLoading();
+        showToast('Erro em procedimentos: '+err.message,'err');
+        console.error(err);
+      }
+    }
     function setupDates(){
       const min=state.raw[0].dh,max=state.raw[state.raw.length-1].dh;
       $("dateStart").value=ymd(min);$("dateEnd").value=ymd(max);
@@ -2604,31 +2865,11 @@
       state.triFilt=state.triRaw.filter(r=>(!s||r.dh>=s)&&(!e||r.dh<=e)&&(turno==="all"||r.turno===turno));
       state.cidFilt=state.cidRaw.filter(r=>(!s||r.dh>=s)&&(!e||r.dh<=e));
       $("recordBadge").textContent=`${state.filt.length.toLocaleString("pt-BR")} registros`;
-      // Badge de contagem no filtro de médico
-      const _fmCountEl=$("filtroMedicoCount"), _fmInput=$("filtroMedico");
-      if(_fmCountEl&&_fmInput){
-        if(medFilt){
-          _fmCountEl.textContent=state.filt.length.toLocaleString("pt-BR")+" reg.";
-          _fmCountEl.classList.add("visible");
-          _fmInput.classList.add("field-active");
-        } else {
-          _fmCountEl.classList.remove("visible");
-          _fmInput.classList.remove("field-active");
-        }
-      }
       renderAll();
     }
     function populateMedicoFilter(){
       const dl=$("filtroMedicoList");if(!dl)return;
-      // FIX: deduplica por norm(r.prof) para evitar que variações de encoding
-      // do mesmo médico gerem entradas duplicadas no datalist
-      const seen=new Set();
-      const medicos=state.raw
-        .filter(r=>r.prof)
-        .filter(r=>{const k=norm(r.prof);if(seen.has(k))return false;seen.add(k);return true;})
-        .map(r=>shortName(r.prof))
-        .filter(Boolean)
-        .sort();
+      const medicos=[...new Set(state.raw.map(r=>shortName(r.prof||"")).filter(Boolean))].sort();
       dl.innerHTML=medicos.map(m=>`<option value="${esc(m)}">`).join("");
     }
     function shortcut(k){
@@ -2660,11 +2901,7 @@
       return `<div class="k-trend ${good?"okc":"erc"}">${sign}${unit==="pp"?diff.toFixed(1)+" p.p.":Math.round(diff)+(unit?` ${unit}`:"")} (${sign}${pctDiff.toFixed(1)}%) vs período anterior</div>`;
     }
     function returnsFor(rows){
-      // FIX: filtrar pront vazio/genérico (paridade com returnsWithin)
-      const byP={};rows.forEach(r=>{
-        if(!r.pront||String(r.pront).trim()===''||/^0+$/.test(String(r.pront)))return;
-        byP[r.pront]??=[];byP[r.pront].push(r)
-      });Object.values(byP).forEach(v=>v.sort((a,b)=>a.dh-b.dh));
+      const byP={};rows.forEach(r=>{if(!r.pront)return;byP[r.pront]??=[];byP[r.pront].push(r)});Object.values(byP).forEach(v=>v.sort((a,b)=>a.dh-b.dh));
       const ret=[];Object.entries(byP).forEach(([p,vis])=>{for(let i=1;i<vis.length;i++){const h=(vis[i].dh-vis[i-1].dh)/36e5;if(h>0&&h<=CONFIG.RETURN_HOURS)ret.push({...vis[i],pront:p,diffH:h,prev:vis[i-1]})}});
       return {byP,ret};
     }
@@ -2707,7 +2944,7 @@
     function renderAll_FULL_UNUSED(){destroyCharts();renderGeral();renderIndicadores();renderFluxo();renderGargalos();renderMedicos();renderRetornos();renderCapacidade();renderEvolucao();renderRelatorio();renderTriagem();renderCid();renderQuality();renderPrintCover()}
 
     function renderGeral(){
-      const d=state.filt,total=d.length,days=new Set(d.map(r=>r.dateKey)).size,meds=new Set(d.filter(r=>r.prof).map(r=>norm(r.prof))).size;
+      const d=state.filt,total=d.length,days=new Set(d.map(r=>r.dateKey)).size,meds=new Set(d.filter(r=>r.prof).map(r=>r.prof)).size;
       const prev=previousRows(), prevDays=new Set(prev.map(r=>r.dateKey)).size;
       const curDaily=days?Math.round(total/days):0, prevDaily=prevDays?Math.round(prev.length/prevDays):null;
       const curTotalTime=avg(d,r=>r.tTotal), prevTotalTime=avg(prev,r=>r.tTotal);
@@ -2765,23 +3002,6 @@
       const scoreSub=isExc?"Metas principais dentro do esperado.":isAtt?`${bad} alerta${bad!==1?"s":""} crítico${bad!==1?"s":""}, ${warn} de atenção.`:`${bad} alerta${bad!==1?"s":""} crítico${bad!==1?"s":""} identificado${bad!==1?"s":""}.`;
       // Régua: 3 zonas — crítico 0-61 (vermelho), atenção 62-81 (amarelo), excelente 82-100 (verde)
       const trackGrad=`linear-gradient(to right, var(--er) 0%, var(--er) ${fl.attention}%, var(--wn) ${fl.attention}%, var(--wn) ${fl.excellent}%, var(--ok) ${fl.excellent}%, var(--ok) 100%)`;
-      // Detalhamento das penalidades para exibição
-      const penItems=[];
-      if(bad>0)penItems.push({label:`${bad} alerta${bad>1?"s":""} crítico${bad>1?"s":""}`,val:-(bad*p.criticalAlert),tip:`${bad} × 24 pts`});
-      if(warn>0)penItems.push({label:`${warn} alerta${warn>1?"s":""} de atenção`,val:-(warn*p.warningAlert),tip:`${warn} × 9 pts`});
-      const penRet=Math.max(0,retRate-meta("metaRet"))*p.retornoPerPoint;
-      if(penRet>0)penItems.push({label:`Retorno ${retRate.toFixed(1)}% (meta ${meta("metaRet")}%)`,val:-penRet,tip:`${(retRate-meta("metaRet")).toFixed(1)} pp × 1,4`});
-      const penMed=Math.max(0,(tMed??0)-meta("metaMed"))*p.medicoPerMinute;
-      if(penMed>0)penItems.push({label:`Espera médico ${tMed!=null?Math.round(tMed)+" min":"-"} (meta ${meta("metaMed")} min)`,val:-penMed,tip:`${Math.round((tMed??0)-meta("metaMed"))} min × 0,35`});
-      const penTri=Math.max(0,(tTri??0)-meta("metaTri"))*p.triagemPerMinute;
-      if(penTri>0)penItems.push({label:`Espera triagem ${tTri!=null?Math.round(tTri)+" min":"-"} (meta ${meta("metaTri")} min)`,val:-penTri,tip:`${Math.round((tTri??0)-meta("metaTri"))} min × 0,45`});
-      const penTot=Math.max(0,(totalTime??0)-meta("metaTotal"))*p.totalPerMinute;
-      if(penTot>0)penItems.push({label:`Tempo total ${totalTime!=null?Math.round(totalTime)+" min":"-"} (meta ${meta("metaTotal")} min)`,val:-penTot,tip:`${Math.round((totalTime??0)-meta("metaTotal"))} min × 0,18`});
-      const penGrave=Math.max(0,graveRate-35)*p.graveShareOver35PerPoint;
-      if(penGrave>0)penItems.push({label:`Casos amarelo+ ${graveRate.toFixed(1)}% (acima de 35%)`,val:-penGrave,tip:`${(graveRate-35).toFixed(1)} pp × 0,35`});
-      const penHTML=penItems.length
-        ?penItems.map(x=>`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:3px"><span style="color:var(--txt2)">${esc(x.label)}</span><span style="color:var(--er);font-weight:700;white-space:nowrap" title="${esc(x.tip)}">${Math.round(x.val)} pts</span></div>`).join("")
-        :`<div style="color:var(--ok)">Nenhuma penalidade aplicada no período.</div>`;
       $("execSituation").innerHTML=`
         <div class="card-title">Situação executiva</div>
         <div class="exec-score-row">
@@ -2805,19 +3025,7 @@
         </div>
         <div class="k-sub" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr)">
           Demanda: ${fmt(total)} atendimentos (${fmt(daily)}/dia) · Permanência média: ${totalTime==null?"-":Math.round(totalTime)+" min"} · Retorno 72h: ${retRate.toFixed(1)}% · Casos amarelo+: ${graveRate.toFixed(1)}%
-        </div>
-        <details style="margin-top:10px">
-          <summary style="cursor:pointer;font-size:11px;color:var(--mut);user-select:none">ℹ Metodologia do score</summary>
-          <div style="margin-top:8px;padding:10px 12px;background:var(--sur2);border:1px solid var(--bdr);border-radius:8px;font-size:11px;font-family:'Geist Mono',monospace">
-            <div style="font-weight:700;margin-bottom:8px;color:var(--txt)">Base: 100 pts — penalidades aplicadas:</div>
-            ${penHTML}
-            <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--bdr);display:flex;justify-content:space-between">
-              <span style="color:var(--mut)">Score final</span>
-              <span style="font-weight:800;color:${scoreColor}">${score} pts</span>
-            </div>
-            <div style="margin-top:8px;color:var(--mut);font-size:10px">Zonas: &lt;62 Crítico · 62–81 Atenção · ≥82 Excelente</div>
-          </div>
-        </details>`;
+        </div>`;
       $("execAlerts").innerHTML=alerts.slice(0,4).map(([t,title,msg])=>`<div class="exec-alert"><span class="dot" style="background:var(--${t==="err"?"er":t==="warn"?"wn":t==="ok"?"ok":"inf"})"></span><div><strong>${esc(title)}</strong><span class="mono">${esc(msg)}</span></div></div>`).join("");
     }
     function renderHeatmap(rows){
@@ -2863,46 +3071,6 @@
       const tempoVals=m.flatMap(x=>[x.triAvg,x.medAvg,x.totAvg]).filter(Number.isFinite);
       chart("chartIndTempo",{type:"line",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{label:"Triagem",data:m.map(x=>x.triAvg),borderColor:"#3b82f6",tension:.3,spanGaps:true},{label:"Médico",data:m.map(x=>x.medAvg),borderColor:"#f97316",tension:.3,spanGaps:true},{label:"Total",data:m.map(x=>x.totAvg),borderColor:"#ef4444",tension:.3,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaTri"),label:"meta triagem",color:"#3b82f6"},{value:meta("metaMed"),label:"meta médico",color:"#f97316"},{value:meta("metaTotal"),label:"meta total",color:"#ef4444"}]}},scales:{...axes(),y:{...axes().y,suggestedMax:Math.max(meta("metaTri"),meta("metaMed"),meta("metaTotal"),...tempoVals,1)*1.15}}}});
       $("tableInd").innerHTML=`<thead><tr><th>Mês</th><th>Volume</th><th>Triagem média</th><th>Triagem na meta</th><th>Espera médico</th><th>Total médio</th><th>Status</th></tr></thead><tbody>${m.map(x=>{const ok=[x.vol>=meta("metaVol"),x.triAvg==null||x.triAvg<=meta("metaTri"),x.medAvg==null||x.medAvg<=meta("metaMed"),x.totAvg==null||x.totAvg<=meta("metaTotal")].filter(Boolean).length;return`<tr><td class="mono">${monthLabel(x.k)}</td><td class="mono">${fmt(x.vol)}</td><td class="mono">${x.triAvg==null?"-":Math.round(x.triAvg)+" min"}</td><td class="mono">${pct(x.triOk,x.triN)}</td><td class="mono">${x.medAvg==null?"-":Math.round(x.medAvg)+" min"}</td><td class="mono">${x.totAvg==null?"-":Math.round(x.totAvg)+" min"}</td><td class="mono ${ok>=3?"okc":ok>=2?"wnc":"erc"}">${ok}/4</td></tr>`}).join("")}</tbody>`;
-      // Conformidade Manchester por classificação de risco
-      const manch=manchesterConformidade(d);
-      const manchOrder=["VERMELHO","LARANJA","AMARELO","VERDE","AZUL","BRANCO"];
-      const manchRows=manchOrder.filter(cor=>manch[cor]);
-      const manchEl=$("tableManchester");
-      if(manchEl){
-        if(manchRows.length===0){
-          manchEl.innerHTML='<tbody><tr><td colspan="6" class="mono muted" style="padding:16px">Sem dados de espera m\u00e9dica registrados para calcular conform\u00e2ncia Manchester.</td></tr></tbody>';
-        } else {
-          const head='<thead><tr><th>Classifica\u00e7\u00e3o</th><th>Meta</th><th>Conform. geral</th><th>Diurno</th><th>Noturno</th><th>Cobertura</th><th>Status</th></tr></thead>';
-          const body='<tbody>'+manchRows.map(cor=>{
-            const x=manch[cor];
-            const totalCor=x.total+(x.semDado||0);
-            const cobertura=totalCor?x.total/totalCor*100:0;
-            const baixaCob=cobertura<50&&totalCor>0;
-            const rate=x.total?x.ok/x.total*100:0;
-            const rateD=x.D?.total?x.D.ok/x.D.total*100:null;
-            const rateN=x.N?.total?x.N.ok/x.N.total*100:null;
-            const cls=rate>=90?"okc":rate>=70?"wnc":"erc";
-            const status=rate>=90?"\u2713 ok":rate>=70?"aten\u00e7\u00e3o":"fora";
-            const dot='<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+(RISK_COLOR[cor]||"#64748b")+';margin-right:6px"></span>';
-            const cobCell=baixaCob
-              ?'<td class="mono wnc" title="Cobertura baixa: menos de 50% tem hora do m\u00e9dico registrada.">'+cobertura.toFixed(0)+'% \u26a0\ufe0f</td>'
-              :'<td class="mono">'+cobertura.toFixed(0)+'% <span class="muted">('+fmt(x.total)+'/'+fmt(totalCor)+')</span></td>';
-            // Flag turno com pior desempenho
-            const difDN=rateD!=null&&rateN!=null?Math.abs(rateD-rateN):0;
-            const piordDN=difDN>=10?(rateD<rateN?'D':'N'):null;
-            const fmtTurno=(r,t)=>r==null?'<td class="mono muted">-</td>'
-              :'<td class="mono '+(r<70?"erc":r<90?"wnc":"okc")+(piordDN===t?" font-weight:700":"")+'" title="'+(t==="D"?"Plantão diurno":"Plantão noturno")+'">'+r.toFixed(1)+'%</td>';
-            return '<tr><td>'+dot+cor.charAt(0)+cor.slice(1).toLowerCase()+'</td>'
-              +'<td class="mono">'+(x.meta===0?"imediato":x.meta+" min")+'</td>'
-              +'<td class="mono" style="color:'+(RISK_COLOR[cor]||"#64748b")+'">'+rate.toFixed(1)+'%</td>'
-              +fmtTurno(rateD,"D")
-              +fmtTurno(rateN,"N")
-              +cobCell
-              +'<td class="mono '+cls+'">'+status+'</td></tr>';
-          }).join('')+'</tbody>';
-          manchEl.innerHTML=head+body;
-        }
-      }
     }
     function renderFluxo(){
       const d=state.filt, prev=previousRows();
@@ -2929,18 +3097,14 @@
     }
     function renderGargalos(){
       const buckets=hourBuckets(state.filt);
-      // KPI pico real: máximo individual dos registros (não média de slot)
-      const medPicos=state.filt.filter(r=>r.tEspMed!=null);
-      const triPicos=state.filt.filter(r=>r.tEspTri!=null);
-      const medPicoMax=medPicos.length?medPicos.reduce((m,r)=>r.tEspMed>m.tEspMed?r:m):null;
-      const triPicoMax=triPicos.length?triPicos.reduce((m,r)=>r.tEspTri>m.tEspTri?r:m):null;
-      const picoLabel=r=>r&&r.dh?r.dh.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"})+" "+String(r.dh.getHours()).padStart(2,"0")+"h":"-";
+      const topMed=[...buckets].filter(x=>x.medAvg!=null).sort((a,b)=>b.medAvg-a.medAvg)[0];
+      const topTri=[...buckets].filter(x=>x.triAvg!=null).sort((a,b)=>b.triAvg-a.triAvg)[0];
       const topVol=[...buckets].sort((a,b)=>b.n-a.n)[0];
       const topCarga=[...buckets].sort((a,b)=>b.carga-a.carga)[0];
       const label=x=>x?`${DOW[x.diaSem]} ${x.hora}h`:"-";
       $("kpisGargalos").innerHTML=[
-        kpi("Maior espera médica",medPicoMax?Math.round(medPicoMax.tEspMed)+" min":"-",picoLabel(medPicoMax),"#f97316"),
-        kpi("Maior espera triagem",triPicoMax?Math.round(triPicoMax.tEspTri)+" min":"-",picoLabel(triPicoMax),"#3b82f6"),
+        kpi("Maior espera médica",topMed?Math.round(topMed.medAvg)+" min":"-",label(topMed),"#f97316"),
+        kpi("Maior espera triagem",topTri?Math.round(topTri.triAvg)+" min":"-",label(topTri),"#3b82f6"),
         kpi("Maior volume horario",topVol?fmt(topVol.n):"-",label(topVol),"#22c55e"),
         kpi("Maior carga estimada",topCarga?topCarga.carga.toFixed(1):"-",`${label(topCarga)} - atend × permanência`,"#ef4444")
       ].join("");
@@ -3002,30 +3166,6 @@
       chart("chartGargMed",{type:"bar",data:{labels:medTop.map(label),datasets:[{data:medTop.map(x=>Math.round(x.medAvg)),backgroundColor:medTop.map(x=>x.medAvg>meta("metaMed")?"#ef4444":"#22c55e"),borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},targetLine:{lines:[{value:meta("metaMed"),label:"meta",color:"#eab308"}]}},scales:axes()}});
       const cargaTop=[...buckets].sort((a,b)=>b.carga-a.carga).slice(0,10).reverse();
       chart("chartCarga",{type:"bar",data:{labels:cargaTop.map(label),datasets:[{data:cargaTop.map(x=>+x.carga.toFixed(1)),backgroundColor:"#7c3aed",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
-      // Comparativo por dia da semana
-      const dowMap=Array.from({length:7},(_,i)=>({dow:i,n:0,med:[],tri:[],tot:[],grave:0}));
-      state.filt.forEach(r=>{
-        const d=dowMap[r.diaSem];
-        d.n++;
-        if(r.tEspMed!=null)d.med.push(r.tEspMed);
-        if(r.tEspTri!=null)d.tri.push(r.tEspTri);
-        if(r.tTotal!=null)d.tot.push(r.tTotal);
-        if(["AMARELO","LARANJA","VERMELHO"].includes(r.cor))d.grave++;
-      });
-      const dowStats=DOWO.map(i=>({
-        dow:i,label:DOW[i],n:dowMap[i].n,
-        medAvg:avg(dowMap[i].med,v=>v),
-        triAvg:avg(dowMap[i].tri,v=>v),
-        totAvg:avg(dowMap[i].tot,v=>v),
-        gravePct:dowMap[i].n?dowMap[i].grave/dowMap[i].n*100:0
-      }));
-      const dowLabels=dowStats.map(x=>x.label);
-      const maxMed=Math.max(...dowStats.map(x=>x.medAvg||0),1);
-      chart("chartDowGarg",{type:"bar",data:{labels:dowLabels,datasets:[
-        {label:"Volume",data:dowStats.map(x=>x.n),backgroundColor:"rgba(59,130,246,0.7)",borderRadius:3,yAxisID:"yVol"},
-        {label:"Espera méd. (min)",data:dowStats.map(x=>x.medAvg!=null?Math.round(x.medAvg):null),backgroundColor:dowStats.map(x=>(x.medAvg||0)>meta("metaMed")?"rgba(239,68,68,0.8)":"rgba(249,115,22,0.7)"),borderRadius:3,yAxisID:"yMed"}
-      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaMed"),label:"meta médico",color:"#eab308",yAxisID:"yMed"}]}},scales:{x:{grid:{color:gridColor()},ticks:{color:tickColor()}},yVol:{position:"left",grid:{color:gridColor()},ticks:{color:"#3b82f6"},title:{display:true,text:"Volume",color:"#3b82f6",font:{size:10}}},yMed:{position:"right",grid:{display:false},ticks:{color:"#f97316",callback:v=>v+" min"},suggestedMax:Math.max(meta("metaMed"),maxMed)*1.2,title:{display:true,text:"Espera méd.",color:"#f97316",font:{size:10}}}}}});
-      $("tableDow").innerHTML=`<thead><tr><th>Dia</th><th>Volume</th><th>Espera triagem</th><th>Espera médico</th><th>Total médio</th><th>Amarelo+</th></tr></thead><tbody>${dowStats.map(x=>`<tr><td class="mono">${x.label}</td><td class="mono">${fmt(x.n)}</td><td class="mono">${x.triAvg==null?"-":Math.round(x.triAvg)+" min"}</td><td class="mono ${(x.medAvg||0)>meta("metaMed")?"erc":""}">${x.medAvg==null?"-":Math.round(x.medAvg)+" min"}</td><td class="mono">${x.totAvg==null?"-":Math.round(x.totAvg)+" min"}</td><td class="mono">${x.gravePct.toFixed(1)}%</td></tr>`).join("")}</tbody>`;
     }
     function medRows(){
       // FIX: igual ao código base — filtra duração > 60min para contagem de produtividade
@@ -3033,9 +3173,8 @@
       const d=state.filt.filter(r=>r.tConsulta==null||r.tConsulta<=60), map={};
       d.forEach(r=>{
         if(!r.prof)return;
-        const profKey=norm(r.prof);
-        map[profKey]??={prof:r.prof,total:0,D:0,N:0,tri:[],med:[],tot:[],risks:{},diasD:new Set(),diasN:new Set()};
-        const x=map[profKey];
+        map[r.prof]??={prof:r.prof,total:0,D:0,N:0,tri:[],med:[],tot:[],risks:{},diasD:new Set(),diasN:new Set()};
+        const x=map[r.prof];
         x.total++;x[r.turno]++;
         if(r.tEspTri!=null)x.tri.push(r.tEspTri);
         if(r.tEspMed!=null)x.med.push(r.tEspMed);
@@ -3051,7 +3190,7 @@
         const mediaPlantao=plantTotal>0?Math.round(x.total/plantTotal):null;
         const mediaPlantaoD=plantD>0?Math.round(x.D/plantD):null;
         const mediaPlantaoN=plantN>0?Math.round(x.N/plantN):null;
-        const _rows=d.filter(r=>norm(r.prof||"")===norm(x.prof||""));
+        const _rows=d.filter(r=>shortName(r.prof||"")=== shortName(x.prof||""));
         const _pontos=calcularPontos(_rows);
         const _le2=_rows.filter(r=>r.idade!=null&&r.idade<=2).length;
         const _le12=_rows.filter(r=>r.idade!=null&&r.idade<=12).length;
@@ -3146,14 +3285,13 @@
       const retByMed={};
       ret.forEach(r=>{
         if(!r.prof)return;
-        const retProfKey=norm(r.prof);
-        retByMed[retProfKey]??={prof:r.prof,total:0,critico:0,piora:0};
-        retByMed[retProfKey].total++;
-        if(["AMARELO","LARANJA","VERMELHO"].includes(r.cor))retByMed[retProfKey].critico++;
-        if(riskWeight(r.cor)>riskWeight(r.prev?.cor))retByMed[retProfKey].piora++;
+        retByMed[r.prof]??={prof:r.prof,total:0,critico:0,piora:0};
+        retByMed[r.prof].total++;
+        if(["AMARELO","LARANJA","VERMELHO"].includes(r.cor))retByMed[r.prof].critico++;
+        if(riskWeight(r.cor)>riskWeight(r.prev?.cor))retByMed[r.prof].piora++;
       });
       // Adicionar total de atendimentos do médico para calcular taxa
-      const allByMed={};d.forEach(r=>{if(!r.prof)return;const k=norm(r.prof);allByMed[k]=(allByMed[k]||0)+1});
+      const allByMed={};d.forEach(r=>{if(!r.prof)return;allByMed[r.prof]=(allByMed[r.prof]||0)+1});
       const topMedRet=Object.values(retByMed)
         .map(x=>({...x,totalAtend:allByMed[x.prof]||0,taxa:allByMed[x.prof]?+(x.total/allByMed[x.prof]*100).toFixed(1):null}))
         .sort((a,b)=>b.total-a.total).slice(0,15);
@@ -3171,65 +3309,31 @@
       $("tableRetCrit").innerHTML=`<thead><tr><th>Tipo</th><th>Prontuário</th><th>Intervalo</th><th>Risco anterior</th><th>Risco retorno</th><th>Data retorno</th><th>Médico</th></tr></thead><tbody>${critRows.map(r=>`<tr><td class="mono ${r.tipo==="Critico"?"erc":"wnc"}">${esc(r.tipo)}</td><td class="mono">${esc(r.pront)}</td><td class="mono">${r.diffH.toFixed(1)}h</td><td class="mono">${esc(r.prev?.cor||"-")}</td><td class="mono">${esc(r.cor)}</td><td class="mono">${r.dh.toLocaleString("pt-BR")}</td><td>${esc(r.prof||"-")}</td></tr>`).join("")}</tbody>`;
     }
     function returnsWithin(rows,hours){
-      // Cache: evita recalcular quando rows e hours não mudaram
-      const cacheKey=rows.length+'_'+(rows[0]?.dateKey||'')+'_'+(rows[rows.length-1]?.dateKey||'')+'_'+hours;
-      if(!returnsWithin._cache)returnsWithin._cache={};
-      if(returnsWithin._cache[cacheKey])return returnsWithin._cache[cacheKey];
       const byP={};rows.forEach(r=>{
+        // FIX: filtrar pront vazio/genérico para evitar falsos retornos
         if(!r.pront||String(r.pront).trim()===''||/^0+$/.test(String(r.pront)))return;
         byP[r.pront]??=[];byP[r.pront].push(r)
       });Object.values(byP).forEach(v=>v.sort((a,b)=>a.dh-b.dh));
       const ret=[];Object.entries(byP).forEach(([p,vis])=>{for(let i=1;i<vis.length;i++){const h=(vis[i].dh-vis[i-1].dh)/36e5;if(h>0&&h<=hours)ret.push({...vis[i],pront:p,diffH:h,prev:vis[i-1]})}});
-      // Limpa cache antigo para evitar acúmulo (mantém só os 10 mais recentes)
-      const keys=Object.keys(returnsWithin._cache);
-      if(keys.length>=10)delete returnsWithin._cache[keys[0]];
-      returnsWithin._cache[cacheKey]=ret;
       return ret;
     }
     function renderCapacidade(){
       const d=state.filt, capM=Number($("capMed").value)||3, capT=Number($("capTri").value)||6;
-      // FIX: agrupar por dateKey+hora (slot diário real) para evitar diluição de médicos em períodos longos
-      // Antes: acumulava todos os médicos que já trabalharam naquele horário no período todo → pressão subavaliada
-      // Agora: cada dia-hora é um slot independente; pressão média por hora do dia = média dos slots daquela hora
-      const medSlotMap={};
-      d.forEach(r=>{
-        const k=r.dateKey+"-"+r.hora;
-        medSlotMap[k]??={hora:r.hora,dateKey:r.dateKey,n:0,medicos:new Set()};
-        medSlotMap[k].n++;
-        if(r.prof)medSlotMap[k].medicos.add(norm(r.prof));
-      });
-      const triSlotMap={};
-      state.triFilt.forEach(r=>{
-        const k=r.dateKey+"-"+r.hora;
-        triSlotMap[k]??={hora:r.hora,dateKey:r.dateKey,tri:0,triadores:new Set()};
-        triSlotMap[k].tri++;
-        if(r.triador)triSlotMap[k].triadores.add(r.triador);
-      });
-      // Pressão por slot diário
-      const medSlots=Object.values(medSlotMap).map(s=>({...s,press:s.medicos.size?s.n/(s.medicos.size*capM):s.n/capM}));
-      const triSlots=Object.values(triSlotMap).map(s=>({...s,press:s.triadores.size?s.tri/(s.triadores.size*capT):s.tri/capT}));
-      // Médias de pressão por hora do dia (para gráfico)
-      const medPressure=Array.from({length:24},(_,h)=>{const ss=medSlots.filter(s=>s.hora===h);return ss.length?ss.reduce((a,s)=>a+s.press,0)/ss.length:0;});
-      const triPressure=Array.from({length:24},(_,h)=>{const ss=triSlots.filter(s=>s.hora===h);return ss.length?ss.reduce((a,s)=>a+s.press,0)/ss.length:0;});
-      // Slot de pico por hora — guarda o objeto completo para exibir data
-      const medPeakSlot=Array.from({length:24},(_,h)=>{const ss=medSlots.filter(s=>s.hora===h);return ss.length?ss.reduce((m,s)=>s.press>m.press?s:m,{press:0}):null;});
-      const triPeakSlot=Array.from({length:24},(_,h)=>{const ss=triSlots.filter(s=>s.hora===h);return ss.length?ss.reduce((m,s)=>s.press>m.press?s:m,{press:0}):null;});
-      const fmtDate=dk=>dk?dk.slice(8,10)+"/"+dk.slice(5,7):"-";
-      // KPIs: horas do dia com pressão MÉDIA > 100%
-      const medOver=medPressure.filter(p=>p>1).length, triOver=triPressure.filter(p=>p>1).length;
+      const byHour=Array.from({length:24},(_,hora)=>({hora,n:0,tri:0,medicos:new Set(),triadores:new Set()}));
+      d.forEach(r=>{byHour[r.hora].n++;if(r.prof)byHour[r.hora].medicos.add(r.prof)});
+      state.triFilt.forEach(r=>{byHour[r.hora].tri++;if(r.triador)byHour[r.hora].triadores.add(r.triador)});
+      const medPressure=byHour.map(x=>x.medicos.size?x.n/(x.medicos.size*capM):x.n/capM);
+      const triPressure=byHour.map(x=>x.triadores.size?x.tri/(x.triadores.size*capT):(x.tri?x.tri/capT:0));
+      const medOver=byHour.filter((x,i)=>medPressure[i]>1), triOver=byHour.filter((x,i)=>triPressure[i]>1);
       $("kpisCap").innerHTML=[
         kpi("Capacidade médica",`${capM}/h`,"parâmetro configurado por médico","#3b82f6"),
-        kpi("Horas acima — médico",fmt(medOver),"pressão média > 100%","#ef4444"),
+        kpi("Horas acima — médico",fmt(medOver.length),"pressão > 100%","#ef4444"),
         kpi("Capacidade triagem",`${capT}/h`,"parâmetro configurado por triador","#22c55e"),
-        kpi("Horas acima — triagem",fmt(triOver),"pressão média > 100%","#f97316")
+        kpi("Horas acima — triagem",fmt(triOver.length),"pressão > 100%","#f97316")
       ].join("");
-      chart("chartCapHora",{type:"line",data:{labels:Array.from({length:24},(_,i)=>i+"h"),datasets:[{label:"Pressão média médica",data:medPressure.map(x=>+(x*100).toFixed(1)),borderColor:"#ef4444",backgroundColor:"rgba(239,68,68,.08)",tension:.3,fill:true},{label:"Pressão média triagem",data:triPressure.map(x=>+(x*100).toFixed(1)),borderColor:"#22c55e",backgroundColor:"rgba(34,197,94,.08)",tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:100,label:"100% capacidade",color:"#eab308"}]}},scales:{...axes(),y:{...axes().y,ticks:{color:tickColor(),callback:v=>v+"%"},suggestedMax:Math.max(120,...medPressure.map(x=>x*100),...triPressure.map(x=>x*100))*1.1}}}});
-      const rows=Array.from({length:24},(_,h)=>({hora:h,pressMedAvg:medPressure[h],medPeakSlot:medPeakSlot[h],pressTriAvg:triPressure[h],triPeakSlot:triPeakSlot[h]})).filter(r=>r.pressMedAvg>1||r.pressTriAvg>1).sort((a,b)=>Math.max(b.pressMedAvg,b.pressTriAvg)-Math.max(a.pressMedAvg,a.pressTriAvg));
-      $("tableCap").innerHTML=`<thead><tr><th>Hora</th><th>Pressão méd. média</th><th>Pico médico</th><th>Pressão tri. média</th><th>Pico triagem</th></tr></thead><tbody>${rows.map(r=>{
-        const mpPress=r.medPeakSlot?.press||0, mpDate=fmtDate(r.medPeakSlot?.dateKey);
-        const tpPress=r.triPeakSlot?.press||0, tpDate=fmtDate(r.triPeakSlot?.dateKey);
-        return`<tr><td class="mono">${r.hora}h</td><td class="mono ${r.pressMedAvg>1?"erc":"okc"}">${(r.pressMedAvg*100).toFixed(0)}%</td><td class="mono ${mpPress>1?"erc":""}"><span title="Data do pico">${(mpPress*100).toFixed(0)}% em ${mpDate}</span></td><td class="mono ${r.pressTriAvg>1?"erc":"okc"}">${(r.pressTriAvg*100).toFixed(0)}%</td><td class="mono ${tpPress>1?"erc":""}"><span title="Data do pico">${(tpPress*100).toFixed(0)}% em ${tpDate}</span></td></tr>`;
-      }).join("")||`<tr><td colspan="5" class="mono muted">Nenhum horário com pressão média acima da capacidade no período.</td></tr>`}</tbody>`;
+      chart("chartCapHora",{type:"line",data:{labels:byHour.map(x=>x.hora+"h"),datasets:[{label:"Pressão médica",data:medPressure.map(x=>+(x*100).toFixed(1)),borderColor:"#ef4444",backgroundColor:"rgba(239,68,68,.08)",tension:.3,fill:true},{label:"Pressão triagem",data:triPressure.map(x=>+(x*100).toFixed(1)),borderColor:"#22c55e",backgroundColor:"rgba(34,197,94,.08)",tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:100,label:"100% capacidade",color:"#eab308"}]}},scales:{...axes(),y:{...axes().y,ticks:{color:tickColor(),callback:v=>v+"%"},suggestedMax:Math.max(120,...medPressure.map(x=>x*100),...triPressure.map(x=>x*100))*1.1}}}});
+      const rows=byHour.map((x,i)=>({hora:x.hora,atend:x.n,medicos:x.medicos.size,pressMed:medPressure[i],tri:x.tri,triadores:x.triadores.size,pressTri:triPressure[i]})).filter(x=>x.pressMed>1||x.pressTri>1).sort((a,b)=>Math.max(b.pressMed,b.pressTri)-Math.max(a.pressMed,a.pressTri));
+      $("tableCap").innerHTML=`<thead><tr><th>Hora</th><th>Atendimentos</th><th>Médicos ativos</th><th>Pressão médica</th><th>Triagens</th><th>Triadores ativos</th><th>Pressão triagem</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="mono">${r.hora}h</td><td class="mono">${fmt(r.atend)}</td><td class="mono">${r.medicos||"-"}</td><td class="mono ${r.pressMed>1?"erc":"okc"}">${(r.pressMed*100).toFixed(0)}%</td><td class="mono">${fmt(r.tri)}</td><td class="mono">${r.triadores||"-"}</td><td class="mono ${r.pressTri>1?"erc":"okc"}">${(r.pressTri*100).toFixed(0)}%</td></tr>`).join("")||`<tr><td colspan="7" class="mono muted">Nenhum horário acima da capacidade configurada.</td></tr>`}</tbody>`;
     }
     function monthReturnRate(rows,k){
       const mRows=rows.filter(r=>r.anoMes===k), ret=returnsWithin(mRows,72);
@@ -3334,12 +3438,8 @@
     function buildReportText(){
       const {s,e}=dateRange(), d=state.filt, m=monthlyStats(d), {ret}=returns72(), alerts=topAlerts(d);
       const days=new Set(d.map(r=>r.dateKey)).size, tTri=avg(d,r=>r.tEspTri), tMed=avg(d,r=>r.tEspMed), tTot=avg(d,r=>r.tTotal);
-      const buckets=hourBuckets(d), topVol=[...buckets].sort((a,b)=>b.n-a.n)[0];
-      // Pico real de espera médica (consistente com KPI de Gargalos)
-      const medPicosRel=d.filter(r=>r.tEspMed!=null);
-      const medPicoMaxRel=medPicosRel.length?medPicosRel.reduce((m,r)=>r.tEspMed>m.tEspMed?r:m):null;
-      const picoLabelRel=r=>r&&r.dh?r.dh.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"})+" "+String(r.dh.getHours()).padStart(2,"0")+"h":"-";
-      const medLine=medPicoMaxRel?`pico de ${Math.round(medPicoMaxRel.tEspMed)} min em ${picoLabelRel(medPicoMaxRel)}`:"sem dados suficientes";
+      const buckets=hourBuckets(d), topMed=[...buckets].filter(x=>x.medAvg!=null).sort((a,b)=>b.medAvg-a.medAvg)[0], topVol=[...buckets].sort((a,b)=>b.n-a.n)[0];
+      const medLine=topMed?`${DOW[topMed.diaSem]} ${topMed.hora}h, com espera médica média de ${Math.round(topMed.medAvg)} min`:"sem dados suficientes";
       const volLine=topVol?`${DOW[topVol.diaSem]} ${topVol.hora}h, com ${topVol.n} atendimentos`:"sem dados suficientes";
       const turnoLabel={'all':'Todos os turnos','D':'Diurno','N':'Noturno'}[$("turno").value]||'Todos';
       const medLabel=(()=>{const el=$("filtroMedico");const v=el?el.value.trim():"";return v?`Médico: ${v}`:"Todos os médicos";})();
@@ -3569,8 +3669,8 @@
       $("quality").innerHTML=`
         <div style="margin-bottom:12px;padding:10px 14px;background:var(--sur2);border-radius:8px;border:1px solid var(--bdr)">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin-bottom:4px">Índice geral de completude</div>
-          <div style="font-size:28px;font-weight:800;color:${completude>=90?"var(--ok)":completude>=70?"var(--wn)":"var(--er)"};font-family:'Geist Mono',monospace">${completude}%</div>
-          <div style="font-size:10px;color:var(--mut);font-family:'Geist Mono',monospace">${fmt(n)} registros no período filtrado</div>
+          <div style="font-size:28px;font-weight:800;color:${completude>=90?"var(--ok)":completude>=70?"var(--wn)":"var(--er)"};font-family:'IBM Plex Mono',monospace">${completude}%</div>
+          <div style="font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace">${fmt(n)} registros no período filtrado</div>
         </div>
         <table class="table" style="font-size:11px">
           <thead><tr><th>Campo</th><th>Fonte</th><th>Preenchidos</th><th>Faltantes</th><th>Completude</th></tr></thead>
@@ -3582,7 +3682,7 @@
               <td class="muted mono">${esc(f.fonte)}</td>
               <td>${fmt(ok)}</td>
               <td style="color:${f.falta>0?"var(--er)":"var(--ok)"}">${fmt(f.falta)}</td>
-              <td><span style="color:${color};font-weight:700;font-family:'Geist Mono',monospace">${pct_ok}%</span></td>
+              <td><span style="color:${color};font-weight:700;font-family:'IBM Plex Mono',monospace">${pct_ok}%</span></td>
             </tr>`;
           }).join("")}</tbody>
         </table>
@@ -3594,137 +3694,7 @@
           </div>`).join("")}
       `;
     }
-    // ════════════════════════════════════════════════════════════
-    // PROCEDIMENTOS — parse, load e render
-    // ════════════════════════════════════════════════════════════
-    function parseProc(rows){
-      const header=rows[0].map(v=>String(v||"").trim().toLowerCase());
-      // Detectar offset: alguns sistemas exportam uma coluna extra sem cabeçalho
-      // (número sequencial de registro) antes das colunas nomeadas.
-      // Se as linhas de dados têm mais colunas que o cabeçalho, compensar.
-      const firstDataRow=rows.find((_,i)=>i>0&&rows[i]&&rows[i].length>0)||[];
-      const offset=Math.max(0, firstDataRow.length - header.length);
-      const idx={
-        codprof:  header.findIndex(h=>h.includes("codprofissional")||h==="codprof"),
-        nome:     header.findIndex(h=>h.includes("nomprofissional")||h.includes("nomeprofissional")||(h.includes("profissional")&&!h.includes("cod"))),
-        esp:      header.findIndex(h=>h.includes("nomespecialidade")||(h.includes("especialidade")&&!h.includes("cod"))),
-        codproc:  header.findIndex(h=>h.includes("codprocedimento")&&!h.includes("faturavel")),
-        nomproc:  header.findIndex(h=>h.includes("nomprocedimento")||h.includes("nomeprocedimento")||(h.includes("procedimento")&&h.includes("nom"))),
-        qtd:      header.findIndex(h=>h.includes("qdeprocedimento")||h==="qtd"||h.includes("quantidade")),
-        instr:    header.findIndex(h=>h.includes("codinstrumento")||h.includes("instrumento")),
-      };
-      const get=(row,i)=>i>=0?String(row[i+offset]||"").trim():"";
-      const getN=(row,i)=>i>=0?(Number(row[i+offset])||0):0;
-      const out=[];
-      rows.slice(1).forEach(row=>{
-        if(!row||!row.length)return;
-        const nome=get(row,idx.nome);
-        if(!nome||/^\d+$/.test(nome))return; // ignorar linhas onde "nome" é número (offset errado)
-        out.push({
-          codprof:  get(row,idx.codprof),
-          nome,
-          nomeNorm: norm(nome),
-          esp:      get(row,idx.esp),
-          codproc:  get(row,idx.codproc),
-          nomproc:  get(row,idx.nomproc),
-          qtd:      getN(row,idx.qtd)||1,
-          instr:    getN(row,idx.instr)||1,
-        });
-      });
-      return out;
-    }
-
-    async function loadProc(file){
-      if(!file)return;
-      showLoading("Carregando procedimentos…");
-      try{
-        const {rows}=await sheetData(file);
-        state.procRaw=parseProc(rows);
-        state.files.proc=file.name;
-        const btn=$("procBtn");
-        if(btn)btn.textContent=`✓ Proc: ${state.procRaw.length.toLocaleString("pt-BR")} reg.`;
-        setProgress(100,"Procedimentos carregados.");hideLoading();
-        showToast(`Procedimentos: ${state.procRaw.length.toLocaleString("pt-BR")} registros.`,"ok");
-        if($("pane-procedimentos")?.classList.contains("active")||true)renderProcedimentos();
-      }catch(e){hideLoading();showToast("Erro ao carregar procedimentos: "+e.message,"err");}
-    }
-
-    function renderProcedimentos(){
-      const empty=$("procEmpty"), content=$("procContent");
-      if(!state.procRaw.length){
-        empty?.classList.remove("hidden"); content?.classList.add("hidden"); return;
-      }
-      empty?.classList.add("hidden"); content?.classList.remove("hidden");
-
-      const proc=state.procRaw;
-
-      // ── Agrupamento por profissional ──────────────────────────────
-      const byProf={};
-      proc.forEach(r=>{
-        const k=r.nomeNorm;
-        byProf[k]??={nome:r.nome,esp:r.esp,totalProc:0,tiposProc:new Set()};
-        byProf[k].totalProc+=r.qtd;
-        byProf[k].tiposProc.add(r.codproc);
-      });
-
-      // Cruzamento com histórico desabilitado (planilha de procedimentos não tem data)
-
-      // ── KPIs ──────────────────────────────────────────────────────
-      const totalProc=proc.reduce((s,r)=>s+r.qtd,0);
-      const medicos=Object.values(byProf).filter(v=>v.esp.toLowerCase().includes("médico")||v.esp.toLowerCase().includes("medico"));
-      const enf=Object.values(byProf).filter(v=>v.esp.toLowerCase().includes("enfermeiro"));
-      const tec=Object.values(byProf).filter(v=>v.esp.toLowerCase().includes("técnico")||v.esp.toLowerCase().includes("tecnico"));
-      $("kpisProc").innerHTML=[
-        kpi("Total de procedimentos",fmt(totalProc),"todos os profissionais","#7c3aed"),
-        kpi("Médicos ativos",fmt(medicos.length),"com procedimentos registrados","#3b82f6"),
-        kpi("Enfermeiros ativos",fmt(enf.length),"com procedimentos registrados","#22c55e"),
-        kpi("Tipos de procedimento",fmt(new Set(proc.map(r=>r.codproc)).size),"procedimentos distintos","#f97316"),
-      ].join("");
-
-      // ── Gráfico por categoria ─────────────────────────────────────
-      const cats={"Médico clínico":0,"Enfermeiro":0,"Técnico de enfermagem":0,"Outros":0};
-      proc.forEach(r=>{
-        const e=r.esp;
-        if(e.toLowerCase().includes("médico")||e.toLowerCase().includes("medico"))cats["Médico clínico"]+=r.qtd;
-        else if(e.toLowerCase().includes("enfermeiro"))cats["Enfermeiro"]+=r.qtd;
-        else if(e.toLowerCase().includes("técnico")||e.toLowerCase().includes("tecnico"))cats["Técnico de enfermagem"]+=r.qtd;
-        else cats["Outros"]+=r.qtd;
-      });
-      chart("chartProcCategoria",{type:"doughnut",data:{labels:Object.keys(cats).filter(k=>cats[k]>0),datasets:[{data:Object.values(cats).filter(v=>v>0),backgroundColor:["#3b82f6","#22c55e","#f97316","#94a3b8"],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}}}}});
-
-      // ── Gráfico top 15 procedimentos ─────────────────────────────
-      const byProcMap={};
-      proc.forEach(r=>{byProcMap[r.nomproc]=(byProcMap[r.nomproc]||0)+r.qtd;});
-      const top15=Object.entries(byProcMap).sort((a,b)=>b[1]-a[1]).slice(0,15).reverse();
-      chart("chartProcTop",{type:"bar",data:{labels:top15.map(([n])=>n.length>40?n.slice(0,38)+"…":n),datasets:[{data:top15.map(([,v])=>v),backgroundColor:"#7c3aed",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
-
-      // ── Filtro de especialidade ───────────────────────────────────
-      const esps=[...new Set(proc.map(r=>r.esp))].sort();
-      const sel=$("procFiltEsp");
-      const prevVal=sel?.value||"";
-      if(sel){sel.innerHTML=`<option value="">Todas as especialidades</option>`+esps.map(e=>`<option value="${esc(e)}" ${e===prevVal?"selected":""}>${esc(e)}</option>`).join("");}
-      sel?.addEventListener("change",()=>renderProcTable(Object.values(byProf)));
-
-      function renderProcTable(rows){
-        const filtEsp=$("procFiltEsp")?.value||"";
-        const filtered=filtEsp?rows.filter(v=>v.esp===filtEsp):rows;
-        filtered.sort((a,b)=>b.totalProc-a.totalProc);
-        $("procTableCount").textContent=`${filtered.length} profissionais`;
-        $("tableProcProf").innerHTML=`<thead><tr><th>Profissional</th><th>Especialidade</th><th>Procedimentos</th><th>Tipos distintos</th></tr></thead><tbody>`+
-          filtered.map(v=>{
-    
-            return `<tr><td>${esc(v.nome)}</td><td class="mono muted">${esc(v.esp)}</td><td class="mono">${fmt(v.totalProc)}</td><td class="mono">${v.tiposProc.size}</td></tr>`;
-          }).join("")+`</tbody>`;
-      }
-      renderProcTable(Object.values(byProf));
-
-      // ── Tabela ranking de procedimentos ─────────────────────────
-      const procRanking=Object.entries(byProcMap).sort((a,b)=>b[1]-a[1]);
-      $("tableProcRanking").innerHTML=`<thead><tr><th>#</th><th>Procedimento</th><th>Total</th><th>% do total</th></tr></thead><tbody>`+
-        procRanking.map(([nome,qtd],i)=>`<tr><td class="mono muted">${i+1}</td><td>${esc(nome)}</td><td class="mono">${fmt(qtd)}</td><td class="mono">${(qtd/totalProc*100).toFixed(1)}%</td></tr>`).join("")+`</tbody>`;
-    }
-
-        function renderPrintCover(){
+    function renderPrintCover(){
       const {s,e}=dateRange(), d=state.filt, alerts=topAlerts(d), tMed=avg(d,r=>r.tEspMed), tTri=avg(d,r=>r.tEspTri), tTot=avg(d,r=>r.tTotal);
       $("printCover").innerHTML=`<h2>V.I.D.A. — Relatório Assistencial</h2>
         <p class="mono" id="printUnit"></p>
@@ -3751,6 +3721,17 @@
       location.reload();
     }
     const PREF_KEY="upa_dash_prefs";
+    function readPrefsRaw(){
+      try{if(window.localStorage)return window.localStorage.getItem(PREF_KEY)}catch(e){}
+      try{
+        const hit=document.cookie.split("; ").find(row=>row.startsWith(PREF_KEY+"="));
+        return hit?decodeURIComponent(hit.split("=").slice(1).join("=")):null;
+      }catch(e){return null}
+    }
+    function writePrefsRaw(value){
+      try{if(window.localStorage){window.localStorage.setItem(PREF_KEY,value);return}}catch(e){}
+      try{document.cookie=`${PREF_KEY}=${encodeURIComponent(value)};max-age=31536000;path=/;SameSite=Lax`}catch(e){}
+    }
     function saveRecepcionados(){try{localStorage.setItem(RECEP_KEY,JSON.stringify(state.recepcionados))}catch(e){}}
     function loadRecepcionados(){try{const r=localStorage.getItem(RECEP_KEY);if(r)state.recepcionados=JSON.parse(r)||{}}catch(e){}}
     function savePrefs(){
@@ -3758,18 +3739,37 @@
         const ids=["metaTri","metaMed","metaTotal","metaRet","metaVol","capMed","capTri"];
         const prefs={theme:state.theme};
         ids.forEach(id=>{const el=$(id);if(el)prefs[id]=el.value});
-        localStorage.setItem(PREF_KEY,JSON.stringify(prefs));
+        writePrefsRaw(JSON.stringify(prefs));
       }catch(e){/* localStorage pode estar bloqueado em iframe sandbox */}
     }
     function loadPrefs(){
       try{
-        const raw=localStorage.getItem(PREF_KEY);if(!raw)return;
+        const raw=readPrefsRaw();if(!raw)return;
         const p=JSON.parse(raw);
-        if(p.theme&&p.theme!==state.theme){state.theme=p.theme;document.documentElement.dataset.theme=state.theme;Chart.defaults.color=tickColor();Chart.defaults.borderColor=gridColor()}
+        if(p.theme)setTheme(p.theme,{save:false,render:false});
         ["metaTri","metaMed","metaTotal","metaRet","metaVol","capMed","capTri"].forEach(id=>{const el=$(id);if(p[id]!=null&&el)el.value=p[id]});
       }catch(e){/* localStorage pode estar bloqueado em iframe sandbox */}
     }
-    function toggleTheme(){state.theme=state.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=state.theme;const _tl=state.theme==="dark"?"☀ Claro":"☾ Escuro";const _tb=$("themeBtn");if(_tb)_tb.textContent=_tl;const _utb=$("uploadThemeBtn");if(_utb)_utb.textContent=_tl;Chart.defaults.color=tickColor();Chart.defaults.borderColor=gridColor();savePrefs();renderAll()}
+    function toggleTheme(){state.theme=state.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=state.theme;$("themeBtn").textContent=state.theme==="dark"?"☀ Claro":"☾ Escuro";Chart.defaults.color=tickColor();Chart.defaults.borderColor=gridColor();savePrefs();renderAll()}
+    function syncThemeControls(){
+      document.querySelectorAll("[data-theme-choice]").forEach(btn=>{
+        const active=btn.dataset.themeChoice===state.theme;
+        btn.classList.toggle("active",active);
+        btn.setAttribute("aria-pressed",active?"true":"false");
+      });
+      updateThemeIcon();
+    }
+    function setTheme(theme,{save=true,render=true}={}){
+      if(theme!=="light"&&theme!=="dark")return;
+      state.theme=theme;
+      document.documentElement.dataset.theme=theme;
+      Chart.defaults.color=tickColor();
+      Chart.defaults.borderColor=gridColor();
+      syncThemeControls();
+      if(save)savePrefs();
+      if(render&&state.raw.length)renderAll();
+    }
+    toggleTheme=function(){setTheme(state.theme==="dark"?"light":"dark")}
     function bindDrop(drop,input,handler){
       input.addEventListener("change",()=>handler(input.files));
       drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("drag")});
@@ -3794,11 +3794,15 @@
       if(files.length){const num=document.querySelector("#cidDrop .drop-num");if(num){num.style.background="var(--ok)";num.style.color="#fff"}}
       if(files.length&&state.raw.length)loadCid(files);
     });
-    $("triBtn").onclick=()=>$("triFile").click();$("cidBtn").onclick=()=>$("cidFile").click();
-    $("triFile").onchange=e=>loadTri(e.target.files[0]);$("cidFile").onchange=e=>loadCid(e.target.files);
-    $("procFile").onchange=e=>loadProc(e.target.files[0]);
-    const _procBtn=$("procBtn"); if(_procBtn)_procBtn.onclick=()=>$("procFile").click();
+    $("triBtn").onclick=()=>$("triFile").click();$("cidBtn").onclick=()=>$("cidFile").click();$("procBtn").onclick=()=>$("procFile").click();
+    $("triFile").onchange=e=>loadTri(e.target.files[0]);$("cidFile").onchange=e=>loadCid(e.target.files);$("procFile").onchange=e=>loadProcedimentos(e.target.files[0]);
     $("themeBtn").onclick=toggleTheme;$("printBtn").onclick=()=>exportarPDF();$("newBtn").onclick=resetApp;
+    document.querySelectorAll("[data-theme-choice]").forEach(btn=>{
+      btn.addEventListener("click",()=>setTheme(btn.dataset.themeChoice));
+    });
+    ["procFiltroEsp","procFiltroProf","procFiltroProc","procFiltroFat"].forEach(id=>{
+      const el=$(id);if(el)el.addEventListener("change",()=>{_dirtyPanes.add('procedimentos');renderProcedimentos();});
+    });
     // Troca de arquivo de histórico diretamente do topbar (sem perder o app aberto)
     const _hsw=$('histFileSwitch');
     if(_hsw){_hsw.addEventListener('change',e=>{
@@ -3985,6 +3989,71 @@
       // Marca todos os tabs como sujos usando os data-tab dos nav-items
       document.querySelectorAll('.nav-item[data-pane]').forEach(item => _dirtyPanes.add(item.dataset.pane));
     }
+    function setSelectOptions(id,values,allLabel){
+      const el=$(id);if(!el)return;
+      const cur=el.value||'all';
+      el.innerHTML=`<option value="all">${allLabel}</option>`+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+      el.value=values.includes(cur)?cur:'all';
+    }
+    function procFilteredRows(){
+      const esp=$('procFiltroEsp')?.value||'all';
+      const prof=$('procFiltroProf')?.value||'all';
+      const proc=$('procFiltroProc')?.value||'all';
+      const fat=$('procFiltroFat')?.value||'all';
+      return state.procRaw.filter(r=>
+        (esp==='all'||r.esp===esp)&&
+        (prof==='all'||r.prof===prof)&&
+        (proc==='all'||r.proc===proc)&&
+        (fat==='all'||r.faturavelFlag===fat)
+      );
+    }
+    function renderProcedimentos(){
+      const empty=$('procEmpty'), content=$('procContent');
+      if(!state.procRaw.length){
+        if(empty)empty.classList.remove('hidden');
+        if(content)content.classList.add('hidden');
+        return;
+      }
+      if(empty)empty.classList.add('hidden');
+      if(content)content.classList.remove('hidden');
+      setSelectOptions('procFiltroEsp',[...new Set(state.procRaw.map(r=>r.esp).filter(Boolean))].sort(),'Todas as especialidades');
+      setSelectOptions('procFiltroProf',[...new Set(state.procRaw.map(r=>r.prof).filter(Boolean))].sort(),'Todos os profissionais');
+      setSelectOptions('procFiltroProc',[...new Set(state.procRaw.map(r=>r.proc).filter(Boolean))].sort(),'Todos os procedimentos');
+      const rows=procFilteredRows();
+      state.procFilt=rows;
+      const total=sum(rows,r=>r.qde), profs=new Set(rows.map(r=>r.prof)).size, procs=new Set(rows.map(r=>r.proc)).size;
+      const fat=sum(rows.filter(r=>r.faturavelFlag==='S'),r=>r.qde);
+      $('kpisProc').innerHTML=[
+        kpi('Procedimentos',fmt(total),`${fmt(rows.length)} linhas do relatório`,'#3b82f6'),
+        kpi('Profissionais',fmt(profs),'com produção registrada','#22c55e'),
+        kpi('Tipos de procedimento',fmt(procs),'procedimentos distintos','#a78bfa'),
+        kpi('Média por profissional',profs?fmt(Math.round(total/profs)):'-','procedimentos/profissional','#f97316'),
+        kpi('Faturáveis',pct(fat,total),`${fmt(fat)} procedimentos`,'#06b6d4')
+      ].join('');
+      const byProf=Object.values(rows.reduce((m,r)=>{
+        const k=r.codProf+'|'+r.prof;
+        m[k]??={cod:r.codProf,prof:r.prof,esp:r.esp,total:0,tipos:new Set(),fat:0};
+        m[k].total+=r.qde;m[k].tipos.add(r.proc);if(r.faturavelFlag==='S')m[k].fat+=r.qde;
+        return m;
+      },{})).map(r=>({...r,tipos:r.tipos.size})).sort((a,b)=>b.total-a.total);
+      const byProc=Object.values(rows.reduce((m,r)=>{
+        const k=r.codProc+'|'+r.proc;
+        m[k]??={cod:r.codProc,proc:r.proc,total:0,profs:new Set(),fat:0};
+        m[k].total+=r.qde;m[k].profs.add(r.prof);if(r.faturavelFlag==='S')m[k].fat+=r.qde;
+        return m;
+      },{})).map(r=>({...r,profs:r.profs.size})).sort((a,b)=>b.total-a.total);
+      const byEsp=Object.entries(rows.reduce((m,r)=>{m[r.esp]=(m[r.esp]||0)+r.qde;return m},{})).sort((a,b)=>b[1]-a[1]);
+      const fatRows=[['Faturável',fat],['Não faturável',Math.max(total-fat,0)]];
+      const topProf=byProf.slice(0,12).reverse();
+      chart('chartProcProf',{type:'bar',data:{labels:topProf.map(r=>shortName(r.prof)),datasets:[{data:topProf.map(r=>r.total),backgroundColor:'#22c55e',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+      const topProc=byProc.slice(0,12).reverse();
+      chart('chartProcTop',{type:'bar',data:{labels:topProc.map(r=>r.proc.length>34?r.proc.slice(0,34)+'...':r.proc),datasets:[{data:topProc.map(r=>r.total),backgroundColor:'#3b82f6',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+      chart('chartProcEsp',{type:'bar',data:{labels:byEsp.map(([k])=>k),datasets:[{data:byEsp.map(([,v])=>v),backgroundColor:'#a78bfa',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+      chart('chartProcFat',{type:'doughnut',data:{labels:fatRows.map(r=>r[0]),datasets:[{data:fatRows.map(r=>r[1]),backgroundColor:['#06b6d4','#64748b'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true}}}}});
+      $('tableProcProf').innerHTML=`<thead><tr><th>#</th><th>Profissional</th><th>Especialidade</th><th>Total</th><th>Tipos</th><th>Faturável</th></tr></thead><tbody>${byProf.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.prof)}</td><td>${esc(r.esp)}</td><td class="mono">${fmt(r.total)}</td><td class="mono">${fmt(r.tipos)}</td><td class="mono">${pct(r.fat,r.total)}</td></tr>`).join('')}</tbody>`;
+      const detail=rows.slice().sort((a,b)=>b.qde-a.qde||a.prof.localeCompare(b.prof));
+      $('tableProcDetalhe').innerHTML=`<thead><tr><th>#</th><th>Profissional</th><th>Procedimento</th><th>Especialidade</th><th>Cód.</th><th>Fat.</th><th>Qtd.</th></tr></thead><tbody>${detail.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.prof)}</td><td>${esc(r.proc)}</td><td>${esc(r.esp)}</td><td class="mono">${esc(r.codProc)}</td><td class="mono">${esc(r.faturavel||'-')}</td><td class="mono">${fmt(r.qde)}</td></tr>`).join('')}</tbody>`;
+    }
     function renderActivePane() {
       const active = document.querySelector('.nav-item.active');
       const tab = active ? active.dataset.pane : 'geral';
@@ -3997,6 +4066,7 @@
         case 'fluxo':         renderFluxo(); break;
         case 'gargalos':      renderGargalos(); break;
         case 'medicos':       renderMedicos(); break;
+        case 'procedimentos':  renderProcedimentos(); break;
         case 'retornos':      renderRetornos(); break;
         case 'capacidade':    renderCapacidade(); break;
         case 'evolucao':      renderEvolucao(); break;
@@ -4004,7 +4074,6 @@
         case 'triagem':       renderTriagem(); break;
         case 'cid':           renderCid(); break;
         case 'auditoria':     renderAuditoria(); break;
-        case 'procedimentos': renderProcedimentos(); break;
         case 'qualidade':     renderQuality(); break;
         case 'comparativo':    renderComparativo(); break;   // novo
         case 'correlacoes':   renderCorrelacoes(); break;   // novo
@@ -4563,7 +4632,7 @@
         });
       });
       sazonHtml += '</div>';
-      sazonHtml += `<div style="font-size:9px;color:var(--mut);margin-top:6px;font-family:'Geist Mono',monospace">
+      sazonHtml += `<div style="font-size:9px;color:var(--mut);margin-top:6px;font-family:'IBM Plex Mono',monospace">
         Grade: dia da semana × mês. Intensidade = volume de atendimentos.
       </div>`;
       $('heatmapSazon').innerHTML = sazonHtml;
@@ -4637,17 +4706,17 @@
       _origSavePrefs();
       try{
         const ids=MANCHESTER_META_IDS;
-        const raw=localStorage.getItem(PREF_KEY);
+        const raw=readPrefsRaw();
         const p=raw?JSON.parse(raw):{};
         ids.forEach(id=>{const el=$(id);if(el)p[id]=el.value});
-        localStorage.setItem(PREF_KEY,JSON.stringify(p));
+        writePrefsRaw(JSON.stringify(p));
       }catch(e){}
     };
     const _origLoadPrefs=loadPrefs;
     loadPrefs=function(){
       _origLoadPrefs();
       try{
-        const raw=localStorage.getItem(PREF_KEY);if(!raw)return;
+        const raw=readPrefsRaw();if(!raw)return;
         const p=JSON.parse(raw);
         MANCHESTER_META_IDS.forEach(id=>{const el=$(id);if(el&&p[id]!=null)el.value=p[id]});
       }catch(e){}
@@ -4660,6 +4729,8 @@
     // ════════════════════════════════════════════════════════════
     // PAINEL PACIENTES
     // ════════════════════════════════════════════════════════════
+    loadPrefs();
+    syncThemeControls();
     function renderPacientes(){
       popularMesesAnot(); // reutiliza a função de anotações
       renderAnotLista();
@@ -4878,20 +4949,10 @@
     function manchesterConformidade(rows){
       const byRisco={};
       rows.forEach(r=>{
-        if(!r.cor)return;
-        byRisco[r.cor]=byRisco[r.cor]||{
-          total:0,ok:0,semDado:0,meta:metaManchester(r.cor),
-          D:{total:0,ok:0},N:{total:0,ok:0}
-        };
-        const x=byRisco[r.cor];
-        if(r.tEspMed==null){x.semDado++;return;}
-        x.total++;
-        if(r.tEspMed<=x.meta)x.ok++;
-        // Breakdown por turno
-        const t=(r.turno==='D'||r.turno==='N')?r.turno:null;
-        if(!t)return; // sem turno definido: não conta em D nem N
-        x[t].total++;
-        if(r.tEspMed<=x.meta)x[t].ok++;
+        if(!r.cor||r.tEspMed==null)return;
+        byRisco[r.cor]=byRisco[r.cor]||{total:0,ok:0,meta:metaManchester(r.cor)};
+        byRisco[r.cor].total++;
+        if(r.tEspMed<=byRisco[r.cor].meta)byRisco[r.cor].ok++;
       });
       return byRisco;
     }
@@ -5266,7 +5327,7 @@
           <td class="mono">${esc(r?.pront||'—')}</td>
           <td>${esc(shortName(r?.prof||'—'))}</td>
           <td><span class="audit-tag ${i.tipo}">${esc(i.tipo)}</span></td>
-          <td style="color:${sevColor};font-weight:700;font-size:11px;font-family:'Geist Mono',monospace">${esc(i.sev)}</td>
+          <td style="color:${sevColor};font-weight:700;font-size:11px;font-family:'IBM Plex Mono',monospace">${esc(i.sev)}</td>
           <td class="mono muted">${esc(i.campo||'—')}</td>
           <td style="font-size:11px;color:var(--txt2);max-width:300px">${esc(i.motivo||'—')}</td>
         </tr>`;
@@ -5438,7 +5499,7 @@
             y:{
               grid:{display:false},
               ticks:{color:tickColor(),font:{size:11,weight:'600'},
-                font:{family:"'Geist Mono',monospace",size:11}}
+                font:{family:"'IBM Plex Mono',monospace",size:11}}
             }
           }
         }
@@ -5460,49 +5521,28 @@
         const pctF = total?(fem/total*100).toFixed(1):'0';
         const pctM = total?(masc/total*100).toFixed(1):'0';
 
-        // SVG icon feminino
-        const svgF = `<svg viewBox="0 0 48 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="24" cy="10" r="9" fill="#f472b6"/>
-          <path d="M12 30c0-6.627 5.373-12 12-12s12 5.373 12 12v18H12V30z" fill="#f472b6"/>
-          <path d="M12 48l-6 20h36l-6-20H12z" fill="#f9a8d4"/>
-          <rect x="21" y="66" width="6" height="14" rx="3" fill="#f472b6"/>
-          <rect x="8" y="66" width="6" height="14" rx="3" fill="#f472b6"/>
-        </svg>`;
-
-        // SVG icon masculino
-        const svgM = `<svg viewBox="0 0 48 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="24" cy="10" r="9" fill="#60a5fa"/>
-          <path d="M12 28c0-6.627 5.373-12 12-12s12 5.373 12 12v22H12V28z" fill="#60a5fa"/>
-          <rect x="20" y="50" width="8" height="18" rx="4" fill="#3b82f6"/>
-          <rect x="8" y="64" width="6" height="16" rx="3" fill="#60a5fa"/>
-          <rect x="34" y="64" width="6" height="16" rx="3" fill="#60a5fa"/>
-        </svg>`;
-
         sexoEl.innerHTML = `
-          <div class="sexo-viz">
-            <div class="sexo-col">
-              <div class="sexo-icon">${svgF}</div>
-              <div class="sexo-num" style="color:#f472b6">${fmt(fem)}</div>
-              <div class="sexo-label">Feminino</div>
-              <div style="width:80px">
-                <div class="sexo-bar-wrap"><div class="sexo-bar" style="width:${pctF}%;background:#f472b6"></div></div>
-              </div>
-              <div style="font-size:11px;color:var(--mut);font-family:'Geist Mono',monospace">${pctF}%</div>
+          <div class="sexo-wrap">
+            <div class="sexo-split">
+              <div class="sexo-split-f" style="width:${pctF}%"></div>
+              <div class="sexo-split-m"></div>
             </div>
-            <div class="sexo-col">
-              <div class="sexo-icon">${svgM}</div>
-              <div class="sexo-num" style="color:#60a5fa">${fmt(masc)}</div>
-              <div class="sexo-label">Masculino</div>
-              <div style="width:80px">
-                <div class="sexo-bar-wrap"><div class="sexo-bar" style="width:${pctM}%;background:#60a5fa"></div></div>
+            <div class="sexo-rows">
+              <div class="sexo-row">
+                <div class="sexo-dot" style="background:#f472b6"></div>
+                <div class="sexo-rlabel">Feminino</div>
+                <div class="sexo-rval" style="color:#f472b6">${fmt(fem)}</div>
+                <div class="sexo-rpct">${pctF}%</div>
               </div>
-              <div style="font-size:11px;color:var(--mut);font-family:'Geist Mono',monospace">${pctM}%</div>
+              <div class="sexo-row">
+                <div class="sexo-dot" style="background:#60a5fa"></div>
+                <div class="sexo-rlabel">Masculino</div>
+                <div class="sexo-rval" style="color:#60a5fa">${fmt(masc)}</div>
+                <div class="sexo-rpct">${pctM}%</div>
+              </div>
             </div>
-          </div>
-          <div style="text-align:center">
-            <span class="sexo-total">Total inferido: ${fmt(total)} de ${fmt(d.length)} (${pct(total,d.length)})</span>
-            <div style="font-size:9px;color:var(--mut);margin-top:6px;font-family:'Geist Mono',monospace">
-              Inferência por nome — ${fmt(indDet)} registros indeterminados
+            <div class="sexo-note">
+              Inferido por nome &middot; ${fmt(total)} de ${fmt(d.length)} classificados (${pct(total,d.length)}) &middot; ${fmt(indDet)} indeterminados
             </div>
           </div>`;
 
@@ -5636,8 +5676,29 @@
         // Garante que cada pane é renderizada antes da captura
         const originalActive = document.querySelector('.nav-item.active')?.dataset?.pane;
 
+        // Patch temporario: html2canvas 1.4.1 nao suporta color(srgb ...) que
+        // o Chrome moderno retorna em getComputedStyle. Converte para rgb().
+        const _patchColor = v => typeof v !== 'string' ? v :
+          v.replace(/\bcolor\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\)/gi,
+            (_, r, g, b, a) => {
+              const ri = Math.round(r * 255), gi = Math.round(g * 255), bi = Math.round(b * 255);
+              return a != null ? `rgba(${ri},${gi},${bi},${parseFloat(a)})` : `rgb(${ri},${gi},${bi})`;
+            });
+        const _origGCS = window.getComputedStyle;
+        window.getComputedStyle = (...args) => {
+          const s = _origGCS.apply(window, args);
+          return new Proxy(s, {
+            get(t, p) {
+              const v = t[p];
+              if (typeof v === 'string') return _patchColor(v);
+              if (typeof v === 'function') return v.bind(t);
+              return v;
+            }
+          });
+        };
+
         let pagina = 0;
-        for(const p of panes){
+        try{ for(const p of panes){
           const el = document.getElementById(p.id);
           if(!el) continue;
 
@@ -5656,11 +5717,12 @@
           setProgress((pagina/panes.length)*90, `Capturando: ${p.title}`, `${pagina+1}/${panes.length}`);
           const canvas = await html2canvas(el, {
             backgroundColor: getComputedStyle(document.body).backgroundColor,
-            scale: 1.5,
+            scale: 2.5,
             logging: false,
             useCORS: true,
+            imageTimeout: 0,
           });
-          const imgData = canvas.toDataURL('image/jpeg', 0.85);
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
           const ratio = canvas.width / canvas.height;
           let imgW = pdfW - margin*2;
           let imgH = imgW / ratio;
@@ -5681,7 +5743,7 @@
 
           pdf.addImage(imgData, 'JPEG', margin, margin+13, imgW, imgH);
           pagina++;
-        }
+        }} finally { window.getComputedStyle = _origGCS; }
 
         // Restaurar tab original
         if(originalActive){
@@ -5992,9 +6054,9 @@
     setTimeout(updateNavIndicators, 50);
     // ── Controle de densidade dos cards ──────────────────────────
     const DENSITY={
-      compact:{kpi:'160px', chart:'280px', gap:'8px'},
-      normal: {kpi:'215px', chart:'380px', gap:'12px'},
-      wide:   {kpi:'300px', chart:'520px', gap:'16px'},
+      compact:{kpi:'160px', chart:'320px', gap:'8px'},
+      normal: {kpi:'190px', chart:'360px', gap:'12px'},
+      wide:   {kpi:'260px', chart:'480px', gap:'16px'},
     };
     function applyDensity(d){
       const v=DENSITY[d]||DENSITY.normal;
@@ -6096,7 +6158,7 @@
         </div>
       </div>
       <div style="margin-top:16px;padding:12px 14px;background:var(--sur2);border:1px solid var(--bdr);border-radius:8px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--mut);font-weight:700;font-family:'Geist Mono',monospace;margin-bottom:6px">⛁ Banco de dados local</div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--mut);font-weight:700;font-family:'IBM Plex Mono',monospace;margin-bottom:6px">⛁ Banco de dados local</div>
         <div style="font-size:11px;color:var(--txt2);line-height:1.55;margin-bottom:10px">Os dados ficam salvos no navegador entre sessões. Use o botão abaixo para limpar tudo.</div>
         <button class="btn" onclick="limparBanco()" style="color:var(--er);border-color:rgba(239,68,68,.3)">🗑 Limpar banco de dados</button>
       </div>
