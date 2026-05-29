@@ -1101,6 +1101,9 @@
 
       <div class="up-hint">Aceita .xlsx · .xls · .csv — arraste ou clique para selecionar</div>
       <div id="autoLoadHint" style="margin-top:10px;font-size:11px;color:var(--mut);font-family:'Geist Mono',monospace;min-height:16px"></div>
+      <div style="margin-top:16px;display:flex;justify-content:flex-end">
+        <button id="uploadThemeBtn" onclick="toggleTheme()" style="background:none;border:1px solid var(--bdr);border-radius:6px;padding:5px 12px;font-size:11px;font-family:'Geist Mono',monospace;color:var(--mut);cursor:pointer;transition:border-color .15s" onmouseenter="this.style.borderColor='var(--ac)'" onmouseleave="this.style.borderColor='var(--bdr)'">☾ Escuro</button>
+      </div>
     </div>
 
   </section>
@@ -1961,6 +1964,12 @@
     let UC={nome:"",tipo:"UPA",cnes:"",endereco:"",telefone:"",gestao:"",rt:"",coren:""};
     function loadUnitConfig(){try{const r=localStorage.getItem(UC_KEY);if(r)Object.assign(UC,JSON.parse(r))}catch(e){}}
         loadPrefs();
+    // Sincronizar texto dos botões de tema com o tema carregado
+    (function syncThemeBtns(){
+      const isDark=state.theme==="dark";
+      const tb=$("themeBtn"); if(tb)tb.textContent=isDark?"☀ Claro":"☾ Escuro";
+      const utb=$("uploadThemeBtn"); if(utb)utb.textContent=isDark?"☀ Claro":"☾ Escuro";
+    })();
     loadUnitConfig();
     loadRecepcionados();
     // Sync theme icon on page load
@@ -3760,7 +3769,7 @@
         ["metaTri","metaMed","metaTotal","metaRet","metaVol","capMed","capTri"].forEach(id=>{const el=$(id);if(p[id]!=null&&el)el.value=p[id]});
       }catch(e){/* localStorage pode estar bloqueado em iframe sandbox */}
     }
-    function toggleTheme(){state.theme=state.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=state.theme;$("themeBtn").textContent=state.theme==="dark"?"☀ Claro":"☾ Escuro";Chart.defaults.color=tickColor();Chart.defaults.borderColor=gridColor();savePrefs();renderAll()}
+    function toggleTheme(){state.theme=state.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=state.theme;const _tl=state.theme==="dark"?"☀ Claro":"☾ Escuro";const _tb=$("themeBtn");if(_tb)_tb.textContent=_tl;const _utb=$("uploadThemeBtn");if(_utb)_utb.textContent=_tl;Chart.defaults.color=tickColor();Chart.defaults.borderColor=gridColor();savePrefs();renderAll()}
     function bindDrop(drop,input,handler){
       input.addEventListener("change",()=>handler(input.files));
       drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("drag")});
