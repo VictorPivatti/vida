@@ -3590,29 +3590,36 @@
     // ════════════════════════════════════════════════════════════
     function parseProc(rows){
       const header=rows[0].map(v=>String(v||"").trim().toLowerCase());
+      // Detectar offset: alguns sistemas exportam uma coluna extra sem cabeçalho
+      // (número sequencial de registro) antes das colunas nomeadas.
+      // Se as linhas de dados têm mais colunas que o cabeçalho, compensar.
+      const firstDataRow=rows.find((_,i)=>i>0&&rows[i]&&rows[i].length>0)||[];
+      const offset=Math.max(0, firstDataRow.length - header.length);
       const idx={
         codprof:  header.findIndex(h=>h.includes("codprofissional")||h==="codprof"),
-        nome:     header.findIndex(h=>h.includes("nomprofissional")||h.includes("nomeprofissional")||h.includes("profissional")),
-        esp:      header.findIndex(h=>h.includes("nomespecialidade")||h.includes("especialidade")),
+        nome:     header.findIndex(h=>h.includes("nomprofissional")||h.includes("nomeprofissional")||(h.includes("profissional")&&!h.includes("cod"))),
+        esp:      header.findIndex(h=>h.includes("nomespecialidade")||(h.includes("especialidade")&&!h.includes("cod"))),
         codproc:  header.findIndex(h=>h.includes("codprocedimento")&&!h.includes("faturavel")),
-        nomproc:  header.findIndex(h=>h.includes("nomprocedimento")||h.includes("nomeprocedimento")||h.includes("procedimento")&&h.includes("nom")),
-        qtd:      header.findIndex(h=>h.includes("qdeprocedimento")||h.includes("qtd")||h.includes("quantidade")),
+        nomproc:  header.findIndex(h=>h.includes("nomprocedimento")||h.includes("nomeprocedimento")||(h.includes("procedimento")&&h.includes("nom"))),
+        qtd:      header.findIndex(h=>h.includes("qdeprocedimento")||h==="qtd"||h.includes("quantidade")),
         instr:    header.findIndex(h=>h.includes("codinstrumento")||h.includes("instrumento")),
       };
+      const get=(row,i)=>i>=0?String(row[i+offset]||"").trim():"";
+      const getN=(row,i)=>i>=0?(Number(row[i+offset])||0):0;
       const out=[];
       rows.slice(1).forEach(row=>{
         if(!row||!row.length)return;
-        const nome=String(row[idx.nome]||"").trim();
-        if(!nome)return;
+        const nome=get(row,idx.nome);
+        if(!nome||/^\d+$/.test(nome))return; // ignorar linhas onde "nome" é número (offset errado)
         out.push({
-          codprof:  idx.codprof>=0?String(row[idx.codprof]||"").trim():"",
-          nome:     nome,
+          codprof:  get(row,idx.codprof),
+          nome,
           nomeNorm: norm(nome),
-          esp:      idx.esp>=0?String(row[idx.esp]||"").trim():"",
-          codproc:  idx.codproc>=0?String(row[idx.codproc]||"").trim():"",
-          nomproc:  idx.nomproc>=0?String(row[idx.nomproc]||"").trim():"",
-          qtd:      idx.qtd>=0?(Number(row[idx.qtd])||1):1,
-          instr:    idx.instr>=0?(Number(row[idx.instr])||1):1,
+          esp:      get(row,idx.esp),
+          codproc:  get(row,idx.codproc),
+          nomproc:  get(row,idx.nomproc),
+          qtd:      getN(row,idx.qtd)||1,
+          instr:    getN(row,idx.instr)||1,
         });
       });
       return out;
