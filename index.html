@@ -4,6 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>V.I.D.A. — Visualização Integrada de Dados Assistenciais</title>
+  <script>
+    (function(){
+      try{
+        var key="upa_dash_prefs", raw=null;
+        try{raw=window.localStorage&&window.localStorage.getItem(key)}catch(e){}
+        if(!raw){
+          var hit=document.cookie.split("; ").find(function(row){return row.indexOf(key+"=")===0});
+          raw=hit?decodeURIComponent(hit.split("=").slice(1).join("=")):null;
+        }
+        var theme=raw&&JSON.parse(raw).theme;
+        if(theme==="light"||theme==="dark")document.documentElement.dataset.theme=theme;
+      }catch(e){}
+    })();
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -295,6 +309,32 @@
     }
 
     /* Drop zones — novo layout vertical com numeração */
+    .theme-start{
+      display:flex;align-items:center;justify-content:space-between;gap:14px;
+      margin:-10px 0 18px;padding:12px 14px;
+      border:1px solid var(--bdr);border-radius:8px;background:var(--sur);
+      box-shadow:var(--sh3)
+    }
+    .theme-start-label{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .theme-start-label strong{font-size:12px;font-weight:700;color:var(--txt)}
+    .theme-start-label span{font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--mut)}
+    .theme-choice{
+      display:flex;gap:4px;padding:3px;border:1px solid var(--bdr2);
+      border-radius:7px;background:var(--sur2);flex:none
+    }
+    .theme-choice-btn{
+      width:34px;height:30px;border:0;border-radius:5px;
+      display:grid;place-items:center;cursor:pointer;
+      color:var(--txt2);background:transparent;transition:background .15s,color .15s,box-shadow .15s
+    }
+    .theme-choice-btn:hover{color:var(--txt);background:var(--sur3)}
+    .theme-choice-btn.active{color:#fff;background:var(--ac);box-shadow:0 0 0 1px rgba(255,255,255,.08) inset}
+    @media(max-width:520px){
+      .theme-start{align-items:flex-start;flex-direction:column}
+      .theme-choice{width:100%}
+      .theme-choice-btn{flex:1;width:auto}
+    }
+
     .drop-stack{display:flex;flex-direction:column;gap:10px}
     .drop{
       position:relative;border:1px solid var(--bdr2);border-radius:12px;
@@ -575,6 +615,80 @@
     /* ─────────────────────────────────────────────────────────────
        CONTENT AREA
     ───────────────────────────────────────────────────────────── */
+    .sidebar{
+      width:244px;gap:2px;padding:14px 12px 16px;
+      overflow-y:auto;overflow-x:hidden;
+      background:linear-gradient(180deg,var(--sur) 0%,var(--sur2) 100%)
+    }
+    .sidebar::before{
+      height:140px;background:radial-gradient(ellipse at 50% 0%,var(--ac-glow),transparent 68%);
+      opacity:.8
+    }
+    .sidebar-brand{
+      display:flex;align-items:center;gap:10px;
+      padding:6px 6px 14px;margin-bottom:4px;
+      border-bottom:1px solid var(--bdr)
+    }
+    .sidebar-mark{
+      width:32px;height:32px;border-radius:8px;display:grid;place-items:center;flex:none;
+      background:var(--grad);color:#fff;box-shadow:0 8px 22px rgba(124,110,249,.22)
+    }
+    .sidebar-brand-text{display:flex;flex-direction:column;gap:1px;min-width:0}
+    .sidebar-brand-title{
+      font-size:13px;font-weight:800;color:var(--txt);
+      font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;line-height:1.1
+    }
+    .sidebar-brand-sub{
+      font-size:10px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+    }
+    .nav-group{
+      display:block;margin:16px 8px 7px;
+      font-size:9px;font-weight:700;line-height:1;
+      font-family:'IBM Plex Mono',monospace;text-transform:uppercase;
+      letter-spacing:.12em;color:var(--mut)
+    }
+    .nav-divider{display:none}
+    .nav-item{
+      justify-content:flex-start;gap:10px;
+      width:100%;min-height:36px;height:auto;
+      margin:1px 0;padding:8px 10px;
+      border-radius:7px;text-align:left;
+      font-family:'Inter',sans-serif
+    }
+    .nav-item:hover{transform:translateX(2px)}
+    .nav-item.active{
+      background:linear-gradient(90deg,var(--ac-glow),rgba(124,110,249,.06));
+      box-shadow:inset 0 0 0 1px rgba(124,110,249,.14)
+    }
+    .nav-item svg{stroke-width:1.7}
+    .nav-item span:not(.nav-indicator){
+      display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+      font-size:12px;font-weight:600;letter-spacing:0
+    }
+    .nav-item::after,.nav-item::before{display:none}
+    .nav-item.active span.nav-indicator{left:0;top:8px;bottom:8px}
+    @media(max-width:1120px){
+      .sidebar{width:58px;padding:10px 8px 14px;overflow:visible}
+      .sidebar-brand{justify-content:center;padding:4px 0 10px}
+      .sidebar-brand-text,.nav-group{display:none}
+      .nav-divider{display:block;height:1px;background:var(--bdr);margin:8px 10px}
+      .nav-item{width:40px;height:40px;min-height:40px;margin:1px auto;padding:0;justify-content:center}
+      .nav-item span:not(.nav-indicator){display:none}
+      .nav-item::after{
+        content:attr(data-label);display:block;
+        position:absolute;left:calc(100% + 12px);top:50%;
+        transform:translateY(-50%) translateX(-4px);
+        background:var(--sur4);border:1px solid var(--bdr2);
+        color:var(--txt);font-size:11px;font-weight:500;
+        padding:5px 11px;border-radius:6px;
+        white-space:nowrap;pointer-events:none;
+        opacity:0;transition:opacity .15s,transform .15s;
+        font-family:'Inter',sans-serif;letter-spacing:.01em;
+        box-shadow:var(--sh2);z-index:100
+      }
+      .nav-item:hover::after{opacity:1;transform:translateY(-50%) translateX(0)}
+      .nav-item.active span.nav-indicator{left:-8px;top:25%;bottom:25%}
+    }
     .app-body{display:flex;flex:1;overflow:hidden}
     .content-area{flex:1;overflow-y:auto;overflow-x:hidden}
     main{max-width:1440px;margin:0 auto;padding:14px 16px}
@@ -584,10 +698,39 @@
     .pane{display:none}
     .pane.active{display:block;animation:fadeUp .22s ease}
     @keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-    :root{--kpi-min:215px;--chart-min:380px;--card-gap:12px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--kpi-min),1fr));gap:var(--card-gap);margin-bottom:var(--card-gap)}
-    .chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--chart-min),1fr));gap:var(--card-gap);margin-bottom:var(--card-gap)}
-    @media(max-width:760px){.chart-grid{grid-template-columns:1fr}main{padding:12px 14px}}
+    :root{--kpi-min:190px;--chart-min:360px;--card-gap:12px}
+    .grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--kpi-min)),1fr));
+      gap:var(--card-gap);margin-bottom:var(--card-gap);grid-auto-flow:dense
+    }
+    .chart-grid{
+      display:grid;grid-template-columns:repeat(12,minmax(0,1fr));
+      gap:var(--card-gap);margin-bottom:var(--card-gap);grid-auto-flow:dense;
+      align-items:start
+    }
+    .chart-grid>.card{grid-column:span 6}
+    .chart-grid>.card.full{grid-column:1/-1}
+    @media(min-width:1280px){
+      #pane-geral .chart-grid>.card:nth-child(1){grid-column:span 8}
+      #pane-geral .chart-grid>.card:nth-child(2),
+      #pane-geral .chart-grid>.card:nth-child(3){grid-column:span 4}
+      #pane-geral .chart-grid>.card:nth-child(4){grid-column:span 8}
+      #pane-retornos .chart-grid>.card:nth-child(1){grid-column:span 8}
+      #pane-retornos .chart-grid>.card:nth-child(2),
+      #pane-retornos .chart-grid>.card:nth-child(3){grid-column:span 4}
+      #pane-retornos .chart-grid>.card:nth-child(4),
+      #pane-retornos .chart-grid>.card:nth-child(5){grid-column:span 6}
+      #pane-retornos .chart-grid>.card:nth-child(6){grid-column:1/-1}
+      #pane-gargalos .chart-grid>.card:nth-child(1){grid-column:span 8}
+      #pane-gargalos .chart-grid>.card:nth-child(2){grid-column:span 4}
+      #pane-gargalos .chart-grid>.card:nth-child(3),
+      #pane-gargalos .chart-grid>.card:nth-child(4){grid-column:span 6}
+    }
+    @media(max-width:980px){
+      .chart-grid{grid-template-columns:1fr}
+      .chart-grid>.card,.chart-grid>.card.full{grid-column:1/-1}
+    }
+    @media(max-width:760px){main{padding:12px 14px}}
 
     /* ─────────────────────────────────────────────────────────────
        MODAL
@@ -717,14 +860,15 @@
     /* ─────────────────────────────────────────────────────────────
        CHARTS
     ───────────────────────────────────────────────────────────── */
-    .chart{height:260px;position:relative}
-    .chart.small{height:220px}
-    .chart.tall{height:320px}
+    .chart{height:270px;position:relative}
+    .chart.small{height:236px}
+    .chart.tall{height:330px}
 
     /* ─────────────────────────────────────────────────────────────
        TABLES
     ───────────────────────────────────────────────────────────── */
-    .table-wrap{overflow:auto;max-height:520px;border-radius:10px;border:1px solid var(--bdr)}
+    .table-wrap{overflow:auto;max-height:440px;border-radius:10px;border:1px solid var(--bdr)}
+    .card.full .table-wrap{max-height:520px}
     #tableRetMed{min-width:700px}
     .table{width:100%;border-collapse:collapse}
     .table th{
@@ -1086,6 +1230,21 @@
     <div class="upload-right">
       <div class="up-form-title">Carregar dados</div>
 
+      <div class="theme-start" aria-label="Preferencia de tema">
+        <div class="theme-start-label">
+          <strong>Tema da ferramenta</strong>
+          <span>A escolha fica salva neste navegador</span>
+        </div>
+        <div class="theme-choice" role="group" aria-label="Escolher tema">
+          <button class="theme-choice-btn" type="button" data-theme-choice="light" title="Modo claro" aria-label="Modo claro">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          </button>
+          <button class="theme-choice-btn" type="button" data-theme-choice="dark" title="Modo escuro" aria-label="Modo escuro">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+        </div>
+      </div>
+
       <div class="drop-stack">
         <label class="drop" id="histDrop">
           <input id="histFile" type="file" accept=".xlsx,.xls,.csv" multiple>
@@ -1237,6 +1396,8 @@
           <div class="file-name" id="fileName" style="display:flex;align-items:center;gap:6px;max-width:220px;overflow:hidden"></div>
           <button class="btn" id="triBtn">+ Triagem</button>
           <button class="btn" id="cidBtn">+ CID</button>
+          <button class="btn" id="procBtn">+ Procedimentos</button>
+          <input id="procFile" class="hidden" type="file" accept=".xls,.xlsx,.csv">
           <button class="btn btn-icon" onclick="openUnitConfig()" title="Configurar unidade" aria-label="Configurar unidade"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></button>
           <button class="btn btn-icon" id="metasBtn" title="Configurar metas" aria-label="Configurar metas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
           <button class="btn btn-icon" id="themeBtn" title="Alternar tema" aria-label="Alternar tema"><svg id="themeBtnIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
@@ -1296,6 +1457,15 @@
 
       <!-- Sidebar de navegação -->
       <nav class="sidebar" role="navigation" aria-label="Navegação principal">
+        <div class="sidebar-brand">
+          <div class="sidebar-mark" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13h3l2-6 4 12 2-6h5"/></svg>
+          </div>
+          <div class="sidebar-brand-text">
+            <div class="sidebar-brand-title">V.I.D.A.</div>
+            <div class="sidebar-brand-sub">Painéis de análise</div>
+          </div>
+        </div>
         <div class="nav-group">Operação</div>
         <button class="nav-item active" data-label="Visão geral" data-pane="geral" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Visão geral</span></button>
         <button class="nav-item" data-label="Indicadores" data-pane="indicadores"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Indicadores</span></button>
@@ -1305,6 +1475,7 @@
         <div class="nav-group">Equipe</div>
         <button class="nav-item" data-label="Médicos" data-pane="medicos"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>Médicos</span></button>
         <button class="nav-item" data-label="Triagem" data-pane="triagem"><svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Triagem</span></button>
+        <button class="nav-item" data-label="Procedimentos" data-pane="procedimentos"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M3 7h10"/><path d="M3 12h5"/><path d="M3 17h10"/></svg><span>Procedimentos</span></button>
         <button class="nav-item" data-label="Retornos ≤72h" data-pane="retornos"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg><span>Retornos ≤72h</span></button>
         <div class="nav-divider"></div>
         <div class="nav-group">Análise</div>
@@ -1387,6 +1558,38 @@
           <div class="card"><div class="card-title">Top médicos</div><div class="chart tall"><canvas id="chartMed"></canvas></div></div>
           <div class="card"><div class="card-title">Risco por médico — top 12</div><div class="chart tall"><canvas id="chartMedRisco"></canvas></div></div>
           <div class="card full"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center">Ranking médico<button class="btn export" id="exportMedBtn" style="font-size:11px;padding:4px 10px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>XLSX</button></div><div class="search"><input class="field mono" id="searchMed" placeholder="Buscar médico…"></div><div class="table-wrap"><table class="table" id="tableMed"></table></div></div>
+        </div>
+      </section>
+
+      <section class="pane" id="pane-procedimentos">
+        <div class="page-header"><h1 class="page-title">Procedimentos por Profissional</h1><p class="page-desc">Produtividade assistencial do relatório Vivver</p></div>
+        <div id="procEmpty" class="card" style="padding:34px;text-align:center;margin-bottom:12px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Nenhum relatório de procedimentos carregado</div>
+          <div class="mono muted" style="font-size:12px;margin-bottom:16px;line-height:1.6">Carregue o arquivo "Procedimentos realizados por profissional" exportado pelo Vivver.</div>
+          <button class="btn primary" onclick="$('procFile').click()" style="margin:0 auto">+ Carregar procedimentos</button>
+        </div>
+        <div id="procContent" class="hidden">
+          <div class="card" style="margin-bottom:12px">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <select class="field" id="procFiltroEsp" style="min-width:180px"><option value="all">Todas as especialidades</option></select>
+              <select class="field" id="procFiltroProf" style="min-width:220px"><option value="all">Todos os profissionais</option></select>
+              <select class="field" id="procFiltroProc" style="min-width:240px"><option value="all">Todos os procedimentos</option></select>
+              <select class="field" id="procFiltroFat" style="min-width:120px">
+                <option value="all">Faturamento</option>
+                <option value="S">Faturável</option>
+                <option value="N">Não faturável</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid" id="kpisProc"></div>
+          <div class="chart-grid">
+            <div class="card"><div class="card-title">Top profissionais</div><div class="chart tall"><canvas id="chartProcProf"></canvas></div></div>
+            <div class="card"><div class="card-title">Top procedimentos</div><div class="chart tall"><canvas id="chartProcTop"></canvas></div></div>
+            <div class="card"><div class="card-title">Produção por especialidade</div><div class="chart small"><canvas id="chartProcEsp"></canvas></div></div>
+            <div class="card"><div class="card-title">Faturável vs. não faturável</div><div class="chart small"><canvas id="chartProcFat"></canvas></div></div>
+            <div class="card full"><div class="card-title">Ranking por profissional</div><div class="table-wrap"><table class="table" id="tableProcProf"></table></div></div>
+            <div class="card full"><div class="card-title">Detalhamento profissional × procedimento</div><div class="table-wrap"><table class="table" id="tableProcDetalhe"></table></div></div>
+          </div>
         </div>
       </section>
 
@@ -1805,7 +2008,7 @@
       cid:{idAtend:4,cid:5,data:6,medico:8,desc:9}
     };
 
-    const state={raw:[],filt:[],triRaw:[],triFilt:[],cidRaw:[],cidFilt:[],charts:{},quality:[],files:{hist:"",tri:"",cid:""},pending:{tri:null,cid:null},theme:"dark",triSource:"none",_retCache:null,_retCacheKey:"",recepcionados:{}}; // triSource: "none"|"hist"|"file"
+    const state={raw:[],filt:[],triRaw:[],triFilt:[],cidRaw:[],cidFilt:[],procRaw:[],procFilt:[],charts:{},quality:[],files:{hist:"",tri:"",cid:"",proc:""},pending:{tri:null,cid:null,proc:null},theme:"dark",triSource:"none",_retCache:null,_retCacheKey:"",recepcionados:{}}; // triSource: "none"|"hist"|"file"
     const RECEP_KEY="upa_dash_recepcionados";
 
     // Parsing assíncrono direto
@@ -1959,7 +2162,6 @@
     const UC_KEY="upa_dash_unit_config";
     let UC={nome:"",tipo:"UPA",cnes:"",endereco:"",telefone:"",gestao:"",rt:"",coren:""};
     function loadUnitConfig(){try{const r=localStorage.getItem(UC_KEY);if(r)Object.assign(UC,JSON.parse(r))}catch(e){}}
-        loadPrefs();
     loadUnitConfig();
     loadRecepcionados();
     // Sync theme icon on page load
@@ -2572,6 +2774,75 @@
         });
       }
       return rows.sort((a,b)=>a.dh-b.dh);
+    }
+    function splitDelimitedLine(line,sep=';'){
+      const out=[];let cur='',q=false;
+      for(let i=0;i<line.length;i++){
+        const ch=line[i];
+        if(ch==='"'){if(q&&line[i+1]==='"'){cur+='"';i++;}else q=!q;}
+        else if(ch===sep&&!q){out.push(cur);cur='';}
+        else cur+=ch;
+      }
+      out.push(cur);
+      return out;
+    }
+    function parseProcedimentosText(text){
+      const lines=String(text||"").split(/\r?\n/).filter(l=>l.trim());
+      if(!lines.length)return[];
+      const header=splitDelimitedLine(lines[0]).map(h=>norm(fixMojibake(h)));
+      const idx=name=>header.findIndex(h=>h===norm(name));
+      const col={
+        codProf:idx('codprofissional'),prof:idx('NomProfissional'),codEsp:idx('codespecialidade'),
+        esp:idx('nomespecialidade'),codProc:idx('CodProcedimento'),proc:idx('NomProcedimento'),
+        fat:idx('Faturavel'),qde:idx('qdeprocedimento'),tip:idx('TipLancamento'),inst:idx('CodInstrumento')
+      };
+      if(col.prof<0||col.proc<0||col.qde<0)throw new Error('Arquivo de procedimentos sem colunas esperadas do Vivver.');
+      const rows=[];
+      for(let i=1;i<lines.length;i++){
+        const p=splitDelimitedLine(lines[i]);
+        const qde=Number(String(p[col.qde]||'0').replace(',','.'));
+        if(!Number.isFinite(qde)||qde<=0)continue;
+        const prof=fixMojibake(String(p[col.prof]||'').trim());
+        const proc=fixMojibake(String(p[col.proc]||'').trim());
+        if(!prof||!proc)continue;
+        const faturavel=String(p[col.fat]||'').trim().toUpperCase();
+        rows.push({
+          sourceLine:i+1,
+          codProf:String(p[col.codProf]||'').trim(),
+          prof,profKey:norm(prof),
+          codEsp:String(p[col.codEsp]||'').trim(),
+          esp:fixMojibake(String(p[col.esp]||'').trim())||'Sem especialidade',
+          codProc:String(p[col.codProc]||'').trim(),
+          proc,procKey:norm(proc),
+          faturavel,
+          faturavelFlag:faturavel.startsWith('S')?'S':'N',
+          qde,
+          tip:String(p[col.tip]||'').trim(),
+          instrumento:String(p[col.inst]||'').trim()
+        });
+      }
+      return rows;
+    }
+    async function loadProcedimentos(file){
+      if(!file)return;
+      showLoading('Lendo procedimentos...');
+      try{
+        const text=smartDecode(await file.arrayBuffer());
+        const rows=parseProcedimentosText(text);
+        if(!rows.length)throw new Error('Nenhum procedimento válido encontrado.');
+        state.procRaw=rows;
+        state.files.proc=file.name;
+        const btn=$('procBtn');
+        if(btn){btn.textContent='Proced.: '+fmt(sum(rows,r=>r.qde));btn.classList.add('ok');}
+        showToast('Procedimentos carregados: '+fmt(sum(rows,r=>r.qde))+' registros de produção.','ok');
+        hideLoading();
+        markDirty();
+        renderProcedimentos();
+      }catch(err){
+        hideLoading();
+        showToast('Erro em procedimentos: '+err.message,'err');
+        console.error(err);
+      }
     }
     function setupDates(){
       const min=state.raw[0].dh,max=state.raw[state.raw.length-1].dh;
@@ -3450,6 +3721,17 @@
       location.reload();
     }
     const PREF_KEY="upa_dash_prefs";
+    function readPrefsRaw(){
+      try{if(window.localStorage)return window.localStorage.getItem(PREF_KEY)}catch(e){}
+      try{
+        const hit=document.cookie.split("; ").find(row=>row.startsWith(PREF_KEY+"="));
+        return hit?decodeURIComponent(hit.split("=").slice(1).join("=")):null;
+      }catch(e){return null}
+    }
+    function writePrefsRaw(value){
+      try{if(window.localStorage){window.localStorage.setItem(PREF_KEY,value);return}}catch(e){}
+      try{document.cookie=`${PREF_KEY}=${encodeURIComponent(value)};max-age=31536000;path=/;SameSite=Lax`}catch(e){}
+    }
     function saveRecepcionados(){try{localStorage.setItem(RECEP_KEY,JSON.stringify(state.recepcionados))}catch(e){}}
     function loadRecepcionados(){try{const r=localStorage.getItem(RECEP_KEY);if(r)state.recepcionados=JSON.parse(r)||{}}catch(e){}}
     function savePrefs(){
@@ -3457,18 +3739,37 @@
         const ids=["metaTri","metaMed","metaTotal","metaRet","metaVol","capMed","capTri"];
         const prefs={theme:state.theme};
         ids.forEach(id=>{const el=$(id);if(el)prefs[id]=el.value});
-        localStorage.setItem(PREF_KEY,JSON.stringify(prefs));
+        writePrefsRaw(JSON.stringify(prefs));
       }catch(e){/* localStorage pode estar bloqueado em iframe sandbox */}
     }
     function loadPrefs(){
       try{
-        const raw=localStorage.getItem(PREF_KEY);if(!raw)return;
+        const raw=readPrefsRaw();if(!raw)return;
         const p=JSON.parse(raw);
-        if(p.theme&&p.theme!==state.theme){state.theme=p.theme;document.documentElement.dataset.theme=state.theme;Chart.defaults.color=tickColor();Chart.defaults.borderColor=gridColor()}
+        if(p.theme)setTheme(p.theme,{save:false,render:false});
         ["metaTri","metaMed","metaTotal","metaRet","metaVol","capMed","capTri"].forEach(id=>{const el=$(id);if(p[id]!=null&&el)el.value=p[id]});
       }catch(e){/* localStorage pode estar bloqueado em iframe sandbox */}
     }
     function toggleTheme(){state.theme=state.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=state.theme;$("themeBtn").textContent=state.theme==="dark"?"☀ Claro":"☾ Escuro";Chart.defaults.color=tickColor();Chart.defaults.borderColor=gridColor();savePrefs();renderAll()}
+    function syncThemeControls(){
+      document.querySelectorAll("[data-theme-choice]").forEach(btn=>{
+        const active=btn.dataset.themeChoice===state.theme;
+        btn.classList.toggle("active",active);
+        btn.setAttribute("aria-pressed",active?"true":"false");
+      });
+      updateThemeIcon();
+    }
+    function setTheme(theme,{save=true,render=true}={}){
+      if(theme!=="light"&&theme!=="dark")return;
+      state.theme=theme;
+      document.documentElement.dataset.theme=theme;
+      Chart.defaults.color=tickColor();
+      Chart.defaults.borderColor=gridColor();
+      syncThemeControls();
+      if(save)savePrefs();
+      if(render&&state.raw.length)renderAll();
+    }
+    toggleTheme=function(){setTheme(state.theme==="dark"?"light":"dark")}
     function bindDrop(drop,input,handler){
       input.addEventListener("change",()=>handler(input.files));
       drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("drag")});
@@ -3493,9 +3794,15 @@
       if(files.length){const num=document.querySelector("#cidDrop .drop-num");if(num){num.style.background="var(--ok)";num.style.color="#fff"}}
       if(files.length&&state.raw.length)loadCid(files);
     });
-    $("triBtn").onclick=()=>$("triFile").click();$("cidBtn").onclick=()=>$("cidFile").click();
-    $("triFile").onchange=e=>loadTri(e.target.files[0]);$("cidFile").onchange=e=>loadCid(e.target.files);
+    $("triBtn").onclick=()=>$("triFile").click();$("cidBtn").onclick=()=>$("cidFile").click();$("procBtn").onclick=()=>$("procFile").click();
+    $("triFile").onchange=e=>loadTri(e.target.files[0]);$("cidFile").onchange=e=>loadCid(e.target.files);$("procFile").onchange=e=>loadProcedimentos(e.target.files[0]);
     $("themeBtn").onclick=toggleTheme;$("printBtn").onclick=()=>exportarPDF();$("newBtn").onclick=resetApp;
+    document.querySelectorAll("[data-theme-choice]").forEach(btn=>{
+      btn.addEventListener("click",()=>setTheme(btn.dataset.themeChoice));
+    });
+    ["procFiltroEsp","procFiltroProf","procFiltroProc","procFiltroFat"].forEach(id=>{
+      const el=$(id);if(el)el.addEventListener("change",()=>{_dirtyPanes.add('procedimentos');renderProcedimentos();});
+    });
     // Troca de arquivo de histórico diretamente do topbar (sem perder o app aberto)
     const _hsw=$('histFileSwitch');
     if(_hsw){_hsw.addEventListener('change',e=>{
@@ -3682,6 +3989,71 @@
       // Marca todos os tabs como sujos usando os data-tab dos nav-items
       document.querySelectorAll('.nav-item[data-pane]').forEach(item => _dirtyPanes.add(item.dataset.pane));
     }
+    function setSelectOptions(id,values,allLabel){
+      const el=$(id);if(!el)return;
+      const cur=el.value||'all';
+      el.innerHTML=`<option value="all">${allLabel}</option>`+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+      el.value=values.includes(cur)?cur:'all';
+    }
+    function procFilteredRows(){
+      const esp=$('procFiltroEsp')?.value||'all';
+      const prof=$('procFiltroProf')?.value||'all';
+      const proc=$('procFiltroProc')?.value||'all';
+      const fat=$('procFiltroFat')?.value||'all';
+      return state.procRaw.filter(r=>
+        (esp==='all'||r.esp===esp)&&
+        (prof==='all'||r.prof===prof)&&
+        (proc==='all'||r.proc===proc)&&
+        (fat==='all'||r.faturavelFlag===fat)
+      );
+    }
+    function renderProcedimentos(){
+      const empty=$('procEmpty'), content=$('procContent');
+      if(!state.procRaw.length){
+        if(empty)empty.classList.remove('hidden');
+        if(content)content.classList.add('hidden');
+        return;
+      }
+      if(empty)empty.classList.add('hidden');
+      if(content)content.classList.remove('hidden');
+      setSelectOptions('procFiltroEsp',[...new Set(state.procRaw.map(r=>r.esp).filter(Boolean))].sort(),'Todas as especialidades');
+      setSelectOptions('procFiltroProf',[...new Set(state.procRaw.map(r=>r.prof).filter(Boolean))].sort(),'Todos os profissionais');
+      setSelectOptions('procFiltroProc',[...new Set(state.procRaw.map(r=>r.proc).filter(Boolean))].sort(),'Todos os procedimentos');
+      const rows=procFilteredRows();
+      state.procFilt=rows;
+      const total=sum(rows,r=>r.qde), profs=new Set(rows.map(r=>r.prof)).size, procs=new Set(rows.map(r=>r.proc)).size;
+      const fat=sum(rows.filter(r=>r.faturavelFlag==='S'),r=>r.qde);
+      $('kpisProc').innerHTML=[
+        kpi('Procedimentos',fmt(total),`${fmt(rows.length)} linhas do relatório`,'#3b82f6'),
+        kpi('Profissionais',fmt(profs),'com produção registrada','#22c55e'),
+        kpi('Tipos de procedimento',fmt(procs),'procedimentos distintos','#a78bfa'),
+        kpi('Média por profissional',profs?fmt(Math.round(total/profs)):'-','procedimentos/profissional','#f97316'),
+        kpi('Faturáveis',pct(fat,total),`${fmt(fat)} procedimentos`,'#06b6d4')
+      ].join('');
+      const byProf=Object.values(rows.reduce((m,r)=>{
+        const k=r.codProf+'|'+r.prof;
+        m[k]??={cod:r.codProf,prof:r.prof,esp:r.esp,total:0,tipos:new Set(),fat:0};
+        m[k].total+=r.qde;m[k].tipos.add(r.proc);if(r.faturavelFlag==='S')m[k].fat+=r.qde;
+        return m;
+      },{})).map(r=>({...r,tipos:r.tipos.size})).sort((a,b)=>b.total-a.total);
+      const byProc=Object.values(rows.reduce((m,r)=>{
+        const k=r.codProc+'|'+r.proc;
+        m[k]??={cod:r.codProc,proc:r.proc,total:0,profs:new Set(),fat:0};
+        m[k].total+=r.qde;m[k].profs.add(r.prof);if(r.faturavelFlag==='S')m[k].fat+=r.qde;
+        return m;
+      },{})).map(r=>({...r,profs:r.profs.size})).sort((a,b)=>b.total-a.total);
+      const byEsp=Object.entries(rows.reduce((m,r)=>{m[r.esp]=(m[r.esp]||0)+r.qde;return m},{})).sort((a,b)=>b[1]-a[1]);
+      const fatRows=[['Faturável',fat],['Não faturável',Math.max(total-fat,0)]];
+      const topProf=byProf.slice(0,12).reverse();
+      chart('chartProcProf',{type:'bar',data:{labels:topProf.map(r=>shortName(r.prof)),datasets:[{data:topProf.map(r=>r.total),backgroundColor:'#22c55e',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+      const topProc=byProc.slice(0,12).reverse();
+      chart('chartProcTop',{type:'bar',data:{labels:topProc.map(r=>r.proc.length>34?r.proc.slice(0,34)+'...':r.proc),datasets:[{data:topProc.map(r=>r.total),backgroundColor:'#3b82f6',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+      chart('chartProcEsp',{type:'bar',data:{labels:byEsp.map(([k])=>k),datasets:[{data:byEsp.map(([,v])=>v),backgroundColor:'#a78bfa',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+      chart('chartProcFat',{type:'doughnut',data:{labels:fatRows.map(r=>r[0]),datasets:[{data:fatRows.map(r=>r[1]),backgroundColor:['#06b6d4','#64748b'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true}}}}});
+      $('tableProcProf').innerHTML=`<thead><tr><th>#</th><th>Profissional</th><th>Especialidade</th><th>Total</th><th>Tipos</th><th>Faturável</th></tr></thead><tbody>${byProf.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.prof)}</td><td>${esc(r.esp)}</td><td class="mono">${fmt(r.total)}</td><td class="mono">${fmt(r.tipos)}</td><td class="mono">${pct(r.fat,r.total)}</td></tr>`).join('')}</tbody>`;
+      const detail=rows.slice().sort((a,b)=>b.qde-a.qde||a.prof.localeCompare(b.prof));
+      $('tableProcDetalhe').innerHTML=`<thead><tr><th>#</th><th>Profissional</th><th>Procedimento</th><th>Especialidade</th><th>Cód.</th><th>Fat.</th><th>Qtd.</th></tr></thead><tbody>${detail.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.prof)}</td><td>${esc(r.proc)}</td><td>${esc(r.esp)}</td><td class="mono">${esc(r.codProc)}</td><td class="mono">${esc(r.faturavel||'-')}</td><td class="mono">${fmt(r.qde)}</td></tr>`).join('')}</tbody>`;
+    }
     function renderActivePane() {
       const active = document.querySelector('.nav-item.active');
       const tab = active ? active.dataset.pane : 'geral';
@@ -3694,6 +4066,7 @@
         case 'fluxo':         renderFluxo(); break;
         case 'gargalos':      renderGargalos(); break;
         case 'medicos':       renderMedicos(); break;
+        case 'procedimentos':  renderProcedimentos(); break;
         case 'retornos':      renderRetornos(); break;
         case 'capacidade':    renderCapacidade(); break;
         case 'evolucao':      renderEvolucao(); break;
@@ -4333,17 +4706,17 @@
       _origSavePrefs();
       try{
         const ids=MANCHESTER_META_IDS;
-        const raw=localStorage.getItem(PREF_KEY);
+        const raw=readPrefsRaw();
         const p=raw?JSON.parse(raw):{};
         ids.forEach(id=>{const el=$(id);if(el)p[id]=el.value});
-        localStorage.setItem(PREF_KEY,JSON.stringify(p));
+        writePrefsRaw(JSON.stringify(p));
       }catch(e){}
     };
     const _origLoadPrefs=loadPrefs;
     loadPrefs=function(){
       _origLoadPrefs();
       try{
-        const raw=localStorage.getItem(PREF_KEY);if(!raw)return;
+        const raw=readPrefsRaw();if(!raw)return;
         const p=JSON.parse(raw);
         MANCHESTER_META_IDS.forEach(id=>{const el=$(id);if(el&&p[id]!=null)el.value=p[id]});
       }catch(e){}
@@ -4356,6 +4729,8 @@
     // ════════════════════════════════════════════════════════════
     // PAINEL PACIENTES
     // ════════════════════════════════════════════════════════════
+    loadPrefs();
+    syncThemeControls();
     function renderPacientes(){
       popularMesesAnot(); // reutiliza a função de anotações
       renderAnotLista();
@@ -5679,9 +6054,9 @@
     setTimeout(updateNavIndicators, 50);
     // ── Controle de densidade dos cards ──────────────────────────
     const DENSITY={
-      compact:{kpi:'160px', chart:'280px', gap:'8px'},
-      normal: {kpi:'215px', chart:'380px', gap:'12px'},
-      wide:   {kpi:'300px', chart:'520px', gap:'16px'},
+      compact:{kpi:'160px', chart:'320px', gap:'8px'},
+      normal: {kpi:'190px', chart:'360px', gap:'12px'},
+      wide:   {kpi:'260px', chart:'480px', gap:'16px'},
     };
     function applyDensity(d){
       const v=DENSITY[d]||DENSITY.normal;
