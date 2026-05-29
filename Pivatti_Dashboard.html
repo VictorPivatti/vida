@@ -2764,6 +2764,32 @@
       const tempoVals=m.flatMap(x=>[x.triAvg,x.medAvg,x.totAvg]).filter(Number.isFinite);
       chart("chartIndTempo",{type:"line",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{label:"Triagem",data:m.map(x=>x.triAvg),borderColor:"#3b82f6",tension:.3,spanGaps:true},{label:"Médico",data:m.map(x=>x.medAvg),borderColor:"#f97316",tension:.3,spanGaps:true},{label:"Total",data:m.map(x=>x.totAvg),borderColor:"#ef4444",tension:.3,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaTri"),label:"meta triagem",color:"#3b82f6"},{value:meta("metaMed"),label:"meta médico",color:"#f97316"},{value:meta("metaTotal"),label:"meta total",color:"#ef4444"}]}},scales:{...axes(),y:{...axes().y,suggestedMax:Math.max(meta("metaTri"),meta("metaMed"),meta("metaTotal"),...tempoVals,1)*1.15}}}});
       $("tableInd").innerHTML=`<thead><tr><th>Mês</th><th>Volume</th><th>Triagem média</th><th>Triagem na meta</th><th>Espera médico</th><th>Total médio</th><th>Status</th></tr></thead><tbody>${m.map(x=>{const ok=[x.vol>=meta("metaVol"),x.triAvg==null||x.triAvg<=meta("metaTri"),x.medAvg==null||x.medAvg<=meta("metaMed"),x.totAvg==null||x.totAvg<=meta("metaTotal")].filter(Boolean).length;return`<tr><td class="mono">${monthLabel(x.k)}</td><td class="mono">${fmt(x.vol)}</td><td class="mono">${x.triAvg==null?"-":Math.round(x.triAvg)+" min"}</td><td class="mono">${pct(x.triOk,x.triN)}</td><td class="mono">${x.medAvg==null?"-":Math.round(x.medAvg)+" min"}</td><td class="mono">${x.totAvg==null?"-":Math.round(x.totAvg)+" min"}</td><td class="mono ${ok>=3?"okc":ok>=2?"wnc":"erc"}">${ok}/4</td></tr>`}).join("")}</tbody>`;
+      // Conformidade Manchester por classificação de risco
+      const manch=manchesterConformidade(d);
+      const manchOrder=["VERMELHO","LARANJA","AMARELO","VERDE","AZUL","BRANCO"];
+      const manchRows=manchOrder.filter(cor=>manch[cor]);
+      const manchEl=$("tableManchester");
+      if(manchEl){
+        if(manchRows.length===0){
+          manchEl.innerHTML='<tbody><tr><td colspan="6" class="mono muted" style="padding:16px">Sem dados de espera m\u00e9dica registrados para calcular conform\u00e2ncia Manchester.</td></tr></tbody>';
+        } else {
+          const head='<thead><tr><th>Classifica\u00e7\u00e3o</th><th>Meta protocolo</th><th>Atend. c/ dado</th><th>Dentro da meta</th><th>Conform\u00e2ncia</th><th>Status</th></tr></thead>';
+          const body='<tbody>'+manchRows.map(cor=>{
+            const x=manch[cor];
+            const rate=x.total?x.ok/x.total*100:0;
+            const cls=rate>=90?"okc":rate>=70?"wnc":"erc";
+            const status=rate>=90?"\u2713 ok":rate>=70?"aten\u00e7\u00e3o":"fora";
+            const dot='<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+(RISK_COLOR[cor]||"#64748b")+';margin-right:6px"></span>';
+            return '<tr><td>'+dot+cor.charAt(0)+cor.slice(1).toLowerCase()+'</td>'
+              +'<td class="mono">'+(x.meta===0?"imediato":x.meta+" min")+'</td>'
+              +'<td class="mono">'+fmt(x.total)+'</td>'
+              +'<td class="mono">'+fmt(x.ok)+'</td>'
+              +'<td class="mono" style="color:'+(RISK_COLOR[cor]||"#64748b")+'">'+rate.toFixed(1)+'%</td>'
+              +'<td class="mono '+cls+'">'+status+'</td></tr>';
+          }).join('')+'</tbody>';
+          manchEl.innerHTML=head+body;
+        }
+      }
     }
     function renderFluxo(){
       const d=state.filt, prev=previousRows();
