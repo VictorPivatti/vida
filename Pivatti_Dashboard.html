@@ -2637,7 +2637,7 @@
     function renderAll_FULL_UNUSED(){destroyCharts();renderGeral();renderIndicadores();renderFluxo();renderGargalos();renderMedicos();renderRetornos();renderCapacidade();renderEvolucao();renderRelatorio();renderTriagem();renderCid();renderQuality();renderPrintCover()}
 
     function renderGeral(){
-      const d=state.filt,total=d.length,days=new Set(d.map(r=>r.dateKey)).size,meds=new Set(d.filter(r=>r.prof).map(r=>r.prof)).size;
+      const d=state.filt,total=d.length,days=new Set(d.map(r=>r.dateKey)).size,meds=new Set(d.filter(r=>r.prof).map(r=>norm(r.prof))).size;
       const prev=previousRows(), prevDays=new Set(prev.map(r=>r.dateKey)).size;
       const curDaily=days?Math.round(total/days):0, prevDaily=prevDays?Math.round(prev.length/prevDays):null;
       const curTotalTime=avg(d,r=>r.tTotal), prevTotalTime=avg(prev,r=>r.tTotal);
@@ -3018,21 +3018,43 @@
     }
     function renderCapacidade(){
       const d=state.filt, capM=Number($("capMed").value)||3, capT=Number($("capTri").value)||6;
-      const byHour=Array.from({length:24},(_,hora)=>({hora,n:0,tri:0,medicos:new Set(),triadores:new Set()}));
-      d.forEach(r=>{byHour[r.hora].n++;if(r.prof)byHour[r.hora].medicos.add(r.prof)});
-      state.triFilt.forEach(r=>{byHour[r.hora].tri++;if(r.triador)byHour[r.hora].triadores.add(r.triador)});
-      const medPressure=byHour.map(x=>x.medicos.size?x.n/(x.medicos.size*capM):x.n/capM);
-      const triPressure=byHour.map(x=>x.triadores.size?x.tri/(x.triadores.size*capT):(x.tri?x.tri/capT:0));
-      const medOver=byHour.filter((x,i)=>medPressure[i]>1), triOver=byHour.filter((x,i)=>triPressure[i]>1);
+      // FIX: agrupar por dateKey+hora (slot diário real) para evitar diluição de médicos em períodos longos
+      // Antes: acumulava todos os médicos que já trabalharam naquele horário no período todo → pressão subavaliada
+      // Agora: cada dia-hora é um slot independente; pressão média por hora do dia = média dos slots daquela hora
+      const medSlotMap={};
+      d.forEach(r=>{
+        const k=r.dateKey+"-"+r.hora;
+        medSlotMap[k]??={hora:r.hora,n:0,medicos:new Set()};
+        medSlotMap[k].n++;
+        if(r.prof)medSlotMap[k].medicos.add(norm(r.prof));
+      });
+      const triSlotMap={};
+      state.triFilt.forEach(r=>{
+        const k=r.dateKey+"-"+r.hora;
+        triSlotMap[k]??={hora:r.hora,tri:0,triadores:new Set()};
+        triSlotMap[k].tri++;
+        if(r.triador)triSlotMap[k].triadores.add(r.triador);
+      });
+      // Pressão por slot diário
+      const medSlots=Object.values(medSlotMap).map(s=>({...s,press:s.medicos.size?s.n/(s.medicos.size*capM):s.n/capM}));
+      const triSlots=Object.values(triSlotMap).map(s=>({...s,press:s.triadores.size?s.tri/(s.triadores.size*capT):s.tri/capT}));
+      // Médias de pressão por hora do dia (para gráfico)
+      const medPressure=Array.from({length:24},(_,h)=>{const ss=medSlots.filter(s=>s.hora===h);return ss.length?ss.reduce((a,s)=>a+s.press,0)/ss.length:0;});
+      const triPressure=Array.from({length:24},(_,h)=>{const ss=triSlots.filter(s=>s.hora===h);return ss.length?ss.reduce((a,s)=>a+s.press,0)/ss.length:0;});
+      // Pico de pressão por hora (para tabela)
+      const medPeak=Array.from({length:24},(_,h)=>{const ss=medSlots.filter(s=>s.hora===h);return ss.length?ss.reduce((m,s)=>s.press>m?s.press:m,0):0;});
+      const triPeak=Array.from({length:24},(_,h)=>{const ss=triSlots.filter(s=>s.hora===h);return ss.length?ss.reduce((m,s)=>s.press>m?s.press:m,0):0;});
+      // KPIs: horas do dia com pressão MÉDIA > 100%
+      const medOver=medPressure.filter(p=>p>1).length, triOver=triPressure.filter(p=>p>1).length;
       $("kpisCap").innerHTML=[
         kpi("Capacidade médica",`${capM}/h`,"parâmetro configurado por médico","#3b82f6"),
-        kpi("Horas acima — médico",fmt(medOver.length),"pressão > 100%","#ef4444"),
+        kpi("Horas acima — médico",fmt(medOver),"pressão média > 100%","#ef4444"),
         kpi("Capacidade triagem",`${capT}/h`,"parâmetro configurado por triador","#22c55e"),
-        kpi("Horas acima — triagem",fmt(triOver.length),"pressão > 100%","#f97316")
+        kpi("Horas acima — triagem",fmt(triOver),"pressão média > 100%","#f97316")
       ].join("");
-      chart("chartCapHora",{type:"line",data:{labels:byHour.map(x=>x.hora+"h"),datasets:[{label:"Pressão médica",data:medPressure.map(x=>+(x*100).toFixed(1)),borderColor:"#ef4444",backgroundColor:"rgba(239,68,68,.08)",tension:.3,fill:true},{label:"Pressão triagem",data:triPressure.map(x=>+(x*100).toFixed(1)),borderColor:"#22c55e",backgroundColor:"rgba(34,197,94,.08)",tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:100,label:"100% capacidade",color:"#eab308"}]}},scales:{...axes(),y:{...axes().y,ticks:{color:tickColor(),callback:v=>v+"%"},suggestedMax:Math.max(120,...medPressure.map(x=>x*100),...triPressure.map(x=>x*100))*1.1}}}});
-      const rows=byHour.map((x,i)=>({hora:x.hora,atend:x.n,medicos:x.medicos.size,pressMed:medPressure[i],tri:x.tri,triadores:x.triadores.size,pressTri:triPressure[i]})).filter(x=>x.pressMed>1||x.pressTri>1).sort((a,b)=>Math.max(b.pressMed,b.pressTri)-Math.max(a.pressMed,a.pressTri));
-      $("tableCap").innerHTML=`<thead><tr><th>Hora</th><th>Atendimentos</th><th>Médicos ativos</th><th>Pressão médica</th><th>Triagens</th><th>Triadores ativos</th><th>Pressão triagem</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="mono">${r.hora}h</td><td class="mono">${fmt(r.atend)}</td><td class="mono">${r.medicos||"-"}</td><td class="mono ${r.pressMed>1?"erc":"okc"}">${(r.pressMed*100).toFixed(0)}%</td><td class="mono">${fmt(r.tri)}</td><td class="mono">${r.triadores||"-"}</td><td class="mono ${r.pressTri>1?"erc":"okc"}">${(r.pressTri*100).toFixed(0)}%</td></tr>`).join("")||`<tr><td colspan="7" class="mono muted">Nenhum horário acima da capacidade configurada.</td></tr>`}</tbody>`;
+      chart("chartCapHora",{type:"line",data:{labels:Array.from({length:24},(_,i)=>i+"h"),datasets:[{label:"Pressão média médica",data:medPressure.map(x=>+(x*100).toFixed(1)),borderColor:"#ef4444",backgroundColor:"rgba(239,68,68,.08)",tension:.3,fill:true},{label:"Pressão média triagem",data:triPressure.map(x=>+(x*100).toFixed(1)),borderColor:"#22c55e",backgroundColor:"rgba(34,197,94,.08)",tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:100,label:"100% capacidade",color:"#eab308"}]}},scales:{...axes(),y:{...axes().y,ticks:{color:tickColor(),callback:v=>v+"%"},suggestedMax:Math.max(120,...medPressure.map(x=>x*100),...triPressure.map(x=>x*100))*1.1}}}});
+      const rows=Array.from({length:24},(_,h)=>({hora:h,pressMedAvg:medPressure[h],pressMedPeak:medPeak[h],pressTriAvg:triPressure[h],pressTriPeak:triPeak[h]})).filter(r=>r.pressMedAvg>1||r.pressTriAvg>1).sort((a,b)=>Math.max(b.pressMedAvg,b.pressTriAvg)-Math.max(a.pressMedAvg,a.pressTriAvg));
+      $("tableCap").innerHTML=`<thead><tr><th>Hora</th><th>Pressão méd. média</th><th>Pressão méd. pico</th><th>Pressão tri. média</th><th>Pressão tri. pico</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="mono">${r.hora}h</td><td class="mono ${r.pressMedAvg>1?"erc":"okc"}">${(r.pressMedAvg*100).toFixed(0)}%</td><td class="mono ${r.pressMedPeak>1?"erc":""}">pico ${(r.pressMedPeak*100).toFixed(0)}%</td><td class="mono ${r.pressTriAvg>1?"erc":"okc"}">${(r.pressTriAvg*100).toFixed(0)}%</td><td class="mono ${r.pressTriPeak>1?"erc":""}">pico ${(r.pressTriPeak*100).toFixed(0)}%</td></tr>`).join("")||`<tr><td colspan="5" class="mono muted">Nenhum horário com pressão média acima da capacidade no período.</td></tr>`}</tbody>`;
     }
     function monthReturnRate(rows,k){
       const mRows=rows.filter(r=>r.anoMes===k), ret=returnsWithin(mRows,72);
