@@ -2866,8 +2866,9 @@
       const d=state.filt.filter(r=>r.tConsulta==null||r.tConsulta<=60), map={};
       d.forEach(r=>{
         if(!r.prof)return;
-        map[r.prof]??={prof:r.prof,total:0,D:0,N:0,tri:[],med:[],tot:[],risks:{},diasD:new Set(),diasN:new Set()};
-        const x=map[r.prof];
+        const profKey=norm(r.prof);
+        map[profKey]??={prof:r.prof,total:0,D:0,N:0,tri:[],med:[],tot:[],risks:{},diasD:new Set(),diasN:new Set()};
+        const x=map[profKey];
         x.total++;x[r.turno]++;
         if(r.tEspTri!=null)x.tri.push(r.tEspTri);
         if(r.tEspMed!=null)x.med.push(r.tEspMed);
@@ -2883,7 +2884,7 @@
         const mediaPlantao=plantTotal>0?Math.round(x.total/plantTotal):null;
         const mediaPlantaoD=plantD>0?Math.round(x.D/plantD):null;
         const mediaPlantaoN=plantN>0?Math.round(x.N/plantN):null;
-        const _rows=d.filter(r=>shortName(r.prof||"")=== shortName(x.prof||""));
+        const _rows=d.filter(r=>norm(r.prof||"")===norm(x.prof||""));
         const _pontos=calcularPontos(_rows);
         const _le2=_rows.filter(r=>r.idade!=null&&r.idade<=2).length;
         const _le12=_rows.filter(r=>r.idade!=null&&r.idade<=12).length;
@@ -2978,13 +2979,14 @@
       const retByMed={};
       ret.forEach(r=>{
         if(!r.prof)return;
-        retByMed[r.prof]??={prof:r.prof,total:0,critico:0,piora:0};
-        retByMed[r.prof].total++;
-        if(["AMARELO","LARANJA","VERMELHO"].includes(r.cor))retByMed[r.prof].critico++;
-        if(riskWeight(r.cor)>riskWeight(r.prev?.cor))retByMed[r.prof].piora++;
+        const retProfKey=norm(r.prof);
+        retByMed[retProfKey]??={prof:r.prof,total:0,critico:0,piora:0};
+        retByMed[retProfKey].total++;
+        if(["AMARELO","LARANJA","VERMELHO"].includes(r.cor))retByMed[retProfKey].critico++;
+        if(riskWeight(r.cor)>riskWeight(r.prev?.cor))retByMed[retProfKey].piora++;
       });
       // Adicionar total de atendimentos do médico para calcular taxa
-      const allByMed={};d.forEach(r=>{if(!r.prof)return;allByMed[r.prof]=(allByMed[r.prof]||0)+1});
+      const allByMed={};d.forEach(r=>{if(!r.prof)return;const k=norm(r.prof);allByMed[k]=(allByMed[k]||0)+1});
       const topMedRet=Object.values(retByMed)
         .map(x=>({...x,totalAtend:allByMed[x.prof]||0,taxa:allByMed[x.prof]?+(x.total/allByMed[x.prof]*100).toFixed(1):null}))
         .sort((a,b)=>b.total-a.total).slice(0,15);
