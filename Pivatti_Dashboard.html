@@ -2801,26 +2801,32 @@
         if(manchRows.length===0){
           manchEl.innerHTML='<tbody><tr><td colspan="6" class="mono muted" style="padding:16px">Sem dados de espera m\u00e9dica registrados para calcular conform\u00e2ncia Manchester.</td></tr></tbody>';
         } else {
-          const head='<thead><tr><th>Classifica\u00e7\u00e3o</th><th>Meta</th><th>c/ dado</th><th>Sem dado</th><th>Cobertura</th><th>Dentro da meta</th><th>Conform\u00e2ncia</th><th>Status</th></tr></thead>';
+          const head='<thead><tr><th>Classifica\u00e7\u00e3o</th><th>Meta</th><th>Conform. geral</th><th>Diurno</th><th>Noturno</th><th>Cobertura</th><th>Status</th></tr></thead>';
           const body='<tbody>'+manchRows.map(cor=>{
             const x=manch[cor];
             const totalCor=x.total+(x.semDado||0);
             const cobertura=totalCor?x.total/totalCor*100:0;
-            const baixaCobertura=cobertura<50&&totalCor>0;
+            const baixaCob=cobertura<50&&totalCor>0;
             const rate=x.total?x.ok/x.total*100:0;
+            const rateD=x.D?.total?x.D.ok/x.D.total*100:null;
+            const rateN=x.N?.total?x.N.ok/x.N.total*100:null;
             const cls=rate>=90?"okc":rate>=70?"wnc":"erc";
             const status=rate>=90?"\u2713 ok":rate>=70?"aten\u00e7\u00e3o":"fora";
             const dot='<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+(RISK_COLOR[cor]||"#64748b")+';margin-right:6px"></span>';
-            const coberturaCell=baixaCobertura
-              ?'<td class="mono wnc" title="Cobertura baixa: menos da metade dos atendimentos tem hora do m\u00e9dico registrada. A conformidade pode n\u00e3o ser representativa.">'+cobertura.toFixed(0)+'% \u26a0\ufe0f</td>'
-              :'<td class="mono">'+cobertura.toFixed(0)+'%</td>';
+            const cobCell=baixaCob
+              ?'<td class="mono wnc" title="Cobertura baixa: menos de 50% tem hora do m\u00e9dico registrada.">'+cobertura.toFixed(0)+'% \u26a0\ufe0f</td>'
+              :'<td class="mono">'+cobertura.toFixed(0)+'% <span class="muted">('+fmt(x.total)+'/'+fmt(totalCor)+')</span></td>';
+            // Flag turno com pior desempenho
+            const difDN=rateD!=null&&rateN!=null?Math.abs(rateD-rateN):0;
+            const piordDN=difDN>=10?(rateD<rateN?'D':'N'):null;
+            const fmtTurno=(r,t)=>r==null?'<td class="mono muted">-</td>'
+              :'<td class="mono '+(r<70?"erc":r<90?"wnc":"okc")+(piordDN===t?" font-weight:700":"")+'" title="'+(t==="D"?"Plantão diurno":"Plantão noturno")+'">'+r.toFixed(1)+'%</td>';
             return '<tr><td>'+dot+cor.charAt(0)+cor.slice(1).toLowerCase()+'</td>'
               +'<td class="mono">'+(x.meta===0?"imediato":x.meta+" min")+'</td>'
-              +'<td class="mono">'+fmt(x.total)+'</td>'
-              +'<td class="mono muted">'+fmt(x.semDado||0)+'</td>'
-              +coberturaCell
-              +'<td class="mono">'+fmt(x.ok)+'</td>'
               +'<td class="mono" style="color:'+(RISK_COLOR[cor]||"#64748b")+'">'+rate.toFixed(1)+'%</td>'
+              +fmtTurno(rateD,"D")
+              +fmtTurno(rateN,"N")
+              +cobCell
               +'<td class="mono '+cls+'">'+status+'</td></tr>';
           }).join('')+'</tbody>';
           manchEl.innerHTML=head+body;
@@ -4644,10 +4650,19 @@
     function manchesterConformidade(rows){
       const byRisco={};
       rows.forEach(r=>{
-        if(!r.cor||r.tEspMed==null)return;
-        byRisco[r.cor]=byRisco[r.cor]||{total:0,ok:0,meta:metaManchester(r.cor)};
-        byRisco[r.cor].total++;
-        if(r.tEspMed<=byRisco[r.cor].meta)byRisco[r.cor].ok++;
+        if(!r.cor)return;
+        byRisco[r.cor]=byRisco[r.cor]||{
+          total:0,ok:0,semDado:0,meta:metaManchester(r.cor),
+          D:{total:0,ok:0},N:{total:0,ok:0}
+        };
+        const x=byRisco[r.cor];
+        if(r.tEspMed==null){x.semDado++;return;}
+        x.total++;
+        if(r.tEspMed<=x.meta)x.ok++;
+        // Breakdown por turno
+        const t=(r.turno==='D'||r.turno==='N')?r.turno:'D';
+        x[t].total++;
+        if(r.tEspMed<=x.meta)x[t].ok++;
       });
       return byRisco;
     }
