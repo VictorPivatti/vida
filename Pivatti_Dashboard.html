@@ -1429,6 +1429,7 @@
         <span class="flabel">Médico</span>
         <input class="field" id="filtroMedico" list="filtroMedicoList" placeholder="Todos…" autocomplete="off" style="max-width:150px">
         <datalist id="filtroMedicoList"></datalist>
+          <span id="filtroMedicoCount" style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--ac);background:var(--ac-glow);border:1px solid var(--ac);border-radius:99px;padding:1px 7px;display:none;white-space:nowrap"></span>
         <span class="flabel">Risco</span>
         <select class="field" id="filtroRisco" style="max-width:88px">
           <option value="all">Todos</option>
@@ -3010,6 +3011,20 @@
       const scoreSub=isExc?"Metas principais dentro do esperado.":isAtt?`${bad} alerta${bad!==1?"s":""} crítico${bad!==1?"s":""}, ${warn} de atenção.`:`${bad} alerta${bad!==1?"s":""} crítico${bad!==1?"s":""} identificado${bad!==1?"s":""}.`;
       // Régua: 3 zonas — crítico 0-61 (vermelho), atenção 62-81 (amarelo), excelente 82-100 (verde)
       const trackGrad=`linear-gradient(to right, var(--er) 0%, var(--er) ${fl.attention}%, var(--wn) ${fl.attention}%, var(--wn) ${fl.excellent}%, var(--ok) ${fl.excellent}%, var(--ok) 100%)`;
+      const penItems=[];
+      if(bad>0)penItems.push({label:`${bad} alerta${bad>1?"s":""} crítico${bad>1?"s":""}`,val:-(bad*p.criticalAlert),tip:`${bad} × 24 pts`});
+      if(warn>0)penItems.push({label:`${warn} alerta${warn>1?"s":""} de atenção`,val:-(warn*p.warningAlert),tip:`${warn} × 9 pts`});
+      const penRet=Math.max(0,retRate-meta("metaRet"))*p.retornoPerPoint;
+      if(penRet>0)penItems.push({label:`Retorno ${retRate.toFixed(1)}% (meta ${meta("metaRet")}%)`,val:-penRet,tip:`${(retRate-meta("metaRet")).toFixed(1)} pp × 1,4`});
+      const penMed=Math.max(0,(tMed||0)-meta("metaMed"))*p.medicoPerMinute;
+      if(penMed>0)penItems.push({label:`Espera médico ${tMed!=null?Math.round(tMed)+" min":"-"} (meta ${meta("metaMed")} min)`,val:-penMed,tip:`${Math.round((tMed||0)-meta("metaMed"))} min × 0,35`});
+      const penTri=Math.max(0,(tTri||0)-meta("metaTri"))*p.triagemPerMinute;
+      if(penTri>0)penItems.push({label:`Espera triagem ${tTri!=null?Math.round(tTri)+" min":"-"} (meta ${meta("metaTri")} min)`,val:-penTri,tip:`${Math.round((tTri||0)-meta("metaTri"))} min × 0,45`});
+      const penTot=Math.max(0,(totalTime||0)-meta("metaTotal"))*p.totalPerMinute;
+      if(penTot>0)penItems.push({label:`Tempo total ${totalTime!=null?Math.round(totalTime)+" min":"-"} (meta ${meta("metaTotal")} min)`,val:-penTot,tip:`${Math.round((totalTime||0)-meta("metaTotal"))} min × 0,18`});
+      const penGrave=Math.max(0,graveRate-35)*p.graveShareOver35PerPoint;
+      if(penGrave>0)penItems.push({label:`Casos amarelo+ ${graveRate.toFixed(1)}% (acima de 35%)`,val:-penGrave,tip:`${(graveRate-35).toFixed(1)} pp × 0,35`});
+      const penHTML=penItems.length?penItems.map(x=>`<div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:3px"><span style="color:var(--txt2)">${esc(x.label)}</span><span style="color:var(--er);font-weight:700;white-space:nowrap" title="${esc(x.tip)}">${Math.round(x.val)} pts</span></div>`).join(""):`<div style="color:var(--ok)">Nenhuma penalidade aplicada no período.</div>`;
       $("execSituation").innerHTML=`
         <div class="card-title">Situação executiva</div>
         <div class="exec-score-row">
@@ -3033,7 +3048,19 @@
         </div>
         <div class="k-sub" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr)">
           Demanda: ${fmt(total)} atendimentos (${fmt(daily)}/dia) · Permanência média: ${totalTime==null?"-":Math.round(totalTime)+" min"} · Retorno 72h: ${retRate.toFixed(1)}% · Casos amarelo+: ${graveRate.toFixed(1)}%
-        </div>`;
+        </div>
+        <details style="margin-top:10px">
+          <summary style="cursor:pointer;font-size:11px;color:var(--mut);user-select:none">ℹ Metodologia do score</summary>
+          <div style="margin-top:8px;padding:10px 12px;background:var(--sur2);border:1px solid var(--bdr);border-radius:8px;font-size:11px;font-family:'Geist Mono',monospace">
+            <div style="font-weight:700;margin-bottom:8px;color:var(--txt)">Base: 100 pts — penalidades aplicadas:</div>
+            ${penHTML}
+            <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--bdr);display:flex;justify-content:space-between">
+              <span style="color:var(--mut)">Score final</span>
+              <span style="font-weight:800;color:${scoreColor}">${score} pts</span>
+            </div>
+            <div style="margin-top:6px;color:var(--mut);font-size:10px">Zonas: &lt;62 Crítico · 62–81 Atenção · ≥82 Excelente</div>
+          </div>
+        </details>`;
       $("execAlerts").innerHTML=alerts.slice(0,4).map(([t,title,msg])=>`<div class="exec-alert"><span class="dot" style="background:var(--${t==="err"?"er":t==="warn"?"wn":t==="ok"?"ok":"inf"})"></span><div><strong>${esc(title)}</strong><span class="mono">${esc(msg)}</span></div></div>`).join("");
     }
     function renderHeatmap(rows){
@@ -3078,7 +3105,40 @@
       chart("chartIndTri",{type:"bar",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{data:m.map(x=>x.triN?+(x.triOk/x.triN*100).toFixed(1):null),backgroundColor:m.map(x=>x.triN&&x.triOk/x.triN>=.9?"#22c55e":"#ef4444"),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},targetLine:{lines:[{value:90,label:"meta 90%",color:"#eab308"}]}},scales:{...axes(),y:{grid:{color:gridColor()},ticks:{color:tickColor(),callback:v=>v+"%"},max:100}}}});
       const tempoVals=m.flatMap(x=>[x.triAvg,x.medAvg,x.totAvg]).filter(Number.isFinite);
       chart("chartIndTempo",{type:"line",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{label:"Triagem",data:m.map(x=>x.triAvg),borderColor:"#3b82f6",tension:.3,spanGaps:true},{label:"Médico",data:m.map(x=>x.medAvg),borderColor:"#f97316",tension:.3,spanGaps:true},{label:"Total",data:m.map(x=>x.totAvg),borderColor:"#ef4444",tension:.3,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaTri"),label:"meta triagem",color:"#3b82f6"},{value:meta("metaMed"),label:"meta médico",color:"#f97316"},{value:meta("metaTotal"),label:"meta total",color:"#ef4444"}]}},scales:{...axes(),y:{...axes().y,suggestedMax:Math.max(meta("metaTri"),meta("metaMed"),meta("metaTotal"),...tempoVals,1)*1.15}}}});
-      $("tableInd").innerHTML=`<thead><tr><th>Mês</th><th>Volume</th><th>Triagem média</th><th>Triagem na meta</th><th>Espera médico</th><th>Total médio</th><th>Status</th></tr></thead><tbody>${m.map(x=>{const ok=[x.vol>=meta("metaVol"),x.triAvg==null||x.triAvg<=meta("metaTri"),x.medAvg==null||x.medAvg<=meta("metaMed"),x.totAvg==null||x.totAvg<=meta("metaTotal")].filter(Boolean).length;return`<tr><td class="mono">${monthLabel(x.k)}</td><td class="mono">${fmt(x.vol)}</td><td class="mono">${x.triAvg==null?"-":Math.round(x.triAvg)+" min"}</td><td class="mono">${pct(x.triOk,x.triN)}</td><td class="mono">${x.medAvg==null?"-":Math.round(x.medAvg)+" min"}</td><td class="mono">${x.totAvg==null?"-":Math.round(x.totAvg)+" min"}</td><td class="mono ${ok>=3?"okc":ok>=2?"wnc":"erc"}">${ok}/4</td></tr>`}).join("")}</tbody>`;
+      // Conformidade Manchester por classificação de risco
+      const manch=manchesterConformidade(d);
+      const manchOrder=["VERMELHO","LARANJA","AMARELO","VERDE","AZUL","BRANCO"];
+      const manchRows=manchOrder.filter(cor=>manch[cor]);
+      const manchEl=$("tableManchester");
+      if(manchEl){
+        if(!manchRows.length){manchEl.innerHTML='<tbody><tr><td colspan="8" class="mono muted" style="padding:16px">Sem dados de espera m\u00e9dica registrados para calcular conform\u00e2ncia Manchester.</td></tr></tbody>';}
+        else{
+          const head='<thead><tr><th>Classifica\u00e7\u00e3o</th><th>Meta</th><th>Conform. geral</th><th>Diurno</th><th>Noturno</th><th>Cobertura</th><th>Status</th></tr></thead>';
+          const body='<tbody>'+manchRows.map(cor=>{
+            const x=manch[cor];
+            const totalCor=x.total+(x.semDado||0);
+            const cobertura=totalCor?x.total/totalCor*100:0;
+            const baixaCob=cobertura<50&&totalCor>0;
+            const rate=x.total?x.ok/x.total*100:0;
+            const rateD=x.D?.total?x.D.ok/x.D.total*100:null;
+            const rateN=x.N?.total?x.N.ok/x.N.total*100:null;
+            const cls=rate>=90?"okc":rate>=70?"wnc":"erc";
+            const status=rate>=90?"\u2713 ok":rate>=70?"aten\u00e7\u00e3o":"fora";
+            const dot='<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+(RISK_COLOR[cor]||"#64748b")+';margin-right:6px"></span>';
+            const cobCell=baixaCob?'<td class="mono wnc" title="Cobertura baixa">'+cobertura.toFixed(0)+'% \u26a0\ufe0f</td>':'<td class="mono">'+cobertura.toFixed(0)+'% <span class="muted">('+fmt(x.total)+'/'+fmt(totalCor)+')</span></td>';
+            const difDN=rateD!=null&&rateN!=null?Math.abs(rateD-rateN):0;
+            const piordDN=difDN>=10?(rateD<rateN?'D':'N'):null;
+            const fmtTurno=(r,t)=>r==null?'<td class="mono muted">-</td>':'<td class="mono '+(r<70?"erc":r<90?"wnc":"okc")+'" title="'+(t==="D"?"Plantão diurno":"Plantão noturno")+'">'+r.toFixed(1)+'%'+(piordDN===t?' \u26a0\ufe0f':'')+' </td>';
+            return '<tr><td>'+dot+cor.charAt(0)+cor.slice(1).toLowerCase()+'</td>'
+              +'<td class="mono">'+(x.meta===0?"imediato":x.meta+" min")+'</td>'
+              +'<td class="mono" style="color:'+(RISK_COLOR[cor]||"#64748b")+'">'+rate.toFixed(1)+'%</td>'
+              +fmtTurno(rateD,"D")+fmtTurno(rateN,"N")+cobCell
+              +'<td class="mono '+cls+'">'+status+'</td></tr>';
+          }).join('')+'</tbody>';
+          manchEl.innerHTML=head+body;
+        }
+      }
+            $("tableInd").innerHTML=`<thead><tr><th>Mês</th><th>Volume</th><th>Triagem média</th><th>Triagem na meta</th><th>Espera médico</th><th>Total médio</th><th>Status</th></tr></thead><tbody>${m.map(x=>{const ok=[x.vol>=meta("metaVol"),x.triAvg==null||x.triAvg<=meta("metaTri"),x.medAvg==null||x.medAvg<=meta("metaMed"),x.totAvg==null||x.totAvg<=meta("metaTotal")].filter(Boolean).length;return`<tr><td class="mono">${monthLabel(x.k)}</td><td class="mono">${fmt(x.vol)}</td><td class="mono">${x.triAvg==null?"-":Math.round(x.triAvg)+" min"}</td><td class="mono">${pct(x.triOk,x.triN)}</td><td class="mono">${x.medAvg==null?"-":Math.round(x.medAvg)+" min"}</td><td class="mono">${x.totAvg==null?"-":Math.round(x.totAvg)+" min"}</td><td class="mono ${ok>=3?"okc":ok>=2?"wnc":"erc"}">${ok}/4</td></tr>`}).join("")}</tbody>`;
     }
     function renderFluxo(){
       const d=state.filt, prev=previousRows();
@@ -3105,14 +3165,17 @@
     }
     function renderGargalos(){
       const buckets=hourBuckets(state.filt);
-      const topMed=[...buckets].filter(x=>x.medAvg!=null).sort((a,b)=>b.medAvg-a.medAvg)[0];
-      const topTri=[...buckets].filter(x=>x.triAvg!=null).sort((a,b)=>b.triAvg-a.triAvg)[0];
       const topVol=[...buckets].sort((a,b)=>b.n-a.n)[0];
       const topCarga=[...buckets].sort((a,b)=>b.carga-a.carga)[0];
       const label=x=>x?`${DOW[x.diaSem]} ${x.hora}h`:"-";
+      const medPicos=state.filt.filter(r=>r.tEspMed!=null);
+      const triPicos=state.filt.filter(r=>r.tEspTri!=null);
+      const medPicoMax=medPicos.length?medPicos.reduce((m,r)=>r.tEspMed>m.tEspMed?r:m):null;
+      const triPicoMax=triPicos.length?triPicos.reduce((m,r)=>r.tEspTri>m.tEspTri?r:m):null;
+      const picoLabel=r=>r&&r.dh?r.dh.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"})+" "+String(r.dh.getHours()).padStart(2,"0")+"h":"-";
       $("kpisGargalos").innerHTML=[
-        kpi("Maior espera médica",topMed?Math.round(topMed.medAvg)+" min":"-",label(topMed),"#f97316"),
-        kpi("Maior espera triagem",topTri?Math.round(topTri.triAvg)+" min":"-",label(topTri),"#3b82f6"),
+        kpi("Maior espera médica",medPicoMax?Math.round(medPicoMax.tEspMed)+" min":"-",picoLabel(medPicoMax),"#f97316"),
+        kpi("Maior espera triagem",triPicoMax?Math.round(triPicoMax.tEspTri)+" min":"-",picoLabel(triPicoMax),"#3b82f6"),
         kpi("Maior volume horario",topVol?fmt(topVol.n):"-",label(topVol),"#22c55e"),
         kpi("Maior carga estimada",topCarga?topCarga.carga.toFixed(1):"-",`${label(topCarga)} - atend × permanência`,"#ef4444")
       ].join("");
@@ -3316,7 +3379,7 @@
       const retByMed={};
       ret.forEach(r=>{
         if(!r.prof)return;
-        retByMed[r.prof]??={prof:r.prof,total:0,critico:0,piora:0};
+        const retProfKey=norm(r.prof);retByMed[retProfKey]??={prof:r.prof,total:0,critico:0,piora:0};
         retByMed[r.prof].total++;
         if(["AMARELO","LARANJA","VERMELHO"].includes(r.cor))retByMed[r.prof].critico++;
         if(riskWeight(r.cor)>riskWeight(r.prev?.cor))retByMed[r.prof].piora++;
@@ -3350,21 +3413,27 @@
     }
     function renderCapacidade(){
       const d=state.filt, capM=Number($("capMed").value)||3, capT=Number($("capTri").value)||6;
-      const byHour=Array.from({length:24},(_,hora)=>({hora,n:0,tri:0,medicos:new Set(),triadores:new Set()}));
-      d.forEach(r=>{byHour[r.hora].n++;if(r.prof)byHour[r.hora].medicos.add(r.prof)});
-      state.triFilt.forEach(r=>{byHour[r.hora].tri++;if(r.triador)byHour[r.hora].triadores.add(r.triador)});
-      const medPressure=byHour.map(x=>x.medicos.size?x.n/(x.medicos.size*capM):x.n/capM);
-      const triPressure=byHour.map(x=>x.triadores.size?x.tri/(x.triadores.size*capT):(x.tri?x.tri/capT:0));
-      const medOver=byHour.filter((x,i)=>medPressure[i]>1), triOver=byHour.filter((x,i)=>triPressure[i]>1);
+      const medSlotMap={};
+      d.forEach(r=>{const k=r.dateKey+"-"+r.hora;medSlotMap[k]??={hora:r.hora,dateKey:r.dateKey,n:0,medicos:new Set()};medSlotMap[k].n++;if(r.prof)medSlotMap[k].medicos.add(norm(r.prof));});
+      const triSlotMap={};
+      state.triFilt.forEach(r=>{const k=r.dateKey+"-"+r.hora;triSlotMap[k]??={hora:r.hora,dateKey:r.dateKey,tri:0,triadores:new Set()};triSlotMap[k].tri++;if(r.triador)triSlotMap[k].triadores.add(r.triador);});
+      const medSlots=Object.values(medSlotMap).map(s=>({...s,press:s.medicos.size?s.n/(s.medicos.size*capM):s.n/capM}));
+      const triSlots=Object.values(triSlotMap).map(s=>({...s,press:s.triadores.size?s.tri/(s.triadores.size*capT):s.tri/capT}));
+      const medPressure=Array.from({length:24},(_,h)=>{const ss=medSlots.filter(s=>s.hora===h);return ss.length?ss.reduce((a,s)=>a+s.press,0)/ss.length:0;});
+      const triPressure=Array.from({length:24},(_,h)=>{const ss=triSlots.filter(s=>s.hora===h);return ss.length?ss.reduce((a,s)=>a+s.press,0)/ss.length:0;});
+      const medPeakSlot=Array.from({length:24},(_,h)=>{const ss=medSlots.filter(s=>s.hora===h);return ss.length?ss.reduce((m,s)=>s.press>m.press?s:m,{press:0}):null;});
+      const triPeakSlot=Array.from({length:24},(_,h)=>{const ss=triSlots.filter(s=>s.hora===h);return ss.length?ss.reduce((m,s)=>s.press>m.press?s:m,{press:0}):null;});
+      const fmtDate=dk=>dk?dk.slice(8,10)+"/"+dk.slice(5,7):"-";
+      const medOver=medPressure.filter(p=>p>1).length, triOver=triPressure.filter(p=>p>1).length;
       $("kpisCap").innerHTML=[
         kpi("Capacidade médica",`${capM}/h`,"parâmetro configurado por médico","#3b82f6"),
-        kpi("Horas acima — médico",fmt(medOver.length),"pressão > 100%","#ef4444"),
+        kpi("Horas acima — médico",fmt(medOver),"pressão média > 100%","#ef4444"),
         kpi("Capacidade triagem",`${capT}/h`,"parâmetro configurado por triador","#22c55e"),
-        kpi("Horas acima — triagem",fmt(triOver.length),"pressão > 100%","#f97316")
+        kpi("Horas acima — triagem",fmt(triOver),"pressão média > 100%","#f97316")
       ].join("");
-      chart("chartCapHora",{type:"line",data:{labels:byHour.map(x=>x.hora+"h"),datasets:[{label:"Pressão médica",data:medPressure.map(x=>+(x*100).toFixed(1)),borderColor:"#ef4444",backgroundColor:"rgba(239,68,68,.08)",tension:.3,fill:true},{label:"Pressão triagem",data:triPressure.map(x=>+(x*100).toFixed(1)),borderColor:"#22c55e",backgroundColor:"rgba(34,197,94,.08)",tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:100,label:"100% capacidade",color:"#eab308"}]}},scales:{...axes(),y:{...axes().y,ticks:{color:tickColor(),callback:v=>v+"%"},suggestedMax:Math.max(120,...medPressure.map(x=>x*100),...triPressure.map(x=>x*100))*1.1}}}});
-      const rows=byHour.map((x,i)=>({hora:x.hora,atend:x.n,medicos:x.medicos.size,pressMed:medPressure[i],tri:x.tri,triadores:x.triadores.size,pressTri:triPressure[i]})).filter(x=>x.pressMed>1||x.pressTri>1).sort((a,b)=>Math.max(b.pressMed,b.pressTri)-Math.max(a.pressMed,a.pressTri));
-      $("tableCap").innerHTML=`<thead><tr><th>Hora</th><th>Atendimentos</th><th>Médicos ativos</th><th>Pressão médica</th><th>Triagens</th><th>Triadores ativos</th><th>Pressão triagem</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="mono">${r.hora}h</td><td class="mono">${fmt(r.atend)}</td><td class="mono">${r.medicos||"-"}</td><td class="mono ${r.pressMed>1?"erc":"okc"}">${(r.pressMed*100).toFixed(0)}%</td><td class="mono">${fmt(r.tri)}</td><td class="mono">${r.triadores||"-"}</td><td class="mono ${r.pressTri>1?"erc":"okc"}">${(r.pressTri*100).toFixed(0)}%</td></tr>`).join("")||`<tr><td colspan="7" class="mono muted">Nenhum horário acima da capacidade configurada.</td></tr>`}</tbody>`;
+      chart("chartCapHora",{type:"line",data:{labels:Array.from({length:24},(_,i)=>i+"h"),datasets:[{label:"Pressão média médica",data:medPressure.map(x=>+(x*100).toFixed(1)),borderColor:"#ef4444",backgroundColor:"rgba(239,68,68,.08)",tension:.3,fill:true},{label:"Pressão média triagem",data:triPressure.map(x=>+(x*100).toFixed(1)),borderColor:"#22c55e",backgroundColor:"rgba(34,197,94,.08)",tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:100,label:"100% capacidade",color:"#eab308"}]}},scales:{...axes(),y:{...axes().y,ticks:{color:tickColor(),callback:v=>v+"%"},suggestedMax:Math.max(120,...medPressure.map(x=>x*100),...triPressure.map(x=>x*100))*1.1}}}});
+      const rows=Array.from({length:24},(_,h)=>({hora:h,pressMedAvg:medPressure[h],medPeakSlot:medPeakSlot[h],pressTriAvg:triPressure[h],triPeakSlot:triPeakSlot[h]})).filter(r=>r.pressMedAvg>1||r.pressTriAvg>1).sort((a,b)=>Math.max(b.pressMedAvg,b.pressTriAvg)-Math.max(a.pressMedAvg,a.pressTriAvg));
+      $("tableCap").innerHTML=`<thead><tr><th>Hora</th><th>Pressão méd. média</th><th>Pico médico</th><th>Pressão tri. média</th><th>Pico triagem</th></tr></thead><tbody>${rows.map(r=>{const mpPress=r.medPeakSlot?.press||0,mpDate=fmtDate(r.medPeakSlot?.dateKey);const tpPress=r.triPeakSlot?.press||0,tpDate=fmtDate(r.triPeakSlot?.dateKey);return`<tr><td class="mono">${r.hora}h</td><td class="mono ${r.pressMedAvg>1?"erc":"okc"}">${(r.pressMedAvg*100).toFixed(0)}%</td><td class="mono ${mpPress>1?"erc":""}">${(mpPress*100).toFixed(0)}% em ${mpDate}</td><td class="mono ${r.pressTriAvg>1?"erc":"okc"}">${(r.pressTriAvg*100).toFixed(0)}%</td><td class="mono ${tpPress>1?"erc":""}">${(tpPress*100).toFixed(0)}% em ${tpDate}</td></tr>`;}).join("")||`<tr><td colspan="5" class="mono muted">Nenhum horário com pressão média acima da capacidade no período.</td></tr>`}</tbody>`;
     }
     function monthReturnRate(rows,k){
       const mRows=rows.filter(r=>r.anoMes===k), ret=returnsWithin(mRows,72);
@@ -3469,8 +3538,11 @@
     function buildReportText(){
       const {s,e}=dateRange(), d=state.filt, m=monthlyStats(d), {ret}=returns72(), alerts=topAlerts(d);
       const days=new Set(d.map(r=>r.dateKey)).size, tTri=avg(d,r=>r.tEspTri), tMed=avg(d,r=>r.tEspMed), tTot=avg(d,r=>r.tTotal);
-      const buckets=hourBuckets(d), topMed=[...buckets].filter(x=>x.medAvg!=null).sort((a,b)=>b.medAvg-a.medAvg)[0], topVol=[...buckets].sort((a,b)=>b.n-a.n)[0];
-      const medLine=topMed?`${DOW[topMed.diaSem]} ${topMed.hora}h, com espera médica média de ${Math.round(topMed.medAvg)} min`:"sem dados suficientes";
+      const buckets=hourBuckets(d), topVol=[...buckets].sort((a,b)=>b.n-a.n)[0];
+      const medPicosRel=d.filter(r=>r.tEspMed!=null);
+      const medPicoMaxRel=medPicosRel.length?medPicosRel.reduce((m,r)=>r.tEspMed>m.tEspMed?r:m):null;
+      const picoLabelRel=r=>r&&r.dh?r.dh.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"})+" "+String(r.dh.getHours()).padStart(2,"0")+"h":"-";
+      const medLine=medPicoMaxRel?`pico de ${Math.round(medPicoMaxRel.tEspMed)} min em ${picoLabelRel(medPicoMaxRel)}`:"sem dados suficientes";
       const volLine=topVol?`${DOW[topVol.diaSem]} ${topVol.hora}h, com ${topVol.n} atendimentos`:"sem dados suficientes";
       const turnoLabel={'all':'Todos os turnos','D':'Diurno','N':'Noturno'}[$("turno").value]||'Todos';
       const medLabel=(()=>{const el=$("filtroMedico");const v=el?el.value.trim():"";return v?`Médico: ${v}`:"Todos os médicos";})();
