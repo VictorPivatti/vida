@@ -438,6 +438,9 @@
       transition:border-color .12s;flex:none
     }
     .field:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 2px var(--ac-glow)}
+    .field-active{border-color:var(--ac)!important;background:var(--ac-glow)!important}
+    .filter-count{font-size:10px;font-family:'Geist Mono',monospace;color:var(--ac);background:var(--ac-glow);border:1px solid var(--ac);border-radius:99px;padding:1px 7px;margin-left:2px;white-space:nowrap;display:none}
+    .filter-count.visible{display:inline-block}
     input[type="date"].field{min-width:96px}
     select.field{min-width:0}
     .pill{
@@ -1232,6 +1235,7 @@
         <span class="flabel">Médico</span>
         <input class="field" id="filtroMedico" list="filtroMedicoList" placeholder="Todos…" autocomplete="off" style="max-width:150px">
         <datalist id="filtroMedicoList"></datalist>
+        <span id="filtroMedicoCount" class="filter-count"></span>
         <span class="flabel">Risco</span>
         <select class="field" id="filtroRisco" style="max-width:88px">
           <option value="all">Todos</option>
@@ -2558,6 +2562,18 @@
       state.triFilt=state.triRaw.filter(r=>(!s||r.dh>=s)&&(!e||r.dh<=e)&&(turno==="all"||r.turno===turno));
       state.cidFilt=state.cidRaw.filter(r=>(!s||r.dh>=s)&&(!e||r.dh<=e));
       $("recordBadge").textContent=`${state.filt.length.toLocaleString("pt-BR")} registros`;
+      // Badge de contagem no filtro de médico
+      const _fmCountEl=$("filtroMedicoCount"), _fmInput=$("filtroMedico");
+      if(_fmCountEl&&_fmInput){
+        if(medFilt){
+          _fmCountEl.textContent=state.filt.length.toLocaleString("pt-BR")+" reg.";
+          _fmCountEl.classList.add("visible");
+          _fmInput.classList.add("field-active");
+        } else {
+          _fmCountEl.classList.remove("visible");
+          _fmInput.classList.remove("field-active");
+        }
+      }
       renderAll();
     }
     function populateMedicoFilter(){
