@@ -2725,6 +2725,23 @@
       const scoreSub=isExc?"Metas principais dentro do esperado.":isAtt?`${bad} alerta${bad!==1?"s":""} crítico${bad!==1?"s":""}, ${warn} de atenção.`:`${bad} alerta${bad!==1?"s":""} crítico${bad!==1?"s":""} identificado${bad!==1?"s":""}.`;
       // Régua: 3 zonas — crítico 0-61 (vermelho), atenção 62-81 (amarelo), excelente 82-100 (verde)
       const trackGrad=`linear-gradient(to right, var(--er) 0%, var(--er) ${fl.attention}%, var(--wn) ${fl.attention}%, var(--wn) ${fl.excellent}%, var(--ok) ${fl.excellent}%, var(--ok) 100%)`;
+      // Detalhamento das penalidades para exibição
+      const penItems=[];
+      if(bad>0)penItems.push({label:`${bad} alerta${bad>1?"s":""} crítico${bad>1?"s":""}`,val:-(bad*p.criticalAlert),tip:`${bad} × 24 pts`});
+      if(warn>0)penItems.push({label:`${warn} alerta${warn>1?"s":""} de atenção`,val:-(warn*p.warningAlert),tip:`${warn} × 9 pts`});
+      const penRet=Math.max(0,retRate-meta("metaRet"))*p.retornoPerPoint;
+      if(penRet>0)penItems.push({label:`Retorno ${retRate.toFixed(1)}% (meta ${meta("metaRet")}%)`,val:-penRet,tip:`${(retRate-meta("metaRet")).toFixed(1)} pp × 1,4`});
+      const penMed=Math.max(0,(tMed??0)-meta("metaMed"))*p.medicoPerMinute;
+      if(penMed>0)penItems.push({label:`Espera médico ${tMed!=null?Math.round(tMed)+" min":"-"} (meta ${meta("metaMed")} min)`,val:-penMed,tip:`${Math.round((tMed??0)-meta("metaMed"))} min × 0,35`});
+      const penTri=Math.max(0,(tTri??0)-meta("metaTri"))*p.triagemPerMinute;
+      if(penTri>0)penItems.push({label:`Espera triagem ${tTri!=null?Math.round(tTri)+" min":"-"} (meta ${meta("metaTri")} min)`,val:-penTri,tip:`${Math.round((tTri??0)-meta("metaTri"))} min × 0,45`});
+      const penTot=Math.max(0,(totalTime??0)-meta("metaTotal"))*p.totalPerMinute;
+      if(penTot>0)penItems.push({label:`Tempo total ${totalTime!=null?Math.round(totalTime)+" min":"-"} (meta ${meta("metaTotal")} min)`,val:-penTot,tip:`${Math.round((totalTime??0)-meta("metaTotal"))} min × 0,18`});
+      const penGrave=Math.max(0,graveRate-35)*p.graveShareOver35PerPoint;
+      if(penGrave>0)penItems.push({label:`Casos amarelo+ ${graveRate.toFixed(1)}% (acima de 35%)`,val:-penGrave,tip:`${(graveRate-35).toFixed(1)} pp × 0,35`});
+      const penHTML=penItems.length
+        ?penItems.map(x=>`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:3px"><span style="color:var(--txt2)">${esc(x.label)}</span><span style="color:var(--er);font-weight:700;white-space:nowrap" title="${esc(x.tip)}">${Math.round(x.val)} pts</span></div>`).join("")
+        :`<div style="color:var(--ok)">Nenhuma penalidade aplicada no período.</div>`;
       $("execSituation").innerHTML=`
         <div class="card-title">Situação executiva</div>
         <div class="exec-score-row">
@@ -2748,7 +2765,19 @@
         </div>
         <div class="k-sub" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr)">
           Demanda: ${fmt(total)} atendimentos (${fmt(daily)}/dia) · Permanência média: ${totalTime==null?"-":Math.round(totalTime)+" min"} · Retorno 72h: ${retRate.toFixed(1)}% · Casos amarelo+: ${graveRate.toFixed(1)}%
-        </div>`;
+        </div>
+        <details style="margin-top:10px">
+          <summary style="cursor:pointer;font-size:11px;color:var(--mut);user-select:none">ℹ Metodologia do score</summary>
+          <div style="margin-top:8px;padding:10px 12px;background:var(--sur2);border:1px solid var(--bdr);border-radius:8px;font-size:11px;font-family:'Geist Mono',monospace">
+            <div style="font-weight:700;margin-bottom:8px;color:var(--txt)">Base: 100 pts — penalidades aplicadas:</div>
+            ${penHTML}
+            <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--bdr);display:flex;justify-content:space-between">
+              <span style="color:var(--mut)">Score final</span>
+              <span style="font-weight:800;color:${scoreColor}">${score} pts</span>
+            </div>
+            <div style="margin-top:8px;color:var(--mut);font-size:10px">Zonas: &lt;62 Crítico · 62–81 Atenção · ≥82 Excelente</div>
+          </div>
+        </details>`;
       $("execAlerts").innerHTML=alerts.slice(0,4).map(([t,title,msg])=>`<div class="exec-alert"><span class="dot" style="background:var(--${t==="err"?"er":t==="warn"?"wn":t==="ok"?"ok":"inf"})"></span><div><strong>${esc(title)}</strong><span class="mono">${esc(msg)}</span></div></div>`).join("");
     }
     function renderHeatmap(rows){
