@@ -2790,14 +2790,18 @@
     }
     function renderGargalos(){
       const buckets=hourBuckets(state.filt);
-      const topMed=[...buckets].filter(x=>x.medAvg!=null).sort((a,b)=>b.medAvg-a.medAvg)[0];
-      const topTri=[...buckets].filter(x=>x.triAvg!=null).sort((a,b)=>b.triAvg-a.triAvg)[0];
+      // KPI pico real: máximo individual dos registros (não média de slot)
+      const medPicos=state.filt.filter(r=>r.tEspMed!=null);
+      const triPicos=state.filt.filter(r=>r.tEspTri!=null);
+      const medPicoMax=medPicos.length?medPicos.reduce((m,r)=>r.tEspMed>m.tEspMed?r:m):null;
+      const triPicoMax=triPicos.length?triPicos.reduce((m,r)=>r.tEspTri>m.tEspTri?r:m):null;
+      const picoLabel=r=>r&&r.dh?r.dh.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"})+" "+String(r.dh.getHours()).padStart(2,"0")+"h":"-";
       const topVol=[...buckets].sort((a,b)=>b.n-a.n)[0];
       const topCarga=[...buckets].sort((a,b)=>b.carga-a.carga)[0];
       const label=x=>x?`${DOW[x.diaSem]} ${x.hora}h`:"-";
       $("kpisGargalos").innerHTML=[
-        kpi("Maior espera médica",topMed?Math.round(topMed.medAvg)+" min":"-",label(topMed),"#f97316"),
-        kpi("Maior espera triagem",topTri?Math.round(topTri.triAvg)+" min":"-",label(topTri),"#3b82f6"),
+        kpi("Maior espera médica",medPicoMax?Math.round(medPicoMax.tEspMed)+" min":"-",picoLabel(medPicoMax),"#f97316"),
+        kpi("Maior espera triagem",triPicoMax?Math.round(triPicoMax.tEspTri)+" min":"-",picoLabel(triPicoMax),"#3b82f6"),
         kpi("Maior volume horario",topVol?fmt(topVol.n):"-",label(topVol),"#22c55e"),
         kpi("Maior carga estimada",topCarga?topCarga.carga.toFixed(1):"-",`${label(topCarga)} - atend × permanência`,"#ef4444")
       ].join("");
