@@ -1706,11 +1706,7 @@
           <button class="btn primary" onclick="document.getElementById('procFile').click()">+ Carregar planilha de procedimentos</button>
         </div>
         <div id="procContent" class="hidden">
-          <div style="padding:8px 14px;background:var(--sur2);border:1px solid var(--wn);border-radius:8px;font-size:11px;color:var(--txt2);font-family:'Geist Mono',monospace;margin-bottom:16px">
-            <strong style="color:var(--wn)">⚠ Atenção:</strong> A planilha de procedimentos é um relatório agregado de período (sem data por registro). 
-            O cruzamento com atendimentos usa o histórico completo carregado — independente do filtro de datas.
-            Para análise precisa, carregue o histórico do mesmo período da planilha de procedimentos.
-          </div>
+
           <div id="kpisProc" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px"></div>
           <div class="chart-grid">
             <div class="card"><div class="card-title">Procedimentos por categoria profissional</div><div class="chart small"><canvas id="chartProcCategoria"></canvas></div></div>
@@ -3655,16 +3651,7 @@
         byProf[k].tiposProc.add(r.codproc);
       });
 
-      // ── Cruzar com atendimentos históricos ────────────────────────
-      const medAtt={};
-      state.raw.filter(r=>r.prof).forEach(r=>{
-        const k=norm(r.prof);
-        medAtt[k]=(medAtt[k]||0)+1;
-      });
-      Object.entries(byProf).forEach(([k,v])=>{
-        v.atend=medAtt[k]||0;
-        v.ratio=v.atend?+(v.totalProc/v.atend).toFixed(2):null;
-      });
+      // Cruzamento com histórico desabilitado (planilha de procedimentos não tem data)
 
       // ── KPIs ──────────────────────────────────────────────────────
       const totalProc=proc.reduce((s,r)=>s+r.qtd,0);
@@ -3675,8 +3662,8 @@
       const tec=Object.values(byProf).filter(v=>v.esp.toLowerCase().includes("técnico")||v.esp.toLowerCase().includes("tecnico"));
       $("kpisProc").innerHTML=[
         kpi("Total de procedimentos",fmt(totalProc),"todos os profissionais","#7c3aed"),
-        kpi("Procedimentos / atendimento",ratioGeral!=null?ratioGeral.toFixed(2):"-","histórico completo","#3b82f6"),
-        kpi("Médicos ativos",fmt(medicos.length),"com procedimentos registrados","#22c55e"),
+        kpi("Médicos ativos",fmt(medicos.length),"com procedimentos registrados","#3b82f6"),
+        kpi("Enfermeiros ativos",fmt(enf.length),"com procedimentos registrados","#22c55e"),
         kpi("Tipos de procedimento",fmt(new Set(proc.map(r=>r.codproc)).size),"procedimentos distintos","#f97316"),
       ].join("");
 
@@ -3709,11 +3696,10 @@
         const filtered=filtEsp?rows.filter(v=>v.esp===filtEsp):rows;
         filtered.sort((a,b)=>b.totalProc-a.totalProc);
         $("procTableCount").textContent=`${filtered.length} profissionais`;
-        $("tableProcProf").innerHTML=`<thead><tr><th>Profissional</th><th>Especialidade</th><th>Procedimentos</th><th>Tipos distintos</th><th>Atendimentos no histórico</th><th>Proc / Atend</th></tr></thead><tbody>`+
+        $("tableProcProf").innerHTML=`<thead><tr><th>Profissional</th><th>Especialidade</th><th>Procedimentos</th><th>Tipos distintos</th></tr></thead><tbody>`+
           filtered.map(v=>{
-            const ratio=v.atend&&v.totalProc?(v.totalProc/v.atend).toFixed(2):"-";
-            const cls=v.atend===0?"muted":"";
-            return `<tr><td>${esc(v.nome)}</td><td class="mono muted">${esc(v.esp)}</td><td class="mono">${fmt(v.totalProc)}</td><td class="mono">${v.tiposProc.size}</td><td class="mono ${v.atend===0?"erc":""}">${v.atend===0?"⚠ não encontrado":fmt(v.atend)}</td><td class="mono ${cls}">${ratio}</td></tr>`;
+    
+            return `<tr><td>${esc(v.nome)}</td><td class="mono muted">${esc(v.esp)}</td><td class="mono">${fmt(v.totalProc)}</td><td class="mono">${v.tiposProc.size}</td></tr>`;
           }).join("")+`</tbody>`;
       }
       renderProcTable(Object.values(byProf));
