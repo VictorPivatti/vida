@@ -1200,10 +1200,12 @@
         <div class="topbar-actions">
           <input id="triFile" class="hidden" type="file" accept=".xlsx,.xls,.csv">
           <input id="cidFile" class="hidden" type="file" accept=".xlsx,.xls,.csv" multiple>
+          <input id="procFile" class="hidden" type="file" accept=".xls,.xlsx,.csv">
           <input id="histFileSwitch" class="hidden" type="file" accept=".xlsx,.xls,.csv" multiple>
           <div class="file-name" id="fileName" style="display:flex;align-items:center;gap:6px;max-width:220px;overflow:hidden"></div>
           <button class="btn" id="triBtn">+ Triagem</button>
           <button class="btn" id="cidBtn">+ CID</button>
+          <button class="btn" id="procBtn">+ Procedimentos</button>
           <button class="btn btn-icon" onclick="openUnitConfig()" title="Configurar unidade" aria-label="Configurar unidade"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></button>
           <button class="btn btn-icon" id="metasBtn" title="Configurar metas" aria-label="Configurar metas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
           <button class="btn btn-icon" id="themeBtn" title="Alternar tema" aria-label="Alternar tema"><svg id="themeBtnIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
@@ -1292,7 +1294,8 @@
         <div class="nav-divider"></div>
         <div class="nav-group">Sistema</div>
         <button class="nav-item" data-label="Auditoria" data-pane="auditoria"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Auditoria</span></button>
-        <button class="nav-item" data-label="Qualidade" data-pane="qualidade"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Qualidade</span></button>
+        <button class="nav-item" data-label="Produtividade / Procedimentos" data-pane="procedimentos"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button class="nav-item" data-label="Qualidade" data-pane="qualidade"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>Qualidade</span></button>
       </nav>
 
       <!-- Área de conteúdo -->
@@ -1692,6 +1695,38 @@
         </div>
       </section>
 
+      <section class="pane" id="pane-procedimentos">
+        <div class="page-header">
+          <h1 class="page-title">Produtividade / Procedimentos</h1>
+          <p class="page-desc">Análise de produção por profissional cruzada com atendimentos do histórico</p>
+        </div>
+        <div id="procEmpty" class="hidden" style="text-align:center;padding:60px 20px">
+          <div style="font-size:40px;margin-bottom:16px">📋</div>
+          <p style="color:var(--mut);font-family:'Geist Mono',monospace;font-size:13px;margin-bottom:16px">Nenhuma planilha de procedimentos carregada.</p>
+          <button class="btn primary" onclick="document.getElementById('procFile').click()">+ Carregar planilha de procedimentos</button>
+        </div>
+        <div id="procContent" class="hidden">
+          <div style="padding:8px 14px;background:var(--sur2);border:1px solid var(--wn);border-radius:8px;font-size:11px;color:var(--txt2);font-family:'Geist Mono',monospace;margin-bottom:16px">
+            <strong style="color:var(--wn)">⚠ Atenção:</strong> A planilha de procedimentos é um relatório agregado de período (sem data por registro). 
+            O cruzamento com atendimentos usa o histórico completo carregado — independente do filtro de datas.
+            Para análise precisa, carregue o histórico do mesmo período da planilha de procedimentos.
+          </div>
+          <div id="kpisProc" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px"></div>
+          <div class="chart-grid">
+            <div class="card"><div class="card-title">Procedimentos por categoria profissional</div><div class="chart small"><canvas id="chartProcCategoria"></canvas></div></div>
+            <div class="card"><div class="card-title">Top 15 procedimentos</div><div class="chart small"><canvas id="chartProcTop"></canvas></div></div>
+            <div class="card full"><div class="card-title">Produtividade por profissional</div>
+              <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
+                <select id="procFiltEsp" class="field"><option value="">Todas as especialidades</option></select>
+                <span id="procTableCount" style="font-size:11px;color:var(--mut);font-family:'Geist Mono',monospace"></span>
+              </div>
+              <div class="table-wrap"><table class="table" id="tableProcProf"></table></div>
+            </div>
+            <div class="card full"><div class="card-title">Procedimentos realizados — ranking</div><div class="table-wrap"><table class="table" id="tableProcRanking"></table></div></div>
+          </div>
+        </div>
+      </section>
+
     </main>
     </div><!-- /content-area -->
     </div><!-- /app-body -->
@@ -1775,7 +1810,7 @@
       cid:{idAtend:4,cid:5,data:6,medico:8,desc:9}
     };
 
-    const state={raw:[],filt:[],triRaw:[],triFilt:[],cidRaw:[],cidFilt:[],charts:{},quality:[],files:{hist:"",tri:"",cid:""},pending:{tri:null,cid:null},theme:"dark",triSource:"none",_retCache:null,_retCacheKey:"",recepcionados:{}}; // triSource: "none"|"hist"|"file"
+    const state={raw:[],filt:[],triRaw:[],triFilt:[],cidRaw:[],cidFilt:[],procRaw:[],charts:{},quality:[],files:{hist:"",tri:"",cid:"",proc:""},pending:{tri:null,cid:null},theme:"dark",triSource:"none",_retCache:null,_retCacheKey:"",recepcionados:{}}; // triSource: "none"|"hist"|"file"
     const RECEP_KEY="upa_dash_recepcionados";
 
     // Parsing assíncrono direto
@@ -3554,7 +3589,142 @@
           </div>`).join("")}
       `;
     }
-    function renderPrintCover(){
+    // ════════════════════════════════════════════════════════════
+    // PROCEDIMENTOS — parse, load e render
+    // ════════════════════════════════════════════════════════════
+    function parseProc(rows){
+      const header=rows[0].map(v=>String(v||"").trim().toLowerCase());
+      const idx={
+        codprof:  header.findIndex(h=>h.includes("codprofissional")||h==="codprof"),
+        nome:     header.findIndex(h=>h.includes("nomprofissional")||h.includes("nomeprofissional")||h.includes("profissional")),
+        esp:      header.findIndex(h=>h.includes("nomespecialidade")||h.includes("especialidade")),
+        codproc:  header.findIndex(h=>h.includes("codprocedimento")&&!h.includes("faturavel")),
+        nomproc:  header.findIndex(h=>h.includes("nomprocedimento")||h.includes("nomeprocedimento")||h.includes("procedimento")&&h.includes("nom")),
+        qtd:      header.findIndex(h=>h.includes("qdeprocedimento")||h.includes("qtd")||h.includes("quantidade")),
+        instr:    header.findIndex(h=>h.includes("codinstrumento")||h.includes("instrumento")),
+      };
+      const out=[];
+      rows.slice(1).forEach(row=>{
+        if(!row||!row.length)return;
+        const nome=String(row[idx.nome]||"").trim();
+        if(!nome)return;
+        out.push({
+          codprof:  String(row[idx.codprof]||"").trim(),
+          nome:     nome,
+          nomeNorm: norm(nome),
+          esp:      String(row[idx.esp]||"").trim(),
+          codproc:  String(row[idx.codproc]||"").trim(),
+          nomproc:  String(row[idx.nomproc]||"").trim(),
+          qtd:      Number(row[idx.qtd])||1,
+          instr:    Number(row[idx.instr])||1,
+        });
+      });
+      return out;
+    }
+
+    async function loadProc(file){
+      if(!file)return;
+      showLoading("Carregando procedimentos…");
+      try{
+        const {rows}=await sheetData(file);
+        state.procRaw=parseProc(rows);
+        state.files.proc=file.name;
+        const btn=$("procBtn");
+        if(btn)btn.textContent=`✓ Proc: ${state.procRaw.length.toLocaleString("pt-BR")} reg.`;
+        setProgress(100,"Procedimentos carregados.");hideLoading();
+        showToast(`Procedimentos: ${state.procRaw.length.toLocaleString("pt-BR")} registros.`,"ok");
+        if($("pane-procedimentos")?.classList.contains("active")||true)renderProcedimentos();
+      }catch(e){hideLoading();showToast("Erro ao carregar procedimentos: "+e.message,"err");}
+    }
+
+    function renderProcedimentos(){
+      const empty=$("procEmpty"), content=$("procContent");
+      if(!state.procRaw.length){
+        empty?.classList.remove("hidden"); content?.classList.add("hidden"); return;
+      }
+      empty?.classList.add("hidden"); content?.classList.remove("hidden");
+
+      const proc=state.procRaw;
+
+      // ── Agrupamento por profissional ──────────────────────────────
+      const byProf={};
+      proc.forEach(r=>{
+        const k=r.nomeNorm;
+        byProf[k]??={nome:r.nome,esp:r.esp,totalProc:0,tiposProc:new Set(),atend:0,atendNorm:null};
+        byProf[k].totalProc+=r.qtd;
+        byProf[k].tiposProc.add(r.codproc);
+      });
+
+      // ── Cruzar com atendimentos históricos ────────────────────────
+      const medAtt={};
+      state.raw.filter(r=>r.prof).forEach(r=>{
+        const k=norm(r.prof);
+        medAtt[k]=(medAtt[k]||0)+1;
+      });
+      Object.entries(byProf).forEach(([k,v])=>{
+        v.atend=medAtt[k]||0;
+        v.ratio=v.atend?+(v.totalProc/v.atend).toFixed(2):null;
+      });
+
+      // ── KPIs ──────────────────────────────────────────────────────
+      const totalProc=proc.reduce((s,r)=>s+r.qtd,0);
+      const totalAtend=state.raw.length;
+      const ratioGeral=totalAtend?+(totalProc/totalAtend).toFixed(2):null;
+      const medicos=Object.values(byProf).filter(v=>v.esp.toLowerCase().includes("médico")||v.esp.toLowerCase().includes("medico"));
+      const enf=Object.values(byProf).filter(v=>v.esp.toLowerCase().includes("enfermeiro"));
+      const tec=Object.values(byProf).filter(v=>v.esp.toLowerCase().includes("técnico")||v.esp.toLowerCase().includes("tecnico"));
+      $("kpisProc").innerHTML=[
+        kpi("Total de procedimentos",fmt(totalProc),"todos os profissionais","#7c3aed"),
+        kpi("Procedimentos / atendimento",ratioGeral!=null?ratioGeral.toFixed(2):"-","histórico completo","#3b82f6"),
+        kpi("Médicos ativos",fmt(medicos.length),"com procedimentos registrados","#22c55e"),
+        kpi("Tipos de procedimento",fmt(new Set(proc.map(r=>r.codproc)).size),"procedimentos distintos","#f97316"),
+      ].join("");
+
+      // ── Gráfico por categoria ─────────────────────────────────────
+      const cats={"Médico clínico":0,"Enfermeiro":0,"Técnico de enfermagem":0,"Outros":0};
+      proc.forEach(r=>{
+        const e=r.esp;
+        if(e.toLowerCase().includes("médico")||e.toLowerCase().includes("medico"))cats["Médico clínico"]+=r.qtd;
+        else if(e.toLowerCase().includes("enfermeiro"))cats["Enfermeiro"]+=r.qtd;
+        else if(e.toLowerCase().includes("técnico")||e.toLowerCase().includes("tecnico"))cats["Técnico de enfermagem"]+=r.qtd;
+        else cats["Outros"]+=r.qtd;
+      });
+      chart("chartProcCategoria",{type:"doughnut",data:{labels:Object.keys(cats).filter(k=>cats[k]>0),datasets:[{data:Object.values(cats).filter(v=>v>0),backgroundColor:["#3b82f6","#22c55e","#f97316","#94a3b8"],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}}}}});
+
+      // ── Gráfico top 15 procedimentos ─────────────────────────────
+      const byProcMap={};
+      proc.forEach(r=>{byProcMap[r.nomproc]=(byProcMap[r.nomproc]||0)+r.qtd;});
+      const top15=Object.entries(byProcMap).sort((a,b)=>b[1]-a[1]).slice(0,15).reverse();
+      chart("chartProcTop",{type:"bar",data:{labels:top15.map(([n])=>n.length>40?n.slice(0,38)+"…":n),datasets:[{data:top15.map(([,v])=>v),backgroundColor:"#7c3aed",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+
+      // ── Filtro de especialidade ───────────────────────────────────
+      const esps=[...new Set(proc.map(r=>r.esp))].sort();
+      const sel=$("procFiltEsp");
+      const prevVal=sel?.value||"";
+      if(sel){sel.innerHTML=`<option value="">Todas as especialidades</option>`+esps.map(e=>`<option value="${esc(e)}" ${e===prevVal?"selected":""}>${esc(e)}</option>`).join("");}
+      sel?.addEventListener("change",()=>renderProcTable(Object.values(byProf)));
+
+      function renderProcTable(rows){
+        const filtEsp=$("procFiltEsp")?.value||"";
+        const filtered=filtEsp?rows.filter(v=>v.esp===filtEsp):rows;
+        filtered.sort((a,b)=>b.totalProc-a.totalProc);
+        $("procTableCount").textContent=`${filtered.length} profissionais`;
+        $("tableProcProf").innerHTML=`<thead><tr><th>Profissional</th><th>Especialidade</th><th>Procedimentos</th><th>Tipos distintos</th><th>Atendimentos no histórico</th><th>Proc / Atend</th></tr></thead><tbody>`+
+          filtered.map(v=>{
+            const ratio=v.atend&&v.totalProc?(v.totalProc/v.atend).toFixed(2):"-";
+            const cls=v.atend===0?"muted":"";
+            return `<tr><td>${esc(v.nome)}</td><td class="mono muted">${esc(v.esp)}</td><td class="mono">${fmt(v.totalProc)}</td><td class="mono">${v.tiposProc.size}</td><td class="mono ${v.atend===0?"erc":""}">${v.atend===0?"⚠ não encontrado":fmt(v.atend)}</td><td class="mono ${cls}">${ratio}</td></tr>`;
+          }).join("")+`</tbody>`;
+      }
+      renderProcTable(Object.values(byProf));
+
+      // ── Tabela ranking de procedimentos ─────────────────────────
+      const procRanking=Object.entries(byProcMap).sort((a,b)=>b[1]-a[1]);
+      $("tableProcRanking").innerHTML=`<thead><tr><th>#</th><th>Procedimento</th><th>Total</th><th>% do total</th></tr></thead><tbody>`+
+        procRanking.map(([nome,qtd],i)=>`<tr><td class="mono muted">${i+1}</td><td>${esc(nome)}</td><td class="mono">${fmt(qtd)}</td><td class="mono">${(qtd/totalProc*100).toFixed(1)}%</td></tr>`).join("")+`</tbody>`;
+    }
+
+        function renderPrintCover(){
       const {s,e}=dateRange(), d=state.filt, alerts=topAlerts(d), tMed=avg(d,r=>r.tEspMed), tTri=avg(d,r=>r.tEspTri), tTot=avg(d,r=>r.tTotal);
       $("printCover").innerHTML=`<h2>V.I.D.A. — Relatório Assistencial</h2>
         <p class="mono" id="printUnit"></p>
@@ -3626,6 +3796,8 @@
     });
     $("triBtn").onclick=()=>$("triFile").click();$("cidBtn").onclick=()=>$("cidFile").click();
     $("triFile").onchange=e=>loadTri(e.target.files[0]);$("cidFile").onchange=e=>loadCid(e.target.files);
+    $("procFile").onchange=e=>loadProc(e.target.files[0]);
+    const _procBtn=$("procBtn"); if(_procBtn)_procBtn.onclick=()=>$("procFile").click();
     $("themeBtn").onclick=toggleTheme;$("printBtn").onclick=()=>exportarPDF();$("newBtn").onclick=resetApp;
     // Troca de arquivo de histórico diretamente do topbar (sem perder o app aberto)
     const _hsw=$('histFileSwitch');
@@ -3832,6 +4004,7 @@
         case 'triagem':       renderTriagem(); break;
         case 'cid':           renderCid(); break;
         case 'auditoria':     renderAuditoria(); break;
+        case 'procedimentos': renderProcedimentos(); break;
         case 'qualidade':     renderQuality(); break;
         case 'comparativo':    renderComparativo(); break;   // novo
         case 'correlacoes':   renderCorrelacoes(); break;   // novo
