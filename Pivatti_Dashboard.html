@@ -3185,8 +3185,12 @@
     function buildReportText(){
       const {s,e}=dateRange(), d=state.filt, m=monthlyStats(d), {ret}=returns72(), alerts=topAlerts(d);
       const days=new Set(d.map(r=>r.dateKey)).size, tTri=avg(d,r=>r.tEspTri), tMed=avg(d,r=>r.tEspMed), tTot=avg(d,r=>r.tTotal);
-      const buckets=hourBuckets(d), topMed=[...buckets].filter(x=>x.medAvg!=null).sort((a,b)=>b.medAvg-a.medAvg)[0], topVol=[...buckets].sort((a,b)=>b.n-a.n)[0];
-      const medLine=topMed?`${DOW[topMed.diaSem]} ${topMed.hora}h, com espera médica média de ${Math.round(topMed.medAvg)} min`:"sem dados suficientes";
+      const buckets=hourBuckets(d), topVol=[...buckets].sort((a,b)=>b.n-a.n)[0];
+      // Pico real de espera médica (consistente com KPI de Gargalos)
+      const medPicosRel=d.filter(r=>r.tEspMed!=null);
+      const medPicoMaxRel=medPicosRel.length?medPicosRel.reduce((m,r)=>r.tEspMed>m.tEspMed?r:m):null;
+      const picoLabelRel=r=>r&&r.dh?r.dh.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"})+" "+String(r.dh.getHours()).padStart(2,"0")+"h":"-";
+      const medLine=medPicoMaxRel?`pico de ${Math.round(medPicoMaxRel.tEspMed)} min em ${picoLabelRel(medPicoMaxRel)}`:"sem dados suficientes";
       const volLine=topVol?`${DOW[topVol.diaSem]} ${topVol.hora}h, com ${topVol.n} atendimentos`:"sem dados suficientes";
       const turnoLabel={'all':'Todos os turnos','D':'Diurno','N':'Noturno'}[$("turno").value]||'Todos';
       const medLabel=(()=>{const el=$("filtroMedico");const v=el?el.value.trim():"";return v?`Médico: ${v}`:"Todos os médicos";})();
