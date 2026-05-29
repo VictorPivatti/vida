@@ -3605,14 +3605,14 @@
         const nome=String(row[idx.nome]||"").trim();
         if(!nome)return;
         out.push({
-          codprof:  String(row[idx.codprof]||"").trim(),
+          codprof:  idx.codprof>=0?String(row[idx.codprof]||"").trim():"",
           nome:     nome,
           nomeNorm: norm(nome),
-          esp:      String(row[idx.esp]||"").trim(),
-          codproc:  String(row[idx.codproc]||"").trim(),
-          nomproc:  String(row[idx.nomproc]||"").trim(),
-          qtd:      Number(row[idx.qtd])||1,
-          instr:    Number(row[idx.instr])||1,
+          esp:      idx.esp>=0?String(row[idx.esp]||"").trim():"",
+          codproc:  idx.codproc>=0?String(row[idx.codproc]||"").trim():"",
+          nomproc:  idx.nomproc>=0?String(row[idx.nomproc]||"").trim():"",
+          qtd:      idx.qtd>=0?(Number(row[idx.qtd])||1):1,
+          instr:    idx.instr>=0?(Number(row[idx.instr])||1):1,
         });
       });
       return out;
@@ -3646,7 +3646,7 @@
       const byProf={};
       proc.forEach(r=>{
         const k=r.nomeNorm;
-        byProf[k]??={nome:r.nome,esp:r.esp,totalProc:0,tiposProc:new Set(),atend:0,atendNorm:null};
+        byProf[k]??={nome:r.nome,esp:r.esp,totalProc:0,tiposProc:new Set()};
         byProf[k].totalProc+=r.qtd;
         byProf[k].tiposProc.add(r.codproc);
       });
@@ -3655,8 +3655,6 @@
 
       // ── KPIs ──────────────────────────────────────────────────────
       const totalProc=proc.reduce((s,r)=>s+r.qtd,0);
-      const totalAtend=state.raw.length;
-      const ratioGeral=totalAtend?+(totalProc/totalAtend).toFixed(2):null;
       const medicos=Object.values(byProf).filter(v=>v.esp.toLowerCase().includes("médico")||v.esp.toLowerCase().includes("medico"));
       const enf=Object.values(byProf).filter(v=>v.esp.toLowerCase().includes("enfermeiro"));
       const tec=Object.values(byProf).filter(v=>v.esp.toLowerCase().includes("técnico")||v.esp.toLowerCase().includes("tecnico"));
@@ -4874,7 +4872,8 @@
         x.total++;
         if(r.tEspMed<=x.meta)x.ok++;
         // Breakdown por turno
-        const t=(r.turno==='D'||r.turno==='N')?r.turno:'D';
+        const t=(r.turno==='D'||r.turno==='N')?r.turno:null;
+        if(!t)return; // sem turno definido: não conta em D nem N
         x[t].total++;
         if(r.tEspMed<=x.meta)x[t].ok++;
       });
