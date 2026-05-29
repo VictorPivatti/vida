@@ -2785,16 +2785,24 @@
         if(manchRows.length===0){
           manchEl.innerHTML='<tbody><tr><td colspan="6" class="mono muted" style="padding:16px">Sem dados de espera m\u00e9dica registrados para calcular conform\u00e2ncia Manchester.</td></tr></tbody>';
         } else {
-          const head='<thead><tr><th>Classifica\u00e7\u00e3o</th><th>Meta protocolo</th><th>Atend. c/ dado</th><th>Dentro da meta</th><th>Conform\u00e2ncia</th><th>Status</th></tr></thead>';
+          const head='<thead><tr><th>Classifica\u00e7\u00e3o</th><th>Meta</th><th>c/ dado</th><th>Sem dado</th><th>Cobertura</th><th>Dentro da meta</th><th>Conform\u00e2ncia</th><th>Status</th></tr></thead>';
           const body='<tbody>'+manchRows.map(cor=>{
             const x=manch[cor];
+            const totalCor=x.total+(x.semDado||0);
+            const cobertura=totalCor?x.total/totalCor*100:0;
+            const baixaCobertura=cobertura<50&&totalCor>0;
             const rate=x.total?x.ok/x.total*100:0;
             const cls=rate>=90?"okc":rate>=70?"wnc":"erc";
             const status=rate>=90?"\u2713 ok":rate>=70?"aten\u00e7\u00e3o":"fora";
             const dot='<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+(RISK_COLOR[cor]||"#64748b")+';margin-right:6px"></span>';
+            const coberturaCell=baixaCobertura
+              ?'<td class="mono wnc" title="Cobertura baixa: menos da metade dos atendimentos tem hora do m\u00e9dico registrada. A conformidade pode n\u00e3o ser representativa.">'+cobertura.toFixed(0)+'% \u26a0\ufe0f</td>'
+              :'<td class="mono">'+cobertura.toFixed(0)+'%</td>';
             return '<tr><td>'+dot+cor.charAt(0)+cor.slice(1).toLowerCase()+'</td>'
               +'<td class="mono">'+(x.meta===0?"imediato":x.meta+" min")+'</td>'
               +'<td class="mono">'+fmt(x.total)+'</td>'
+              +'<td class="mono muted">'+fmt(x.semDado||0)+'</td>'
+              +coberturaCell
               +'<td class="mono">'+fmt(x.ok)+'</td>'
               +'<td class="mono" style="color:'+(RISK_COLOR[cor]||"#64748b")+'">'+rate.toFixed(1)+'%</td>'
               +'<td class="mono '+cls+'">'+status+'</td></tr>';
