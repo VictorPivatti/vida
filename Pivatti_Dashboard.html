@@ -2602,7 +2602,11 @@
       return `<div class="k-trend ${good?"okc":"erc"}">${sign}${unit==="pp"?diff.toFixed(1)+" p.p.":Math.round(diff)+(unit?` ${unit}`:"")} (${sign}${pctDiff.toFixed(1)}%) vs período anterior</div>`;
     }
     function returnsFor(rows){
-      const byP={};rows.forEach(r=>{if(!r.pront)return;byP[r.pront]??=[];byP[r.pront].push(r)});Object.values(byP).forEach(v=>v.sort((a,b)=>a.dh-b.dh));
+      // FIX: filtrar pront vazio/genérico (paridade com returnsWithin)
+      const byP={};rows.forEach(r=>{
+        if(!r.pront||String(r.pront).trim()===''||/^0+$/.test(String(r.pront)))return;
+        byP[r.pront]??=[];byP[r.pront].push(r)
+      });Object.values(byP).forEach(v=>v.sort((a,b)=>a.dh-b.dh));
       const ret=[];Object.entries(byP).forEach(([p,vis])=>{for(let i=1;i<vis.length;i++){const h=(vis[i].dh-vis[i-1].dh)/36e5;if(h>0&&h<=CONFIG.RETURN_HOURS)ret.push({...vis[i],pront:p,diffH:h,prev:vis[i-1]})}});
       return {byP,ret};
     }
@@ -3042,12 +3046,19 @@
       $("tableRetCrit").innerHTML=`<thead><tr><th>Tipo</th><th>Prontuário</th><th>Intervalo</th><th>Risco anterior</th><th>Risco retorno</th><th>Data retorno</th><th>Médico</th></tr></thead><tbody>${critRows.map(r=>`<tr><td class="mono ${r.tipo==="Critico"?"erc":"wnc"}">${esc(r.tipo)}</td><td class="mono">${esc(r.pront)}</td><td class="mono">${r.diffH.toFixed(1)}h</td><td class="mono">${esc(r.prev?.cor||"-")}</td><td class="mono">${esc(r.cor)}</td><td class="mono">${r.dh.toLocaleString("pt-BR")}</td><td>${esc(r.prof||"-")}</td></tr>`).join("")}</tbody>`;
     }
     function returnsWithin(rows,hours){
+      // Cache: evita recalcular quando rows e hours não mudaram
+      const cacheKey=rows.length+'_'+(rows[0]?.dateKey||'')+'_'+(rows[rows.length-1]?.dateKey||'')+'_'+hours;
+      if(!returnsWithin._cache)returnsWithin._cache={};
+      if(returnsWithin._cache[cacheKey])return returnsWithin._cache[cacheKey];
       const byP={};rows.forEach(r=>{
-        // FIX: filtrar pront vazio/genérico para evitar falsos retornos
         if(!r.pront||String(r.pront).trim()===''||/^0+$/.test(String(r.pront)))return;
         byP[r.pront]??=[];byP[r.pront].push(r)
       });Object.values(byP).forEach(v=>v.sort((a,b)=>a.dh-b.dh));
       const ret=[];Object.entries(byP).forEach(([p,vis])=>{for(let i=1;i<vis.length;i++){const h=(vis[i].dh-vis[i-1].dh)/36e5;if(h>0&&h<=hours)ret.push({...vis[i],pront:p,diffH:h,prev:vis[i-1]})}});
+      // Limpa cache antigo para evitar acúmulo (mantém só os 10 mais recentes)
+      const keys=Object.keys(returnsWithin._cache);
+      if(keys.length>=10)delete returnsWithin._cache[keys[0]];
+      returnsWithin._cache[cacheKey]=ret;
       return ret;
     }
     function renderCapacidade(){
