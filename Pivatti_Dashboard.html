@@ -1345,6 +1345,8 @@
           <div class="card full"><div class="card-title">VERMELHO fora do protocolo (&gt;10 min) por mês</div><div class="chart small"><canvas id="chartVermelhoMes"></canvas></div></div>
           <div class="card"><div class="card-title">Espera médica por faixa crítica</div><div class="chart small"><canvas id="chartGargMed"></canvas></div></div>
           <div class="card"><div class="card-title">Carga assistencial estimada</div><div class="chart small"><canvas id="chartCarga"></canvas></div></div>
+          <div class="card full"><div class="card-title">Comparativo por dia da semana</div><div class="chart small"><canvas id="chartDowGarg"></canvas></div></div>
+          <div class="card full"><div class="card-title">Resumo por dia da semana</div><div class="table-wrap"><table class="table" id="tableDow"></table></div></div>
         </div>
       </section>
 
@@ -2931,6 +2933,30 @@
       chart("chartGargMed",{type:"bar",data:{labels:medTop.map(label),datasets:[{data:medTop.map(x=>Math.round(x.medAvg)),backgroundColor:medTop.map(x=>x.medAvg>meta("metaMed")?"#ef4444":"#22c55e"),borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},targetLine:{lines:[{value:meta("metaMed"),label:"meta",color:"#eab308"}]}},scales:axes()}});
       const cargaTop=[...buckets].sort((a,b)=>b.carga-a.carga).slice(0,10).reverse();
       chart("chartCarga",{type:"bar",data:{labels:cargaTop.map(label),datasets:[{data:cargaTop.map(x=>+x.carga.toFixed(1)),backgroundColor:"#7c3aed",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+      // Comparativo por dia da semana
+      const dowMap=Array.from({length:7},(_,i)=>({dow:i,n:0,med:[],tri:[],tot:[],grave:0}));
+      state.filt.forEach(r=>{
+        const d=dowMap[r.diaSem];
+        d.n++;
+        if(r.tEspMed!=null)d.med.push(r.tEspMed);
+        if(r.tEspTri!=null)d.tri.push(r.tEspTri);
+        if(r.tTotal!=null)d.tot.push(r.tTotal);
+        if(["AMARELO","LARANJA","VERMELHO"].includes(r.cor))d.grave++;
+      });
+      const dowStats=DOWO.map(i=>({
+        dow:i,label:DOW[i],n:dowMap[i].n,
+        medAvg:avg(dowMap[i].med,v=>v),
+        triAvg:avg(dowMap[i].tri,v=>v),
+        totAvg:avg(dowMap[i].tot,v=>v),
+        gravePct:dowMap[i].n?dowMap[i].grave/dowMap[i].n*100:0
+      }));
+      const dowLabels=dowStats.map(x=>x.label);
+      const maxMed=Math.max(...dowStats.map(x=>x.medAvg||0),1);
+      chart("chartDowGarg",{type:"bar",data:{labels:dowLabels,datasets:[
+        {label:"Volume",data:dowStats.map(x=>x.n),backgroundColor:"rgba(59,130,246,0.7)",borderRadius:3,yAxisID:"yVol"},
+        {label:"Espera méd. (min)",data:dowStats.map(x=>x.medAvg!=null?Math.round(x.medAvg):null),backgroundColor:dowStats.map(x=>(x.medAvg||0)>meta("metaMed")?"rgba(239,68,68,0.8)":"rgba(249,115,22,0.7)"),borderRadius:3,yAxisID:"yMed"}
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaMed"),label:"meta médico",color:"#eab308",yAxisID:"yMed"}]}},scales:{x:{grid:{color:gridColor()},ticks:{color:tickColor()}},yVol:{position:"left",grid:{color:gridColor()},ticks:{color:"#3b82f6"},title:{display:true,text:"Volume",color:"#3b82f6",font:{size:10}}},yMed:{position:"right",grid:{display:false},ticks:{color:"#f97316",callback:v=>v+" min"},suggestedMax:Math.max(meta("metaMed"),maxMed)*1.2,title:{display:true,text:"Espera méd.",color:"#f97316",font:{size:10}}}}}});
+      $("tableDow").innerHTML=`<thead><tr><th>Dia</th><th>Volume</th><th>Espera triagem</th><th>Espera médico</th><th>Total médio</th><th>Amarelo+</th></tr></thead><tbody>${dowStats.map(x=>`<tr><td class="mono">${x.label}</td><td class="mono">${fmt(x.n)}</td><td class="mono">${x.triAvg==null?"-":Math.round(x.triAvg)+" min"}</td><td class="mono ${(x.medAvg||0)>meta("metaMed")?"erc":""}">${x.medAvg==null?"-":Math.round(x.medAvg)+" min"}</td><td class="mono">${x.totAvg==null?"-":Math.round(x.totAvg)+" min"}</td><td class="mono">${x.gravePct.toFixed(1)}%</td></tr>`).join("")}</tbody>`;
     }
     function medRows(){
       // FIX: igual ao código base — filtra duração > 60min para contagem de produtividade
