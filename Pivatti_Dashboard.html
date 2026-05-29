@@ -2562,7 +2562,15 @@
     }
     function populateMedicoFilter(){
       const dl=$("filtroMedicoList");if(!dl)return;
-      const medicos=[...new Set(state.raw.map(r=>shortName(r.prof||"")).filter(Boolean))].sort();
+      // FIX: deduplica por norm(r.prof) para evitar que variações de encoding
+      // do mesmo médico gerem entradas duplicadas no datalist
+      const seen=new Set();
+      const medicos=state.raw
+        .filter(r=>r.prof)
+        .filter(r=>{const k=norm(r.prof);if(seen.has(k))return false;seen.add(k);return true;})
+        .map(r=>shortName(r.prof))
+        .filter(Boolean)
+        .sort();
       dl.innerHTML=medicos.map(m=>`<option value="${esc(m)}">`).join("");
     }
     function shortcut(k){
