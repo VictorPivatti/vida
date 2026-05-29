@@ -820,7 +820,13 @@
       letter-spacing:-.035em;color:var(--txt);
       font-family:'IBM Plex Mono',monospace;
       font-feature-settings:"tnum","zero";
-      display:flex;align-items:baseline;gap:4px
+      display:flex;align-items:baseline;gap:4px;
+      word-break:break-word
+    }
+    .kpi-warn .k-value{
+      font-size:12px;font-weight:500;color:var(--mut);
+      letter-spacing:.01em;line-height:1.35;
+      font-feature-settings:normal;display:block
     }
     .k-value-unit{
       font-size:14px;font-weight:400;color:var(--mut);
@@ -1513,7 +1519,7 @@
         <div id="projGeralNotice" style="margin-bottom:12px"></div>
         <div class="chart-grid">
           <div class="card full"><div class="card-title">Volume mensal</div><div class="chart"><canvas id="chartMensal"></canvas></div></div>
-          <div class="card"><div class="card-title">Dia da semana</div><div class="chart small"><canvas id="chartDow"></canvas></div></div>
+          <div class="card"><div class="card-title">Dia da semana</div><div class="chart" style="height:200px"><canvas id="chartDow"></canvas></div></div>
           <div class="card"><div class="card-title">Pico horário</div><div class="chart small"><canvas id="chartHora"></canvas></div></div>
           <div class="card full"><div class="card-title">Mapa de calor — dia da semana × hora</div><div class="heatmap mono" id="heatmap"></div></div>
         </div>
@@ -1572,13 +1578,13 @@
           <button class="btn primary" onclick="$('procFile').click()" style="margin:0 auto">+ Carregar procedimentos</button>
         </div>
         <div id="procContent" class="hidden">
-          <div class="card" style="margin-bottom:12px">
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <select class="field" id="procFiltroEsp" style="min-width:180px"><option value="all">Todas as especialidades</option></select>
-              <select class="field" id="procFiltroProf" style="min-width:220px"><option value="all">Todos os profissionais</option></select>
-              <select class="field" id="procFiltroProc" style="min-width:240px"><option value="all">Todos os procedimentos</option></select>
-              <select class="field" id="procFiltroFat" style="min-width:120px">
-                <option value="all">Faturamento</option>
+          <div class="card" style="margin-bottom:12px;padding:10px 14px">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:nowrap">
+              <select class="field" id="procFiltroEsp" style="flex:1.6;min-width:0;max-width:220px"><option value="all">Todas especialidades</option></select>
+              <select class="field" id="procFiltroProf" style="flex:2;min-width:0;max-width:260px"><option value="all">Todos profissionais</option></select>
+              <select class="field" id="procFiltroProc" style="flex:2.2;min-width:0"><option value="all">Todos procedimentos</option></select>
+              <select class="field" id="procFiltroFat" style="flex:1;min-width:0;max-width:150px">
+                <option value="all">Todos — fat.</option>
                 <option value="S">Faturável</option>
                 <option value="N">Não faturável</option>
               </select>
@@ -1605,7 +1611,7 @@
           <div class="card"><div class="card-title">Retornos por hora</div><div class="chart small"><canvas id="chartRetHora"></canvas></div></div>
           <div class="card"><div class="card-title">Janelas de retorno</div><div class="chart small"><canvas id="chartRetJanelas"></canvas></div></div>
           <div class="card"><div class="card-title">Pacientes com mais visitas</div><div class="table-wrap"><table class="table" id="tableRet"></table></div></div>
-          <div class="card"><div class="card-title">Médicos com mais retornos ≤72h</div><div class="table-wrap"><table class="table" id="tableRetMed"></table></div></div>
+          <div class="card full"><div class="card-title">Médicos com mais retornos ≤72h</div><div class="table-wrap"><table class="table" id="tableRetMed"></table></div></div>
           <div class="card full"><div class="card-title">Retornos críticos e potencialmente evitáveis</div><div class="table-wrap"><table class="table" id="tableRetCrit"></table></div></div>
         </div>
       </section>
@@ -1805,7 +1811,7 @@
           <div class="card full"><div class="card-title">🔬 Volume por hora × Espera média — correlação operacional</div><div class="chart"><canvas id="chartCorrVolEspera"></canvas></div></div>
           <div class="card"><div class="card-title">🔬 CID × Tempo de permanência — top diagnósticos</div><div class="chart tall"><canvas id="chartCorrCidTempo"></canvas></div></div>
           <div class="card"><div class="card-title">🔬 Médico × Perfil de complexidade</div><div class="chart tall"><canvas id="chartCorrMedRisco"></canvas></div></div>
-          <div class="card full"><div class="card-title">🔬 Retorno ≤72h × CID — diagnósticos com maior recidiva</div><div class="chart"><canvas id="chartCorrRetCid"></canvas></div></div>
+          <div class="card full"><div class="card-title">🔬 Retorno ≤72h × CID — diagnósticos com maior recidiva</div><div class="chart" style="height:300px"><canvas id="chartCorrRetCid"></canvas></div><div class="table-wrap" style="margin-top:12px"><table class="table" id="tableCorrRetCid"></table></div></div>
         </div>
       </section>
 
@@ -1814,7 +1820,7 @@
         <div class="grid" id="kpisFunil"></div>
         <div class="chart-grid">
           <div class="card full"><div class="card-title">🔻 Funil de atendimento — completude do fluxo</div><div id="funnelChart" style="padding:8px 0"></div></div>
-          <div class="card full"><div class="card-title">🔻 Sazonalidade — mês × dia da semana (volume)</div><div class="heatmap mono" id="heatmapSazon"></div></div>
+          <div class="card full"><div class="card-title">🔻 Sazonalidade — mês × dia da semana (volume)</div><div class="mono" id="heatmapSazon" style="overflow-x:auto;padding:4px 0"></div></div>
           <div class="card"><div class="card-title">🔻 Índice de evasão estimada por mês</div><div class="chart"><canvas id="chartEvasao"></canvas></div></div>
           <div class="card"><div class="card-title">🔻 Volume × Espera por dia da semana</div><div class="chart"><canvas id="chartDowEspera"></canvas></div></div>
         </div>
@@ -2935,7 +2941,7 @@
       if(!alerts.length)alerts.push(["ok","Sem alerta crítico no período","Metas principais dentro do esperado com os dados disponíveis."]);
       return alerts;
     }
-    function kpi(label,value,sub,color,trend=""){return`<div class="card kpi" style="--k:${color}"><div class="kpi-stripe"></div><div class="k-label">${esc(label)}</div><div class="k-value">${esc(value)}</div><div class="k-sub">${sub}</div>${trend}</div>`}
+    function kpi(label,value,sub,color,trend="",cls=""){return`<div class="card kpi ${cls}" style="--k:${color}"><div class="kpi-stripe"></div><div class="k-label">${esc(label)}</div><div class="k-value">${esc(value)}</div><div class="k-sub">${sub}</div>${trend}</div>`}
     function renderAll(){
       if(!state.raw.length) return;
       markDirty();
@@ -3225,7 +3231,7 @@
       }
       // Gráfico VERMELHO tardios por mês
       if(vMesesKeys.length>0){
-        chart("chartVermelhoMes",{type:"bar",data:{labels:vMesesKeys.map(k=>k==="sem-data"?"Sem data":monthLabel(k)),datasets:[{label:"VERMELHO >10 min",data:vMesesKeys.map(k=>vMeses[k]),backgroundColor:"#ef4444",borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.parsed.y)} casos fora do protocolo`}}},scales:{...axes(),y:{grid:{color:gridColor()},ticks:{color:tickColor()},beginAtZero:true}}}});
+        chart("chartVermelhoMes",{type:"bar",data:{labels:vMesesKeys.map(k=>k==="sem-data"?"Sem data":monthLabel(+k.replace("-",""))),datasets:[{label:"VERMELHO >10 min",data:vMesesKeys.map(k=>vMeses[k]),backgroundColor:"#ef4444",borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.parsed.y)} casos fora do protocolo`}}},scales:{...axes(),y:{grid:{color:gridColor()},ticks:{color:tickColor()},beginAtZero:true}}}});
       } else {
         const cv=document.getElementById("chartVermelhoMes");
         if(cv){const ctx=cv.getContext("2d");ctx.clearRect(0,0,cv.width,cv.height);}
@@ -3379,10 +3385,11 @@
       const retByMed={};
       ret.forEach(r=>{
         if(!r.prof)return;
-        const retProfKey=norm(r.prof);retByMed[retProfKey]??={prof:r.prof,total:0,critico:0,piora:0};
-        retByMed[r.prof].total++;
-        if(["AMARELO","LARANJA","VERMELHO"].includes(r.cor))retByMed[r.prof].critico++;
-        if(riskWeight(r.cor)>riskWeight(r.prev?.cor))retByMed[r.prof].piora++;
+        const retProfKey=norm(r.prof);
+        retByMed[retProfKey]??={prof:r.prof,total:0,critico:0,piora:0};
+        retByMed[retProfKey].total++;
+        if(["AMARELO","LARANJA","VERMELHO"].includes(r.cor))retByMed[retProfKey].critico++;
+        if(riskWeight(r.cor)>riskWeight(r.prev?.cor))retByMed[retProfKey].piora++;
       });
       // Adicionar total de atendimentos do médico para calcular taxa
       const allByMed={};d.forEach(r=>{if(!r.prof)return;allByMed[r.prof]=(allByMed[r.prof]||0)+1});
@@ -3642,14 +3649,14 @@
       const totRecep=temRecep?mData.reduce((s,r)=>s+(r.recep||0),0):null;
       const totEvasoes=totRecep!=null?totRecep-totBrancos-totAtendidos:null;
       const totTaxa=totRecep&&totRecep>0?totEvasoes/totRecep*100:null;
-      const noRecepMsg="insira os recepcionados";
+      const noRecepMsg="— inserir recepcionados";
       $("kpisEvasao").innerHTML=[
         kpi("Triados",fmt(totTriados),"passaram pela triagem","#3b82f6"),
         kpi("Brancos",fmt(totBrancos),"redirecionados — excluidos do calculo","#94a3b8"),
         kpi("Atendidos",fmt(totAtendidos),"atendimento medico registrado","#22c55e"),
-        kpi("Recepcionados",totRecep!=null?fmt(totRecep):noRecepMsg,"total registrado na recepcao","#a78bfa"),
-        kpi("Evasoes",totEvasoes!=null?(totEvasoes<0?"<0 (revisar dados)":fmt(totEvasoes)):noRecepMsg,"saíram sem atendimento (excl. brancos)","#ef4444"),
-        kpi("Taxa de Evasao",totTaxa!=null?(totTaxa<0?"<0%":totTaxa.toFixed(1)+"%"):noRecepMsg,"formula: (Recep - Brancos - Atendidos) / Recep","#f97316")
+        kpi("Recepcionados",totRecep!=null?fmt(totRecep):noRecepMsg,"total registrado na recepcao","#a78bfa","",totRecep==null?"kpi-warn":""),
+        kpi("Evasoes",totEvasoes!=null?(totEvasoes<0?"<0 (revisar)":fmt(totEvasoes)):noRecepMsg,"saíram sem atendimento (excl. brancos)","#ef4444","",totEvasoes==null?"kpi-warn":""),
+        kpi("Taxa de Evasao",totTaxa!=null?(totTaxa<0?"<0%":totTaxa.toFixed(1)+"%"):noRecepMsg,"(Recep - Brancos - Atend.) / Recep","#f97316","",totTaxa==null?"kpi-warn":"")
       ].join("");
       // Grafico tendencia mensal
       const comTaxa=mData.filter(r=>r.taxa!=null);
@@ -3795,7 +3802,54 @@
             <div><strong>${esc(x.type)}</strong>
             <div class="mono muted">${fmt(x.valid)} válidos de ${fmt(x.total)}. ${esc(x.msg)}</div></div>
           </div>`).join("")}
+      
+      <!-- Consistência cruzada -->
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--bdr)">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-bottom:8px">Consistência cruzada entre bases</div>
+        <div id="auditConsistencia" style="font-family:'IBM Plex Mono',monospace;font-size:11px"></div>
+      </div>
       `;
+      // Consistência cruzada
+      (function renderConsistencia(){
+        const d=state.raw, tri=state.triRaw, cid=state.cidRaw, proc=state.procRaw;
+        const items=[];
+        // Histórico vs Triagem
+        if(tri.length){
+          const triPronts=new Set(tri.map(r=>r.pront).filter(Boolean));
+          const histPronts=new Set(d.map(r=>r.pront).filter(Boolean));
+          const semMatch=d.filter(r=>r.pront&&!triPronts.has(r.pront)).length;
+          const pct=d.length?(100-semMatch/d.length*100).toFixed(1):0;
+          items.push({label:'Histórico ↔ Triagem',status:pct>=95?'ok':pct>=80?'warn':'err',msg:`${pct}% dos atendimentos têm triagem correspondente`});
+        }
+        // Histórico vs CID
+        if(cid.length){
+          const cidDates=new Set(cid.map(r=>r.dateKey).filter(Boolean));
+          const histDates=new Set(d.map(r=>r.dateKey).filter(Boolean));
+          const overlap=[...histDates].filter(k=>cidDates.has(k)).length;
+          const pct=histDates.size?(overlap/histDates.size*100).toFixed(1):0;
+          items.push({label:'Histórico ↔ CID',status:pct>=90?'ok':pct>=70?'warn':'err',msg:`${pct}% dos dias têm CIDs registrados (${fmt(cid.length)} CIDs para ${fmt(d.length)} atend.)`});
+        }
+        // Procedimentos vs Histórico
+        if(proc.length){
+          const procProfs=new Set(proc.map(r=>norm(r.prof||'')).filter(Boolean));
+          const histProfs=new Set(d.filter(r=>r.prof).map(r=>norm(r.prof)));
+          const matched=[...procProfs].filter(p=>histProfs.has(p)).length;
+          const pct=procProfs.size?(matched/procProfs.size*100).toFixed(1):0;
+          items.push({label:'Procedimentos ↔ Histórico',status:pct>=80?'ok':pct>=60?'warn':'err',msg:`${pct}% dos profissionais nos procedimentos foram encontrados no histórico`});
+        }
+        // Volume: se nenhuma base secundária carregada
+        if(!tri.length&&!cid.length&&!proc.length){
+          items.push({label:'Bases secundárias',status:'warn',msg:'Nenhuma base secundária carregada. Carregue triagem, CID ou procedimentos para cruzamento.'});
+        }
+        const el=$('auditConsistencia');
+        if(!el)return;
+        if(!items.length){el.innerHTML='<span style="color:var(--ok)">✓ Não há dados suficientes para cruzamento ainda.</span>';return;}
+        el.innerHTML=items.map(x=>{
+          const color=x.status==='ok'?'var(--ok)':x.status==='warn'?'var(--wn)':'var(--er)';
+          const icon=x.status==='ok'?'✓':x.status==='warn'?'⚠':'✗';
+          return `<div style="display:flex;gap:8px;align-items:baseline;margin-bottom:5px"><span style="color:${color};font-weight:700;min-width:16px">${icon}</span><div><span style="color:var(--txt)">${esc(x.label)}</span><span style="color:var(--mut);margin-left:8px">${esc(x.msg)}</span></div></div>`;
+        }).join('');
+      })();
     }
     function renderPrintCover(){
       const {s,e}=dateRange(), d=state.filt, alerts=topAlerts(d), tMed=avg(d,r=>r.tEspMed), tTri=avg(d,r=>r.tEspTri), tTot=avg(d,r=>r.tTotal);
@@ -4639,6 +4693,19 @@
           .sort((a,b) => b.count - a.count).slice(0,12);
 
         if (retCidEntries.length) {
+          // Tabela de diagnósticos com maior recidiva
+          const tbl = $('tableCorrRetCid');
+          if (tbl) {
+            tbl.innerHTML = '<thead><tr><th>#</th><th>CID</th><th>Diagnóstico</th><th>Retornos ≤72h</th><th>Total atend.</th><th>Taxa recidiva</th></tr></thead><tbody>' +
+              retCidEntries.map((e,i) => `<tr>
+                <td class="mono muted">${i+1}</td>
+                <td class="mono">${esc(e.cid)}</td>
+                <td>${esc(e.desc||'-')}</td>
+                <td class="mono ${e.count>10?'erc':e.count>5?'wnc':''}">${fmt(e.count)}</td>
+                <td class="mono">${fmt(e.total)}</td>
+                <td class="mono ${e.rate>20?'erc':e.rate>10?'wnc':'okc'}">${e.rate.toFixed(1)}%</td>
+              </tr>`).join('') + '</tbody>';
+          }
           chart('chartCorrRetCid', {
             type: 'bar',
             data: {
@@ -4653,8 +4720,8 @@
               plugins: { legend: { position:'bottom', labels:{color:tickColor(), usePointStyle:true} } },
               scales: {
                 x: { grid:{color:gridColor()}, ticks:{color:tickColor(), font:{size:9}, maxRotation:30} },
-                y: { grid:{color:gridColor()}, ticks:{color:tickColor()}, title:{display:true,text:'retornos',color:tickColor(),font:{size:10}} },
-                y1: { position:'right', grid:{display:false}, ticks:{color:'#f59e0b', callback:v=>v+'%'} }
+                y: { grid:{color:gridColor()}, ticks:{color:tickColor()}, title:{display:true,text:'retornos',color:tickColor(),font:{size:10}}, beginAtZero:true },
+                y1: { position:'right', grid:{display:false}, ticks:{color:'#f59e0b', callback:v=>v.toFixed(1)+'%'}, min:0, suggestedMax:100 }
               }
             }
           });
@@ -4923,21 +4990,28 @@
       if(!d.length){$('kpisEscala').innerHTML=kpi('Dados','—','carregue o histórico','#94a3b8');return;}
       const capMedico=Number($('capMed').value)||3;
       // Agrupar por hora: volume e médicos ativos
-      const byH=Array.from({length:24},(_,h)=>({h,n:0,meds:new Set(),dias:new Set()}));
+      // Agrupar por dateKey+hora (slot diário real) para evitar acumular
+      // todos os médicos históricos de um mesmo horário no mesmo Set
+      const slotMap={};
       d.forEach(r=>{
-        byH[r.hora].n++;
-        if(r.prof)byH[r.hora].meds.add(r.prof);
-        byH[r.hora].dias.add(r.dateKey);
+        const k=r.dateKey+'-'+r.hora;
+        slotMap[k]??={h:r.hora,n:0,meds:new Set()};
+        slotMap[k].n++;
+        if(r.prof)slotMap[k].meds.add(norm(r.prof));
       });
-      // Calcular capacidade instalada e déficit
-      const rows=byH.map(x=>{
-        const nDias=x.dias.size||1;
-        const medAtivos=x.meds.size||1;
-        const volMedio=x.n/nDias; // volume médio por hora nesse slot
+      // Agregar por hora: média de volume e mediana de médicos ativos
+      const byH=Array.from({length:24},(_,h)=>{
+        const slots=Object.values(slotMap).filter(s=>s.h===h);
+        if(!slots.length)return{h,n:0,meds:new Set(),dias:new Set(),medAtivos:0,volMedio:0,capacidade:0,deficit:0,pressao:0,nDias:0,slots:0};
+        const totalN=slots.reduce((s,sl)=>s+sl.n,0);
+        const volMedio=totalN/slots.length;
+        // medAtivos = mediana de médicos por slot (mais representativo que acumulado)
+        const medsPerSlot=slots.map(sl=>sl.meds.size).sort((a,b)=>a-b);
+        const medAtivos=medsPerSlot[Math.floor(medsPerSlot.length/2)]||1;
         const capacidade=medAtivos*capMedico;
         const deficit=volMedio-capacidade;
         const pressao=capacidade>0?volMedio/capacidade:0;
-        return{...x,medAtivos,volMedio,capacidade,deficit,pressao,nDias};
+        return{h,n:totalN,meds:new Set(),dias:new Set(),medAtivos,volMedio,capacidade,deficit,pressao,nDias:slots.length,slots:slots.length};
       });
       const horasDeficit=rows.filter(r=>r.deficit>0).length;
       const maxDeficit=Math.max(...rows.map(r=>r.deficit));
@@ -4975,9 +5049,12 @@
         <th>Déficit/Superávit</th><th>Pressão</th><th>Ação sugerida</th>
       </tr></thead><tbody>${rows.map(r=>{
         const pct100=(r.pressao*100).toFixed(0)+'%';
-        const defStr=r.deficit>0?`<span class="erc">+${r.deficit.toFixed(1)} (descoberto)</span>`
-                    :r.deficit<-1?`<span class="okc">${r.deficit.toFixed(1)} (folga)</span>`
-                    :`<span class="wnc">equilibrado</span>`;
+        const defAbs=Math.abs(r.deficit).toFixed(1);
+        const defStr=r.deficit>0.5
+          ?`<span class="erc">▲ +${r.deficit.toFixed(1)} atend/h descobertos</span>`
+          :r.deficit<-0.5
+          ?`<span class="okc">▼ ${r.deficit.toFixed(1)} atend/h folga</span>`
+          :`<span class="wnc">≈ equilibrado</span>`;
         const acao=r.deficit>1?'⚠ Escalar médico adicional'
                   :r.deficit>0?'↑ Monitorar pressão'
                   :r.pressao<0.5?'↓ Pode redistribuir'
