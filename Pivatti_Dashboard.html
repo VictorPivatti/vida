@@ -2947,7 +2947,14 @@
     }
     function populateMedicoFilter(){
       const dl=$("filtroMedicoList");if(!dl)return;
-      const medicos=[...new Set(state.raw.map(r=>shortName(r.prof||"")).filter(Boolean))].sort();
+      // dedup por norm() antes de exibir shortName
+      const seen=new Set();
+      const medicos=state.raw
+        .filter(r=>r.prof)
+        .filter(r=>{const k=norm(r.prof);if(seen.has(k))return false;seen.add(k);return true;})
+        .map(r=>shortName(r.prof))
+        .filter(Boolean)
+        .sort();
       dl.innerHTML=medicos.map(m=>`<option value="${esc(m)}">`).join("");
     }
     function shortcut(k){
@@ -3025,10 +3032,9 @@
         showToast(`Erro no painel "${tab}": ${err.message}`,'err',8000);
       }
     }
-    function renderAll_FULL_UNUSED(){destroyCharts();renderGeral();renderIndicadores();renderFluxo();renderGargalos();renderMedicos();renderRetornos();renderCapacidade();renderEvolucao();renderRelatorio();renderTriagem();renderCid();renderQuality();renderPrintCover()}
 
     function renderGeral(){
-      const d=state.filt,total=d.length,days=new Set(d.map(r=>r.dateKey)).size,meds=new Set(d.filter(r=>r.prof).map(r=>r.prof)).size;
+      const d=state.filt,total=d.length,days=new Set(d.map(r=>r.dateKey)).size,meds=new Set(d.filter(r=>r.prof).map(r=>norm(r.prof))).size;
       const prev=previousRows(), prevDays=new Set(prev.map(r=>r.dateKey)).size;
       const curDaily=days?Math.round(total/days):0, prevDaily=prevDays?Math.round(prev.length/prevDays):null;
       const curTotalTime=avg(d,r=>r.tTotal), prevTotalTime=avg(prev,r=>r.tTotal);
@@ -3186,7 +3192,7 @@
       const manchRows=manchOrder.filter(cor=>manch[cor]);
       const manchEl=$("tableManchester");
       if(manchEl){
-        if(!manchRows.length){manchEl.innerHTML='<tbody><tr><td colspan="8" class="mono muted" style="padding:16px">Sem dados de espera m\u00e9dica registrados para calcular conform\u00e2ncia Manchester.</td></tr></tbody>';}
+        if(!manchRows.length){manchEl.innerHTML='<tbody><tr><td colspan="7" class="mono muted" style="padding:16px">Sem dados de espera m\u00e9dica registrados para calcular conform\u00e2ncia Manchester.</td></tr></tbody>';}
         else{
           const head='<thead><tr><th>Classifica\u00e7\u00e3o</th><th>Meta</th><th>Conform. geral</th><th>Diurno</th><th>Noturno</th><th>Cobertura</th><th>Status</th></tr></thead>';
           const body='<tbody>'+manchRows.map(cor=>{
@@ -3342,8 +3348,9 @@
       const d=state.filt.filter(r=>r.tConsulta==null||r.tConsulta<=60), map={};
       d.forEach(r=>{
         if(!r.prof)return;
-        map[r.prof]??={prof:r.prof,total:0,D:0,N:0,tri:[],med:[],tot:[],risks:{},diasD:new Set(),diasN:new Set()};
-        const x=map[r.prof];
+        const profKey=norm(r.prof);
+        map[profKey]??={prof:r.prof,total:0,D:0,N:0,tri:[],med:[],tot:[],risks:{},diasD:new Set(),diasN:new Set()};
+        const x=map[profKey];
         x.total++;x[r.turno]++;
         if(r.tEspTri!=null)x.tri.push(r.tEspTri);
         if(r.tEspMed!=null)x.med.push(r.tEspMed);
@@ -3359,7 +3366,7 @@
         const mediaPlantao=plantTotal>0?Math.round(x.total/plantTotal):null;
         const mediaPlantaoD=plantD>0?Math.round(x.D/plantD):null;
         const mediaPlantaoN=plantN>0?Math.round(x.N/plantN):null;
-        const _rows=d.filter(r=>shortName(r.prof||"")=== shortName(x.prof||""));
+        const _rows=d.filter(r=>norm(r.prof||"")===norm(x.prof||""));
         const _pontos=calcularPontos(_rows);
         const _le2=_rows.filter(r=>r.idade!=null&&r.idade<=2).length;
         const _le12=_rows.filter(r=>r.idade!=null&&r.idade<=12).length;
@@ -5196,8 +5203,8 @@
     loadPrefs();
     syncThemeControls();
     function renderPacientes(){
-      popularMesesAnot(); // reutiliza a função de anotações
-      renderAnotLista();
+      if(!state.raw.length){const r=$('pacienteResult');if(r)r.innerHTML='<div class="card" style="padding:24px;text-align:center;color:var(--mut)">Carregue o histórico primeiro.</div>';return;}
+      renderTopRetornos();
     }
 
     function buscaProntuario(q){
