@@ -1873,7 +1873,17 @@
         <div class="grid" id="kpisFunil"></div>
         <div class="chart-grid">
           <div class="card full"><div class="card-title">🔻 Funil de atendimento — completude do fluxo</div><div id="funnelChart" style="padding:8px 0"></div></div>
-          <div class="card full"><div class="card-title">🔻 Sazonalidade — mês × dia da semana (volume)</div><div class="mono" id="heatmapSazon" style="overflow-x:auto;padding:4px 0"></div></div>
+          <div class="card full">
+            <div class="card-title">🔻 Sazonalidade — volume médio por dia da semana</div>
+            <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+              <div style="flex:2;min-width:280px">
+                <div class="chart" style="height:220px"><canvas id="chartSazonLine"></canvas></div>
+              </div>
+              <div style="flex:1;min-width:220px">
+                <div id="heatmapSazon" style="overflow-x:auto;padding:4px 0"></div>
+              </div>
+            </div>
+          </div>
           <div class="card"><div class="card-title">🔻 Índice de evasão estimada por mês</div><div class="chart"><canvas id="chartEvasao"></canvas></div></div>
           <div class="card"><div class="card-title">🔻 Volume × Espera por dia da semana</div><div class="chart"><canvas id="chartDowEspera"></canvas></div></div>
         </div>
@@ -5008,32 +5018,87 @@
       html += '</div>';
       $('funnelChart').innerHTML = html;
 
-      // ── Heatmap Sazonalidade: mês × dia da semana ──
+      // ── Sazonalidade: volume médio por dia da semana × mês ──
+      // FIX: normaliza por nº de ocorrências do dia no mês (média, não total)
       const MES_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-      const sazonMap = {};
+      // Contar dias: para cada (mes, diaSem) quantos dias distintos existem
+      const sazonDias = {}, sazonTot = {};
       d.forEach(r => {
-        const k = `${r.diaSem}-${r.dh.getMonth()}`;
-        sazonMap[k] = (sazonMap[k] || 0) + 1;
+        const mes = r.dh.getMonth(), dow = r.diaSem;
+        const k = `${dow}-${mes}`;
+        sazonDias[k] = sazonDias[k] || new Set();
+        sazonDias[k].add(r.dateKey);
+        sazonTot[k] = (sazonTot[k] || 0) + 1;
+      });
+      // Média: total / nº de dias únicos daquele dow naquele mês
+      const sazonAvg = {};
+      Object.keys(sazonTot).forEach(k => {
+        sazonAvg[k] = sazonDias[k] ? sazonTot[k] / sazonDias[k].size : 0;
       });
       const allMonths = [...new Set(d.map(r => r.dh.getMonth()))].sort((a,b)=>a-b);
-      const sazonMax = Math.max(1, ...Object.values(sazonMap));
 
-      let sazonHtml = `<div class="heatmap-sazon" style="grid-template-columns:36px repeat(${allMonths.length},minmax(26px,1fr))">`;
-      sazonHtml += '<div></div>' + allMonths.map(m => `<div class="hm-sazon-head">${MES_SHORT[m]}</div>`).join('');
-      DOW.forEach((label, di) => {
-        const dow = DOWO[di];
-        sazonHtml += `<div class="hm-sazon-row">${label}</div>`;
+      // Paleta de meses
+      const MON_COLORS = ['#3b82f6','#22c55e','#f97316','#a78bfa','#06b6d4','#f43f5e','#eab308','#10b981','#8b5cf6','#ec4899','#14b8a6','#f59e0b'];
+
+      // Gráfico de linhas: X = dia da semana, Y = volume médio, série por mês
+      const dowLabels = DOWO.map(i => DOW[i]); // Seg,Ter,Qua,Qui,Sex,Sab,Dom
+      chart('chartSazonLine', {
+        type: 'line',
+        data: {
+          labels: dowLabels,
+          datasets: allMonths.map(m => ({
+            label: MES_SHORT[m],
+            data: DOWO.map(dow => {
+              const v = sazonAvg[`${dow}-${m}`];
+              return v != null ? +v.toFixed(1) : null;
+            }),
+            borderColor: MON_COLORS[m] || '#64748b',
+            backgroundColor: (MON_COLORS[m] || '#64748b').replace(')', ',.15)').replace('rgb','rgba') || 'transparent',
+            tension: .35, pointRadius: 5, pointHoverRadius: 7,
+            borderWidth: 2, fill: false, spanGaps: true
+          }))
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: tickColor(), usePointStyle: true, font:{size:10} } },
+            tooltip: { callbacks: {
+              label: c => `${c.dataset.label}: ${c.parsed.y != null ? c.parsed.y.toFixed(1) + ' atend/dia' : '-'}`
+            }}
+          },
+          scales: {
+            x: { grid:{color:gridColor()}, ticks:{color:tickColor()} },
+            y: { grid:{color:gridColor()}, ticks:{color:tickColor()}, beginAtZero:true,
+                 title:{display:true,text:'média de atend./dia',color:tickColor(),font:{size:9}} }
+          }
+        }
+      });
+
+      // Heatmap compacto: células fixas 34px, cor normalizada por coluna (cada mês tem seu próprio max)
+      const sazonMaxPerMonth = {};
+      allMonths.forEach(m => {
+        sazonMaxPerMonth[m] = Math.max(1, ...DOWO.map(dow => sazonAvg[`${dow}-${m}`] || 0));
+      });
+      const colW = 38;
+      let sazonHtml = `<div style="display:grid;grid-template-columns:32px repeat(${allMonths.length},${colW}px);gap:2px;align-items:center;font-size:9px;font-family:'IBM Plex Mono',monospace">`;
+      // Cabeçalho
+      sazonHtml += '<div></div>' + allMonths.map(m => `<div style="text-align:center;color:${MON_COLORS[m]||'var(--mut)'};font-weight:700;padding-bottom:2px">${MES_SHORT[m]}</div>`).join('');
+      // Linhas por dia da semana
+      DOWO.forEach(dow => {
+        const label = DOW[dow];
+        sazonHtml += `<div style="text-align:right;color:var(--mut);padding-right:4px">${label}</div>`;
         allMonths.forEach(m => {
-          const n = sazonMap[`${dow}-${m}`] || 0;
-          const a = n / sazonMax;
-          const bg = n ? `rgba(99,102,241,${0.1 + a * 0.85})` : 'var(--sur2)';
-          sazonHtml += `<div class="hm-sazon-cell" data-tip="${label} / ${MES_SHORT[m]}: ${fmt(n)} atend." style="background:${bg}"></div>`;
+          const v = sazonAvg[`${dow}-${m}`] || 0;
+          const rel = v / sazonMaxPerMonth[m]; // 0-1 relativo ao mês
+          const alpha = 0.08 + rel * 0.88;
+          const bg = `rgba(99,102,241,${alpha.toFixed(2)})`;
+          const txtColor = rel > 0.5 ? '#fff' : 'var(--txt)';
+          sazonHtml += `<div data-tip="${label}/${MES_SHORT[m]}: ${v.toFixed(1)} atend/dia" title="${label} ${MES_SHORT[m]}: ${v.toFixed(1)}" style="background:${bg};border-radius:4px;height:30px;display:flex;align-items:center;justify-content:center;color:${txtColor};cursor:default">${v>=1?Math.round(v):''}</div>`;
         });
       });
+      // Legenda
+      sazonHtml += `<div style="grid-column:1/-1;margin-top:6px;color:var(--mut)">Média de atendimentos por dia. Cor normalizada por mês — permite comparar padrão intra-mês.</div>`;
       sazonHtml += '</div>';
-      sazonHtml += `<div style="font-size:9px;color:var(--mut);margin-top:6px;font-family:'IBM Plex Mono',monospace">
-        Grade: dia da semana × mês. Intensidade = volume de atendimentos.
-      </div>`;
       $('heatmapSazon').innerHTML = sazonHtml;
 
       // ── Gráfico evasão por mês ──
