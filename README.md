@@ -287,6 +287,5 @@ Digite apenas parte do nome (ex: `NINOMIYA`). O filtro usa busca parcial normali
 ## Contato e manutenção
 
 **Victor Matheus Sanches Pivatti**  
-Coordenador Assistencial / Enfermeiro Responsável Técnico  
-COREN-MG 708057  
-UPA 24h Tiago Cardoso dos Santos — Mateus Leme, MG
+Email: vsanchespivatti@gmail.com
+Tel.: (37) 98812-0269
