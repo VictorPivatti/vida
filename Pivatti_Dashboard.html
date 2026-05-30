@@ -1624,13 +1624,14 @@
       </section>
 
       <section class="pane" id="pane-procedimentos">
-        <div class="page-header"><h1 class="page-title">Procedimentos por Profissional</h1><p class="page-desc">Produtividade assistencial do relatório Vivver</p></div>
+        <div class="page-header"><h1 class="page-title">Produtividade Assistencial</h1><p class="page-desc">Procedimentos realizados por profissional — BPA individualizado</p></div>
         <div id="procEmpty" class="card" style="padding:34px;text-align:center;margin-bottom:12px">
           <div style="font-weight:700;font-size:15px;margin-bottom:8px">Nenhum relatório de procedimentos carregado</div>
           <div class="mono muted" style="font-size:12px;margin-bottom:16px;line-height:1.6">Carregue o arquivo "Procedimentos realizados por profissional" exportado pelo Vivver.</div>
           <button class="btn primary" onclick="$('procFile').click()" style="margin:0 auto">+ Carregar procedimentos</button>
         </div>
         <div id="procContent" class="hidden">
+          <!-- Filtros -->
           <div class="card" style="margin-bottom:12px;padding:10px 14px">
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:nowrap">
               <select class="field" id="procFiltroEsp" style="flex:1.6;min-width:0;max-width:220px"><option value="all">Todas especialidades</option></select>
@@ -1643,14 +1644,62 @@
               </select>
             </div>
           </div>
+
+          <!-- KPIs resumo executivo -->
           <div class="grid" id="kpisProc"></div>
-          <div class="chart-grid">
-            <div class="card"><div class="card-title">Top profissionais</div><div class="chart tall"><canvas id="chartProcProf"></canvas></div></div>
-            <div class="card"><div class="card-title">Top procedimentos</div><div class="chart tall"><canvas id="chartProcTop"></canvas></div></div>
-            <div class="card"><div class="card-title">Produção por especialidade</div><div class="chart small"><canvas id="chartProcEsp"></canvas></div></div>
-            <div class="card"><div class="card-title">Faturável vs. não faturável</div><div class="chart small"><canvas id="chartProcFat"></canvas></div></div>
-            <div class="card full"><div class="card-title">Ranking por profissional</div><div class="table-wrap"><table class="table" id="tableProcProf"></table></div></div>
-            <div class="card full"><div class="card-title">Detalhamento profissional × procedimento</div><div class="table-wrap"><table class="table" id="tableProcDetalhe"></table></div></div>
+
+          <!-- Resumo por categoria (tabela executiva) -->
+          <div class="card full" style="margin-bottom:0">
+            <div class="card-title">Resumo executivo por categoria</div>
+            <div class="table-wrap"><table class="table" id="tableProcResumo"></table></div>
+          </div>
+
+          <!-- SEÇÃO: Equipe Médica -->
+          <div id="secaoMedicos">
+            <div style="margin:20px 0 10px;padding:10px 0 6px;border-bottom:2px solid var(--ac);display:flex;align-items:center;gap:10px">
+              <span style="font-size:13px;font-weight:700;color:var(--txt)">Equipe Médica</span>
+              <span id="kpiMedTotal" class="mono muted" style="font-size:11px"></span>
+            </div>
+            <div class="chart-grid">
+              <div class="card"><div class="card-title">Ranking — volume total BPA</div><div class="chart tall"><canvas id="chartMedTotal"></canvas></div></div>
+              <div class="card"><div class="card-title">Perfil por tipo de procedimento</div><div class="chart tall"><canvas id="chartMedPerfil"></canvas></div></div>
+              <div class="card full"><div class="card-title">Detalhamento por médico</div><div class="table-wrap"><table class="table" id="tableProcMedicos"></table></div></div>
+            </div>
+          </div>
+
+          <!-- SEÇÃO: Enfermeiros -->
+          <div id="secaoEnfermeiros">
+            <div style="margin:20px 0 10px;padding:10px 0 6px;border-bottom:2px solid #22c55e;display:flex;align-items:center;gap:10px">
+              <span style="font-size:13px;font-weight:700;color:var(--txt)">Equipe de Enfermagem — Enfermeiros</span>
+              <span id="kpiEnfTotal" class="mono muted" style="font-size:11px"></span>
+            </div>
+            <div class="chart-grid">
+              <div class="card"><div class="card-title">Ranking — volume total BPA</div><div class="chart tall"><canvas id="chartEnfTotal"></canvas></div></div>
+              <div class="card"><div class="card-title">Triagens × outros procedimentos</div><div class="chart tall"><canvas id="chartEnfPerfil"></canvas></div></div>
+              <div class="card full"><div class="card-title">Detalhamento por enfermeiro(a)</div><div class="table-wrap"><table class="table" id="tableProcEnfermeiros"></table></div></div>
+            </div>
+          </div>
+
+          <!-- SEÇÃO: Técnicos -->
+          <div id="secaoTecnicos">
+            <div style="margin:20px 0 10px;padding:10px 0 6px;border-bottom:2px solid #f97316;display:flex;align-items:center;gap:10px">
+              <span style="font-size:13px;font-weight:700;color:var(--txt)">Equipe de Enfermagem — Técnicos</span>
+              <span id="kpiTecTotal" class="mono muted" style="font-size:11px"></span>
+            </div>
+            <div class="chart-grid">
+              <div class="card"><div class="card-title">Ranking — volume total BPA</div><div class="chart tall"><canvas id="chartTecTotal"></canvas></div></div>
+              <div class="card"><div class="card-title">Vias de administração — top procedimentos</div><div class="chart tall"><canvas id="chartTecPerfil"></canvas></div></div>
+              <div class="card full"><div class="card-title">Detalhamento por técnico(a)</div><div class="table-wrap"><table class="table" id="tableProcTecnicos"></table></div></div>
+            </div>
+          </div>
+
+          <!-- SEÇÃO: Outros -->
+          <div id="secaoOutros" class="hidden">
+            <div style="margin:20px 0 10px;padding:10px 0 6px;border-bottom:2px solid #94a3b8;display:flex;align-items:center;gap:10px">
+              <span style="font-size:13px;font-weight:700;color:var(--txt)">Outros profissionais</span>
+              <span id="kpiOutTotal" class="mono muted" style="font-size:11px"></span>
+            </div>
+            <div class="card full"><div class="card-title">Detalhamento</div><div class="table-wrap"><table class="table" id="tableProcOutros"></table></div></div>
           </div>
         </div>
       </section>
@@ -4411,51 +4460,274 @@
       );
     }
     function renderProcedimentos(){
-      const empty=$('procEmpty'), content=$('procContent');
+      const empty=$('procEmpty'), contentEl=$('procContent');
       if(!state.procRaw.length){
         if(empty)empty.classList.remove('hidden');
-        if(content)content.classList.add('hidden');
+        if(contentEl)contentEl.classList.add('hidden');
         return;
       }
       if(empty)empty.classList.add('hidden');
-      if(content)content.classList.remove('hidden');
+      if(contentEl)contentEl.classList.remove('hidden');
       setSelectOptions('procFiltroEsp',[...new Set(state.procRaw.map(r=>r.esp).filter(Boolean))].sort(),'Todas as especialidades');
       setSelectOptions('procFiltroProf',[...new Set(state.procRaw.map(r=>r.prof).filter(Boolean))].sort(),'Todos os profissionais');
       setSelectOptions('procFiltroProc',[...new Set(state.procRaw.map(r=>r.proc).filter(Boolean))].sort(),'Todos os procedimentos');
       const rows=procFilteredRows();
       state.procFilt=rows;
-      const total=sum(rows,r=>r.qde), profs=new Set(rows.map(r=>r.prof)).size, procs=new Set(rows.map(r=>r.proc)).size;
+
+      // ── Classificar categoria profissional ────────────────────────
+      const catOf=esp=>{
+        const e=(esp||'').toLowerCase();
+        if(e.includes('médico')||e.includes('medico'))return'med';
+        if(e.includes('enfermeiro'))return'enf';
+        if(e.includes('técnico')||e.includes('tecnico'))return'tec';
+        return'out';
+      };
+
+      // ── Classificar tipo de procedimento ─────────────────────────
+      const procTipo=r=>{
+        const n=r.proc.toUpperCase(), c=r.codProc.replace(/^0+/,'');
+        if(n.includes('ACOLHIMENTO')&&n.includes('RISCO'))return'triagem';
+        if(n.includes('ATENDIMENTO MEDICO')||n.includes('ATENDIMENTO DE URGENCIA')||n.includes('URGENCIA COM OBSERVACAO'))return'consulta';
+        if(n.includes('ELETROCARDIOGRAMA'))return'ecg';
+        if(n.includes('RADIOLOGIA')||n.includes('RAIO')||n.includes('RADIOGRAFICO')||n.includes('RADIOGR'))return'radio';
+        if(n.includes('ENDOVENOSA')||n.includes('INTRAVENOSA'))return'ev';
+        if(n.includes('INTRAMUSCULAR'))return'im';
+        if(n.includes('VIA ORAL')&&n.includes('MEDICAMENTO'))return'vo';
+        if(n.includes('SUBCUTANEA')||n.includes('SUBCUTÂNEA'))return'sc';
+        if(n.includes('NEBULIZACAO')||n.includes('NEBULIZAÇÃO')||n.includes('INALACAO'))return'neb';
+        if(n.includes('GLICEMIA'))return'glicemia';
+        if(n.includes('CURATIVO'))return'curativo';
+        if(n.includes('SUTURAS')||n.includes('SUTURA'))return'sutura';
+        return'outro';
+      };
+
+      // ── Agrupamento geral ─────────────────────────────────────────
+      const total=sum(rows,r=>r.qde);
       const fat=sum(rows.filter(r=>r.faturavelFlag==='S'),r=>r.qde);
+      const byCategoria={med:[],enf:[],tec:[],out:[]};
+      rows.forEach(r=>byCategoria[catOf(r.esp)].push(r));
+
+      // ── KPIs executivos ───────────────────────────────────────────
+      const profs=new Set(rows.map(r=>norm(r.prof))).size;
+      const medProfs=new Set(byCategoria.med.map(r=>norm(r.prof))).size;
+      const enfProfs=new Set(byCategoria.enf.map(r=>norm(r.prof))).size;
+      const tecProfs=new Set(byCategoria.tec.map(r=>norm(r.prof))).size;
       $('kpisProc').innerHTML=[
-        kpi('Procedimentos',fmt(total),`${fmt(rows.length)} linhas do relatório`,'#3b82f6'),
-        kpi('Profissionais',fmt(profs),'com produção registrada','#22c55e'),
-        kpi('Tipos de procedimento',fmt(procs),'procedimentos distintos','#a78bfa'),
-        kpi('Média por profissional',profs?fmt(Math.round(total/profs)):'-','procedimentos/profissional','#f97316'),
-        kpi('Faturáveis',pct(fat,total),`${fmt(fat)} procedimentos`,'#06b6d4')
+        kpi('Total BPA',fmt(total),`${fmt(profs)} profissionais ativos`,'#3b82f6'),
+        kpi('Equipe médica',fmt(sum(byCategoria.med,r=>r.qde)),`${medProfs} médicos — ${total?(sum(byCategoria.med,r=>r.qde)/total*100).toFixed(0):'0'}% do total`,'#a78bfa'),
+        kpi('Enfermeiros',fmt(sum(byCategoria.enf,r=>r.qde)),`${enfProfs} enfermeiros — ${total?(sum(byCategoria.enf,r=>r.qde)/total*100).toFixed(0):'0'}% do total`,'#22c55e'),
+        kpi('Téc. de enfermagem',fmt(sum(byCategoria.tec,r=>r.qde)),`${tecProfs} técnicos — ${total?(sum(byCategoria.tec,r=>r.qde)/total*100).toFixed(0):'0'}% do total`,'#f97316'),
+        kpi('Faturáveis',pct(fat,total),`${fmt(fat)} procedimentos`,'#06b6d4'),
       ].join('');
-      const byProf=Object.values(rows.reduce((m,r)=>{
-        const k=r.codProf+'|'+r.prof;
-        m[k]??={cod:r.codProf,prof:r.prof,esp:r.esp,total:0,tipos:new Set(),fat:0};
-        m[k].total+=r.qde;m[k].tipos.add(r.proc);if(r.faturavelFlag==='S')m[k].fat+=r.qde;
-        return m;
-      },{})).map(r=>({...r,tipos:r.tipos.size})).sort((a,b)=>b.total-a.total);
-      const byProc=Object.values(rows.reduce((m,r)=>{
-        const k=r.codProc+'|'+r.proc;
-        m[k]??={cod:r.codProc,proc:r.proc,total:0,profs:new Set(),fat:0};
-        m[k].total+=r.qde;m[k].profs.add(r.prof);if(r.faturavelFlag==='S')m[k].fat+=r.qde;
-        return m;
-      },{})).map(r=>({...r,profs:r.profs.size})).sort((a,b)=>b.total-a.total);
-      const byEsp=Object.entries(rows.reduce((m,r)=>{m[r.esp]=(m[r.esp]||0)+r.qde;return m},{})).sort((a,b)=>b[1]-a[1]);
-      const fatRows=[['Faturável',fat],['Não faturável',Math.max(total-fat,0)]];
-      const topProf=byProf.slice(0,12).reverse();
-      chart('chartProcProf',{type:'bar',data:{labels:topProf.map(r=>shortName(r.prof)),datasets:[{data:topProf.map(r=>r.total),backgroundColor:'#22c55e',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
-      const topProc=byProc.slice(0,12).reverse();
-      chart('chartProcTop',{type:'bar',data:{labels:topProc.map(r=>r.proc.length>34?r.proc.slice(0,34)+'...':r.proc),datasets:[{data:topProc.map(r=>r.total),backgroundColor:'#3b82f6',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
-      chart('chartProcEsp',{type:'bar',data:{labels:byEsp.map(([k])=>k),datasets:[{data:byEsp.map(([,v])=>v),backgroundColor:'#a78bfa',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
-      chart('chartProcFat',{type:'doughnut',data:{labels:fatRows.map(r=>r[0]),datasets:[{data:fatRows.map(r=>r[1]),backgroundColor:['#06b6d4','#64748b'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true}}}}});
-      $('tableProcProf').innerHTML=`<thead><tr><th>#</th><th>Profissional</th><th>Especialidade</th><th>Total</th><th>Tipos</th><th>Faturável</th></tr></thead><tbody>${byProf.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.prof)}</td><td>${esc(r.esp)}</td><td class="mono">${fmt(r.total)}</td><td class="mono">${fmt(r.tipos)}</td><td class="mono">${pct(r.fat,r.total)}</td></tr>`).join('')}</tbody>`;
-      const detail=rows.slice().sort((a,b)=>b.qde-a.qde||a.prof.localeCompare(b.prof));
-      $('tableProcDetalhe').innerHTML=`<thead><tr><th>#</th><th>Profissional</th><th>Procedimento</th><th>Especialidade</th><th>Cód.</th><th>Fat.</th><th>Qtd.</th></tr></thead><tbody>${detail.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.prof)}</td><td>${esc(r.proc)}</td><td>${esc(r.esp)}</td><td class="mono">${esc(r.codProc)}</td><td class="mono">${esc(r.faturavel||'-')}</td><td class="mono">${fmt(r.qde)}</td></tr>`).join('')}</tbody>`;
+
+      // ── Tabela resumo executivo ───────────────────────────────────
+      const cats=[
+        {label:'Médicos Clínicos',cat:'med',cor:'#a78bfa'},
+        {label:'Enfermeiros',cat:'enf',cor:'#22c55e'},
+        {label:'Técnicos de Enfermagem',cat:'tec',cor:'#f97316'},
+        {label:'Outros',cat:'out',cor:'#94a3b8'},
+      ];
+      const resumoRows=cats.map(c=>{
+        const r=byCategoria[c.cat];
+        const tot=sum(r,x=>x.qde);
+        const ps=new Set(r.map(x=>norm(x.prof))).size;
+        const med=ps?Math.round(tot/ps):0;
+        const vals=Object.values(r.reduce((m,x)=>{const k=norm(x.prof);m[k]=(m[k]||0)+x.qde;return m},{})).sort((a,b)=>a-b);
+        const mediana=vals.length?vals[Math.floor(vals.length/2)]:0;
+        return{...c,tot,ps,med,mediana,pct:total?+(tot/total*100).toFixed(1):0};
+      }).filter(c=>c.tot>0);
+      const totalGeral=sum(resumoRows,r=>r.tot), profsGeral=sum(resumoRows,r=>r.ps);
+      $('tableProcResumo').innerHTML=`<thead><tr>
+        <th>Categoria</th><th>Profissionais</th><th>Total BPA</th><th>Média/profissional</th><th>Mediana</th><th>% do total</th>
+      </tr></thead><tbody>${resumoRows.map(r=>`<tr>
+        <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${r.cor};margin-right:6px"></span><strong>${esc(r.label)}</strong></td>
+        <td class="mono">${fmt(r.ps)}</td>
+        <td class="mono" style="color:${r.cor};font-weight:700">${fmt(r.tot)}</td>
+        <td class="mono">${fmt(r.med)}</td>
+        <td class="mono">${fmt(r.mediana)}</td>
+        <td class="mono"><div style="display:flex;align-items:center;gap:6px"><div style="width:${Math.round(r.pct*1.2)}px;max-width:80px;height:6px;background:${r.cor};border-radius:3px"></div>${r.pct}%</div></td>
+      </tr>`).join('')}
+      <tr style="border-top:2px solid var(--bdr);font-weight:700">
+        <td>TOTAL GERAL</td><td class="mono">${fmt(profsGeral)}</td>
+        <td class="mono">${fmt(totalGeral)}</td>
+        <td class="mono">${profsGeral?fmt(Math.round(totalGeral/profsGeral)):'-'}</td>
+        <td class="mono">—</td><td class="mono">100%</td>
+      </tr></tbody>`;
+
+      // ── Função auxiliar: ranking visual (barra proporcional) ──────
+      const rankBar=(rows,topN=15)=>{
+        const sorted=[...rows].sort((a,b)=>b.total-a.total).slice(0,topN);
+        const max=sorted[0]?.total||1;
+        return sorted.map((r,i)=>({...r,rank:i+1,bar:Math.round(r.total/max*20)}));
+      };
+
+      // ── Função: tabela com breakdown de procedimentos ─────────────
+      const buildProcTable=(rows,tipos,colLabels,tableId)=>{
+        if(!$(tableId))return;
+        const byProf=Object.values(rows.reduce((m,r)=>{
+          const k=norm(r.prof);
+          m[k]??={prof:r.prof,total:0,tipos:{}};
+          m[k].total+=r.qde;
+          const t=procTipo(r);
+          m[k].tipos[t]=(m[k].tipos[t]||0)+r.qde;
+          return m;
+        },{})).sort((a,b)=>b.total-a.total);
+        const max=byProf[0]?.total||1;
+        const head=`<thead><tr><th>#</th><th>Profissional</th>${tipos.map(([t,l])=>`<th>${esc(l)}</th>`).join('')}<th>Total BPA</th><th>Perfil</th></tr></thead>`;
+        const body=`<tbody>${byProf.map((r,i)=>{
+          const tipoCols=tipos.map(([t])=>`<td class="mono">${r.tipos[t]?fmt(r.tipos[t]):'-'}</td>`).join('');
+          const bars='█'.repeat(Math.round(r.total/max*10))+'░'.repeat(10-Math.round(r.total/max*10));
+          return`<tr>
+            <td class="mono muted">${i+1}</td>
+            <td style="font-weight:600">${esc(shortName(r.prof))}</td>
+            ${tipoCols}
+            <td class="mono" style="font-weight:700">${fmt(r.total)}</td>
+            <td class="mono" style="font-family:monospace;font-size:10px;letter-spacing:-1px;color:var(--ac)">${bars}</td>
+          </tr>`;
+        }).join('')}</tbody>`;
+        $(tableId).innerHTML=head+body;
+      };
+
+      // ══════════════════════════════════════════════════════════════
+      // SEÇÃO MÉDICOS
+      // ══════════════════════════════════════════════════════════════
+      const medRows=byCategoria.med;
+      const medTotal=sum(medRows,r=>r.qde);
+      if($('kpiMedTotal'))$('kpiMedTotal').textContent=`${fmt(medTotal)} procedimentos · ${medProfs} médicos`;
+
+      const medByProf=Object.values(medRows.reduce((m,r)=>{
+        const k=norm(r.prof);m[k]??={prof:r.prof,total:0};m[k].total+=r.qde;return m;
+      },{})).sort((a,b)=>b.total-a.total);
+      const topMed=medByProf.slice(0,15).reverse();
+      chart('chartMedTotal',{type:'bar',data:{labels:topMed.map(r=>shortName(r.prof)),datasets:[{data:topMed.map(r=>r.total),backgroundColor:'#a78bfa',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.x} procedimentos`}}},scales:axes()}});
+
+      // Gráfico empilhado por tipo: consulta / ECG / radio / outros
+      const medProcTypes=[['consulta','Consulta/Urgência','#a78bfa'],['ecg','ECG','#3b82f6'],['radio','Radiologia','#06b6d4'],['outro','Outros','#94a3b8']];
+      const topMed15=medByProf.slice(0,15);
+      const medProfMap=medRows.reduce((m,r)=>{const k=norm(r.prof);(m[k]=m[k]||{})[procTipo(r)]=(m[k][procTipo(r)]||0)+r.qde;return m},{});
+      chart('chartMedPerfil',{type:'bar',data:{labels:topMed15.map(r=>shortName(r.prof)),datasets:medProcTypes.map(([t,l,c])=>({label:l,data:topMed15.map(r=>medProfMap[norm(r.prof)]?.[t]||0),backgroundColor:c,borderRadius:2}))},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true,font:{size:10}}}},scales:{...axes(),x:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}},y:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor(),font:{size:9}}}}}});
+
+      buildProcTable(medRows,[
+        ['consulta','Atend. UPA'],['consulta','Urg. Obs.'],['ecg','ECG'],['radio','Radiologia'],['outro','Outros']
+      ].slice(0,4),'',false);
+      // Tabela detalhada médicos
+      const medByProfDetail=Object.values(medRows.reduce((m,r)=>{
+        const k=norm(r.prof);
+        m[k]??={prof:r.prof,total:0,tipos:{}};m[k].total+=r.qde;
+        const t=procTipo(r);m[k].tipos[t]=(m[k].tipos[t]||0)+r.qde;return m;
+      },{})).sort((a,b)=>b.total-a.total);
+      const medMax=medByProfDetail[0]?.total||1;
+      if($('tableProcMedicos')){
+        $('tableProcMedicos').innerHTML=`<thead><tr><th>#</th><th>Médico</th><th>Consultas/UPA</th><th>ECG</th><th>Radiologia</th><th>Outros</th><th>Total BPA</th><th>Perfil</th></tr></thead><tbody>${
+          medByProfDetail.map((r,i)=>{
+            const c=r.tipos,bars='█'.repeat(Math.round(r.total/medMax*12))+'░'.repeat(12-Math.round(r.total/medMax*12));
+            return`<tr><td class="mono muted">${i+1}</td><td style="font-weight:600">${esc(shortName(r.prof))}</td>
+              <td class="mono">${(c.consulta||0)>0?fmt(c.consulta||0):'-'}</td>
+              <td class="mono">${(c.ecg||0)>0?fmt(c.ecg||0):'-'}</td>
+              <td class="mono">${(c.radio||0)>0?fmt(c.radio||0):'-'}</td>
+              <td class="mono">${(c.outro||0)>0?fmt(c.outro||0):'-'}</td>
+              <td class="mono" style="font-weight:700;color:var(--ac)">${fmt(r.total)}</td>
+              <td class="mono" style="font-size:10px;letter-spacing:-1px;color:#a78bfa">${bars}</td></tr>`;
+          }).join('')}</tbody>`;
+      }
+
+      // ══════════════════════════════════════════════════════════════
+      // SEÇÃO ENFERMEIROS
+      // ══════════════════════════════════════════════════════════════
+      const enfRows=byCategoria.enf;
+      const enfTotal=sum(enfRows,r=>r.qde);
+      if($('kpiEnfTotal'))$('kpiEnfTotal').textContent=`${fmt(enfTotal)} procedimentos · ${enfProfs} enfermeiros`;
+
+      const enfByProf=Object.values(enfRows.reduce((m,r)=>{
+        const k=norm(r.prof);m[k]??={prof:r.prof,total:0};m[k].total+=r.qde;return m;
+      },{})).sort((a,b)=>b.total-a.total);
+      const topEnf=enfByProf.slice(0,14).reverse();
+      chart('chartEnfTotal',{type:'bar',data:{labels:topEnf.map(r=>shortName(r.prof)),datasets:[{data:topEnf.map(r=>r.total),backgroundColor:'#22c55e',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+
+      const enfProcTypes=[['triagem','Triagens','#22c55e'],['ev','Med. EV','#3b82f6'],['im','Med. IM','#f97316'],['vo','Med. VO','#eab308'],['outro','Outros','#94a3b8']];
+      const enfProfMap=enfRows.reduce((m,r)=>{const k=norm(r.prof);(m[k]=m[k]||{})[procTipo(r)]=(m[k][procTipo(r)]||0)+r.qde;return m},{});
+      const topEnf14=enfByProf.slice(0,14);
+      chart('chartEnfPerfil',{type:'bar',data:{labels:topEnf14.map(r=>shortName(r.prof)),datasets:enfProcTypes.map(([t,l,c])=>({label:l,data:topEnf14.map(r=>enfProfMap[norm(r.prof)]?.[t]||0),backgroundColor:c,borderRadius:2}))},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true,font:{size:10}}}},scales:{...axes(),x:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}},y:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor(),font:{size:9}}}}}});
+
+      const enfByProfDetail=Object.values(enfRows.reduce((m,r)=>{
+        const k=norm(r.prof);m[k]??={prof:r.prof,total:0,tipos:{}};m[k].total+=r.qde;
+        const t=procTipo(r);m[k].tipos[t]=(m[k].tipos[t]||0)+r.qde;return m;
+      },{})).sort((a,b)=>b.total-a.total);
+      const enfMax=enfByProfDetail[0]?.total||1;
+      if($('tableProcEnfermeiros')){
+        $('tableProcEnfermeiros').innerHTML=`<thead><tr><th>#</th><th>Enfermeiro(a)</th><th>Triagens</th><th>Med. EV</th><th>Med. IM</th><th>Med. VO</th><th>Diagnóstico/Outros</th><th>Total BPA</th><th>Perfil</th></tr></thead><tbody>${
+          enfByProfDetail.map((r,i)=>{
+            const c=r.tipos,bars='█'.repeat(Math.round(r.total/enfMax*12))+'░'.repeat(12-Math.round(r.total/enfMax*12));
+            return`<tr><td class="mono muted">${i+1}</td><td style="font-weight:600">${esc(shortName(r.prof))}</td>
+              <td class="mono" style="${(c.triagem||0)>0?'color:var(--ok)':''}">${(c.triagem||0)>0?fmt(c.triagem||0):'-'}</td>
+              <td class="mono">${(c.ev||0)>0?fmt(c.ev||0):'-'}</td>
+              <td class="mono">${(c.im||0)>0?fmt(c.im||0):'-'}</td>
+              <td class="mono">${(c.vo||0)>0?fmt(c.vo||0):'-'}</td>
+              <td class="mono">${fmt((c.glicemia||0)+(c.outro||0)+(c.curativo||0))}</td>
+              <td class="mono" style="font-weight:700;color:var(--ok)">${fmt(r.total)}</td>
+              <td class="mono" style="font-size:10px;letter-spacing:-1px;color:#22c55e">${bars}</td></tr>`;
+          }).join('')}</tbody>`;
+      }
+
+      // ══════════════════════════════════════════════════════════════
+      // SEÇÃO TÉCNICOS
+      // ══════════════════════════════════════════════════════════════
+      const tecRows=byCategoria.tec;
+      const tecTotal=sum(tecRows,r=>r.qde);
+      if($('kpiTecTotal'))$('kpiTecTotal').textContent=`${fmt(tecTotal)} procedimentos · ${tecProfs} técnicos`;
+
+      const tecByProf=Object.values(tecRows.reduce((m,r)=>{
+        const k=norm(r.prof);m[k]??={prof:r.prof,total:0};m[k].total+=r.qde;return m;
+      },{})).sort((a,b)=>b.total-a.total);
+      const topTec=tecByProf.slice(0,15).reverse();
+      chart('chartTecTotal',{type:'bar',data:{labels:topTec.map(r=>shortName(r.prof)),datasets:[{data:topTec.map(r=>r.total),backgroundColor:'#f97316',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+
+      const tecProcTypes=[['ev','Med. EV','#f97316'],['im','Med. IM','#eab308'],['vo','Med. VO','#22c55e'],['sc','Med. SC','#3b82f6'],['neb','Nebulização','#a78bfa'],['outro','Outros','#94a3b8']];
+      const tecProfMap=tecRows.reduce((m,r)=>{const k=norm(r.prof);(m[k]=m[k]||{})[procTipo(r)]=(m[k][procTipo(r)]||0)+r.qde;return m},{});
+      const topTec15=tecByProf.slice(0,15);
+      chart('chartTecPerfil',{type:'bar',data:{labels:topTec15.map(r=>shortName(r.prof)),datasets:tecProcTypes.map(([t,l,c])=>({label:l,data:topTec15.map(r=>tecProfMap[norm(r.prof)]?.[t]||0),backgroundColor:c,borderRadius:2}))},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true,font:{size:10}}}},scales:{...axes(),x:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}},y:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor(),font:{size:9}}}}}});
+
+      const tecByProfDetail=Object.values(tecRows.reduce((m,r)=>{
+        const k=norm(r.prof);m[k]??={prof:r.prof,total:0,tipos:{}};m[k].total+=r.qde;
+        const t=procTipo(r);m[k].tipos[t]=(m[k].tipos[t]||0)+r.qde;return m;
+      },{})).sort((a,b)=>b.total-a.total);
+      const tecMax=tecByProfDetail[0]?.total||1;
+      if($('tableProcTecnicos')){
+        $('tableProcTecnicos').innerHTML=`<thead><tr><th>#</th><th>Técnico(a)</th><th>Med. EV</th><th>Med. IM</th><th>Med. VO</th><th>Med. SC</th><th>Nebulização</th><th>Outros</th><th>Total BPA</th><th>Perfil</th></tr></thead><tbody>${
+          tecByProfDetail.map((r,i)=>{
+            const c=r.tipos,bars='█'.repeat(Math.round(r.total/tecMax*12))+'░'.repeat(12-Math.round(r.total/tecMax*12));
+            return`<tr><td class="mono muted">${i+1}</td><td style="font-weight:600">${esc(shortName(r.prof))}</td>
+              <td class="mono" style="${(c.ev||0)>0?'color:var(--ac)':''}">${(c.ev||0)>0?fmt(c.ev||0):'-'}</td>
+              <td class="mono">${(c.im||0)>0?fmt(c.im||0):'-'}</td>
+              <td class="mono">${(c.vo||0)>0?fmt(c.vo||0):'-'}</td>
+              <td class="mono">${(c.sc||0)>0?fmt(c.sc||0):'-'}</td>
+              <td class="mono">${(c.neb||0)>0?fmt(c.neb||0):'-'}</td>
+              <td class="mono">${(c.outro||0)+(c.glicemia||0)+(c.curativo||0)>0?fmt((c.outro||0)+(c.glicemia||0)+(c.curativo||0)):'-'}</td>
+              <td class="mono" style="font-weight:700;color:#f97316">${fmt(r.total)}</td>
+              <td class="mono" style="font-size:10px;letter-spacing:-1px;color:#f97316">${bars}</td></tr>`;
+          }).join('')}</tbody>`;
+      }
+
+      // ══════════════════════════════════════════════════════════════
+      // SEÇÃO OUTROS
+      // ══════════════════════════════════════════════════════════════
+      const outRows=byCategoria.out;
+      const secOut=$('secaoOutros');
+      if(outRows.length&&secOut){
+        secOut.classList.remove('hidden');
+        const outTotal=sum(outRows,r=>r.qde);
+        const outProfs=new Set(outRows.map(r=>norm(r.prof))).size;
+        if($('kpiOutTotal'))$('kpiOutTotal').textContent=`${fmt(outTotal)} procedimentos · ${outProfs} profissionais`;
+        const outDetail=Object.values(outRows.reduce((m,r)=>{
+          const k=norm(r.prof);m[k]??={prof:r.prof,esp:r.esp,total:0};m[k].total+=r.qde;return m;
+        },{})).sort((a,b)=>b.total-a.total);
+        if($('tableProcOutros')){
+          $('tableProcOutros').innerHTML=`<thead><tr><th>#</th><th>Profissional</th><th>Especialidade</th><th>Total BPA</th></tr></thead><tbody>${
+            outDetail.map((r,i)=>`<tr><td class="mono muted">${i+1}</td><td>${esc(shortName(r.prof))}</td><td class="muted">${esc(r.esp)}</td><td class="mono">${fmt(r.total)}</td></tr>`).join('')}</tbody>`;
+        }
+      } else if(secOut){
+        secOut.classList.add('hidden');
+      }
     }
     function renderActivePane() {
       const active = document.querySelector('.nav-item.active');
