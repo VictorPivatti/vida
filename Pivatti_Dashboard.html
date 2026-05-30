@@ -1555,6 +1555,7 @@
           <div class="card"><div class="card-title">Tempo médio por mês</div><div class="chart small"><canvas id="chartIndTempo"></canvas></div></div>
           <div class="card full"><div class="card-title">Tabela mensal de conformidade</div><div class="table-wrap"><table class="table" id="tableInd"></table></div></div>
           <div class="card full"><div class="card-title">Conformidade Manchester por classificação de risco</div><div class="table-wrap"><table class="table" id="tableManchester"></table></div></div>
+          <div class="card full"><div class="card-title">Dispersão de espera médica — percentis</div><div id="cardDispersao" style="padding:0 4px"></div></div>
         </div>
       </section>
 
@@ -1565,6 +1566,7 @@
           <div class="card full"><div class="card-title">Evolução dos tempos médios</div><div class="chart"><canvas id="chartTempos"></canvas></div></div>
           <div class="card"><div class="card-title">Classificação de risco</div><div class="chart small"><canvas id="chartRisco"></canvas></div></div>
           <div class="card"><div class="card-title">Turno</div><div class="chart small"><canvas id="chartTurno"></canvas></div></div>
+          <div class="card full"><div class="card-title">Permanência prolongada — pacientes em observação</div><div id="cardPermanencia" style="padding:4px 0"></div><div class="chart small" style="margin-top:8px"><canvas id="chartPermanenciaMes"></canvas></div></div>
         </div>
       </section>
 
@@ -1588,6 +1590,7 @@
         <div class="chart-grid">
           <div class="card"><div class="card-title">Top médicos</div><div class="chart tall"><canvas id="chartMed"></canvas></div></div>
           <div class="card"><div class="card-title">Risco por médico — top 12</div><div class="chart tall"><canvas id="chartMedRisco"></canvas></div></div>
+          <div class="card full"><div class="card-title">Produção por plantão (12h)</div><div class="chart" style="height:240px"><canvas id="chartPlantaoBox"></canvas></div><div class="table-wrap" style="margin-top:8px"><table class="table" id="tablePlantao"></table></div></div>
           <div class="card full"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center">Ranking médico<button class="btn export" id="exportMedBtn" style="font-size:11px;padding:4px 10px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>XLSX</button></div><div class="search"><input class="field mono" id="searchMed" placeholder="Buscar médico…"></div><div class="table-wrap"><table class="table" id="tableMed"></table></div></div>
         </div>
       </section>
@@ -1684,6 +1687,7 @@
           <div class="card"><div class="card-title">Pacientes com mais visitas</div><div class="table-wrap"><table class="table" id="tableRet"></table></div></div>
           <div class="card full"><div class="card-title">Médicos com mais retornos ≤72h</div><div class="table-wrap"><table class="table" id="tableRetMed"></table></div></div>
           <div class="card full"><div class="card-title">Retornos críticos e potencialmente evitáveis</div><div class="table-wrap"><table class="table" id="tableRetCrit"></table></div></div>
+          <div class="card full" id="cardRetCid" class="hidden"><div class="card-title">Retorno ≤72h com mesmo diagnóstico — falha diagnóstica potencial</div><div class="grid" id="kpisRetCid"></div><div class="table-wrap" style="margin-top:8px"><table class="table" id="tableRetMesmoCid"></table></div></div>
         </div>
       </section>
 
@@ -2241,6 +2245,8 @@
     const pct=(n,t,d=1)=>t?`${(n/t*100).toFixed(d)}%`:"-";
     const avg=(arr,fn)=>{const v=arr.map(fn).filter(x=>Number.isFinite(x));return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
     const sum=(arr,fn)=>arr.reduce((s,x)=>s+(fn?fn(x):x),0);
+    // Percentil: retorna p-ésimo percentil de um array de números
+    const percentile=(arr,p)=>{const v=[...arr].filter(x=>Number.isFinite(x)).sort((a,b)=>a-b);if(!v.length)return null;const idx=(p/100)*(v.length-1);const lo=Math.floor(idx),hi=Math.ceil(idx);return+(v[lo]+(v[hi]-v[lo])*(idx-lo)).toFixed(1)};
     const group=(arr,fn)=>arr.reduce((m,r)=>{const k=fn(r);m[k]=(m[k]||0)+1;return m},{});
     const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
     const monthKey=d=>d.getFullYear()*100+d.getMonth()+1;
@@ -3240,6 +3246,31 @@
           manchEl.innerHTML=head+body;
         }
       }
+            // ── INDICADOR 1: Dispersão de espera médica ──────────────────
+      const dispEl=$("cardDispersao");
+      if(dispEl){
+        const medVals=d.filter(r=>r.tEspMed!=null).map(r=>r.tEspMed);
+        const triVals=d.filter(r=>r.tEspTri!=null).map(r=>r.tEspTri);
+        const metaMed_=meta("metaMed"), metaTri_=meta("metaTri");
+        const p50m=percentile(medVals,50),p75m=percentile(medVals,75),p90m=percentile(medVals,90),p95m=percentile(medVals,95);
+        const p50t=percentile(triVals,50),p75t=percentile(triVals,75),p90t=percentile(triVals,90),p95t=percentile(triVals,95);
+        const bar=(v,meta,max)=>{const pct=Math.min(100,v/max*100);const c=v>meta*1.5?"var(--er)":v>meta?"var(--wn)":"var(--ok)";return`<div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:6px;background:var(--sur2);border-radius:3px"><div style="width:${pct}%;height:6px;background:${c};border-radius:3px"></div></div><span class="mono" style="min-width:44px;font-size:11px;color:${c}">${Math.round(v)} min</span></div>`;};
+        const maxM=Math.max(p95m||0,metaMed_*2,1),maxT=Math.max(p95t||0,metaTri_*2,1);
+        dispEl.innerHTML=`
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:8px 0">
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Espera médica — ${fmt(medVals.length)} registros</div>
+              ${[["P50 (mediana)",p50m],["P75",p75m],["P90",p90m],["P95",p95m]].map(([l,v])=>v!=null?`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:var(--txt)">${l}</span><span class="mono muted" style="font-size:10px">meta: ${metaMed_} min</span></div>${bar(v,metaMed_,maxM)}</div>`:'').join('')}
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Espera triagem — ${fmt(triVals.length)} registros</div>
+              ${[["P50 (mediana)",p50t],["P75",p75t],["P90",p90t],["P95",p95t]].map(([l,v])=>v!=null?`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:var(--txt)">${l}</span><span class="mono muted" style="font-size:10px">meta: ${metaTri_} min</span></div>${bar(v,metaTri_,maxT)}</div>`:'').join('')}
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace;padding-bottom:4px">
+            P50 = metade dos pacientes esperou menos que isso · P95 = apenas 5% esperou mais · Meta ${metaMed_}min para espera médica
+          </div>`;
+      }
             $("tableInd").innerHTML=`<thead><tr><th>Mês</th><th>Volume</th><th>Triagem média</th><th>Triagem na meta</th><th>Espera médico</th><th>Total médio</th><th>Status</th></tr></thead><tbody>${m.map(x=>{const ok=[x.vol>=meta("metaVol"),x.triAvg==null||x.triAvg<=meta("metaTri"),x.medAvg==null||x.medAvg<=meta("metaMed"),x.totAvg==null||x.totAvg<=meta("metaTotal")].filter(Boolean).length;return`<tr><td class="mono">${monthLabel(x.k)}</td><td class="mono">${fmt(x.vol)}</td><td class="mono">${x.triAvg==null?"-":Math.round(x.triAvg)+" min"}</td><td class="mono">${pct(x.triOk,x.triN)}</td><td class="mono">${x.medAvg==null?"-":Math.round(x.medAvg)+" min"}</td><td class="mono">${x.totAvg==null?"-":Math.round(x.totAvg)+" min"}</td><td class="mono ${ok>=3?"okc":ok>=2?"wnc":"erc"}">${ok}/4</td></tr>`}).join("")}</tbody>`;
     }
     function renderFluxo(){
@@ -3254,6 +3285,38 @@
       const m=monthlyStats(d), fluxoVals=m.flatMap(x=>[x.triAvg,x.medAvg,x.totAvg]).filter(Number.isFinite);chart("chartTempos",{type:"line",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{label:"Espera triagem",data:m.map(x=>x.triAvg),borderColor:"#3b82f6",tension:.3,spanGaps:true},{label:"Espera médico",data:m.map(x=>x.medAvg),borderColor:"#f97316",tension:.3,spanGaps:true},{label:"Total",data:m.map(x=>x.totAvg),borderColor:"#ef4444",tension:.3,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaTri"),label:"meta triagem",color:"#3b82f6"},{value:meta("metaMed"),label:"meta médico",color:"#f97316"},{value:meta("metaTotal"),label:"meta total",color:"#ef4444"}]}},scales:{...axes(),y:{...axes().y,suggestedMax:Math.max(meta("metaTri"),meta("metaMed"),meta("metaTotal"),...fluxoVals,1)*1.15}}}});
       const risks=group(d,r=>r.cor), keys=RISK_ORDER.filter(k=>risks[k]).reverse();chart("chartRisco",{type:"bar",data:{labels:keys,datasets:[{data:keys.map(k=>risks[k]),backgroundColor:keys.map(k=>RISK_COLOR[k]||"#64748b"),borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.parsed.x)} atend. (${pct(c.parsed.x,d.length)})`}}},scales:{x:{grid:{color:gridColor()},ticks:{color:tickColor()}},y:{grid:{color:gridColor()},ticks:{color:tickColor(),font:{size:10}}}}}});
       const turns=group(d,r=>r.turno);chart("chartTurno",{type:"bar",data:{labels:["Diurno","Noturno"],datasets:[{data:[turns.D||0,turns.N||0],backgroundColor:["#3b82f6","#7c3aed"],borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+
+      // ── INDICADOR 2: Permanência prolongada ───────────────────────
+      const permEl=$("cardPermanencia");
+      if(permEl){
+        const comTotal=d.filter(r=>r.tTotal!=null);
+        const obs4h =comTotal.filter(r=>r.tTotal>240);   // > 4h = observação provável
+        const obs12h=comTotal.filter(r=>r.tTotal>720);   // > 12h = longa permanência
+        const obs24h=comTotal.filter(r=>r.tTotal>1440);  // > 24h = alerta de regulação
+        const pct4 =comTotal.length?(obs4h.length/comTotal.length*100).toFixed(1):0;
+        const pct12=comTotal.length?(obs12h.length/comTotal.length*100).toFixed(1):0;
+        const pct24=comTotal.length?(obs24h.length/comTotal.length*100).toFixed(1):0;
+        const medObs=avg(obs4h,r=>r.tTotal);
+        permEl.innerHTML=`
+          <div class="grid" style="margin:0 0 8px">
+            ${kpi("Em observação (>4h)",fmt(obs4h.length),`${pct4}% dos atendimentos com registro de saída`,"#f97316")}
+            ${kpi("Permanência longa (>12h)",fmt(obs12h.length),`${pct12}% — risco de superlotação`,"#ef4444")}
+            ${kpi("Alerta regulação (>24h)",obs24h.length>0?"⚠ "+fmt(obs24h.length):"0 casos",obs24h.length>0?"critério de regulação — encaminhar":"dentro do padrão esperado",obs24h.length>0?"#dc2626":"#22c55e")}
+            ${kpi("Média permanência obs.",medObs!=null?Math.round(medObs)+" min":"-","entre pacientes em observação (>4h)","#a78bfa")}
+          </div>
+          <div style="font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace">
+            Portaria GM/MS 10/2017: pacientes em observação > 24h devem ser notificados à Central de Regulação para internação. Total ${fmt(comTotal.length)} registros com tempo de saída.
+          </div>`;
+        // Gráfico mensal: % em observação por mês
+        const mObs=monthlyStats(d).map(mx=>{
+          const mRows=d.filter(r=>r.anoMes===mx.k&&r.tTotal!=null);
+          return{k:mx.k,obs4h:mRows.filter(r=>r.tTotal>240).length,obs24h:mRows.filter(r=>r.tTotal>1440).length,total:mRows.length};
+        });
+        chart("chartPermanenciaMes",{type:"bar",data:{labels:mObs.map(x=>monthLabel(x.k)),datasets:[
+          {label:"Obs. >4h",data:mObs.map(x=>x.total?+(x.obs4h/x.total*100).toFixed(1):0),backgroundColor:"rgba(249,115,22,.7)",borderRadius:3},
+          {label:"Obs. >24h (regulação)",data:mObs.map(x=>x.total?+(x.obs24h/x.total*100).toFixed(1):0),backgroundColor:"rgba(220,38,38,.85)",borderRadius:3}
+        ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true,font:{size:10}}}},scales:{...axes(),y:{...axes().y,ticks:{callback:v=>v+"%"}}}}});
+      }
     }
     function riskWeight(c){return({BRANCO:0,AZUL:1,VERDE:2,AMARELO:3,LARANJA:4,VERMELHO:5}[c]??1)}
     function hourBuckets(rows){
@@ -3410,6 +3473,85 @@
       const top=rows.slice(0,12).reverse();chart("chartMed",{type:"bar",data:{labels:top.map(r=>shortName(r.prof)),datasets:[{data:top.map(r=>r.total),backgroundColor:"#3b82f6",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
       const riskKeys=RISK_ORDER.filter(k=>rows.some(r=>r.risks[k]));chart("chartMedRisco",{type:"bar",data:{labels:rows.slice(0,12).map(r=>shortName(r.prof)),datasets:riskKeys.map(k=>({label:k,data:rows.slice(0,12).map(r=>r.risks[k]||0),backgroundColor:RISK_COLOR[k]||"#64748b"}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}}},scales:{x:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor(),maxRotation:35}},y:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}}}}});
       renderMedTable(rows);
+
+      // ── INDICADOR 4: Produção por plantão ──────────────────────
+      // Agrupa atendimentos por dateKey+turno (cada plantão = 12h)
+      const plantaoMap={};
+      d.forEach(r=>{
+        const k=r.dateKey+"_"+r.turno;
+        plantaoMap[k]=plantaoMap[k]||{dateKey:r.dateKey,turno:r.turno,meds:new Set(),n:0,tri:[],med:[]};
+        plantaoMap[k].n++;
+        if(r.prof)plantaoMap[k].meds.add(norm(r.prof));
+        if(r.tEspTri!=null)plantaoMap[k].tri.push(r.tEspTri);
+        if(r.tEspMed!=null)plantaoMap[k].med.push(r.tEspMed);
+      });
+      const plantoes=Object.values(plantaoMap).map(p=>({
+        ...p,
+        medAtivos:p.meds.size,
+        porMedico:p.meds.size?+(p.n/p.meds.size).toFixed(1):p.n,
+        medAvgEsp:avg(p.med,x=>x)
+      })).sort((a,b)=>b.n-a.n);
+
+      // Separar por turno
+      const plantD=plantoes.filter(p=>p.turno==="D"), plantN=plantoes.filter(p=>p.turno==="N");
+      const mediaD=avg(plantD,p=>p.n), mediaN=avg(plantN,p=>p.n);
+      const mediaDpM=avg(plantD.filter(p=>p.medAtivos>0),p=>p.porMedico);
+      const mediaNpM=avg(plantN.filter(p=>p.medAtivos>0),p=>p.porMedico);
+
+      // Gráfico: scatter dos plantões — X=data, Y=volume, cor por turno
+      const scatD=plantD.map(p=>({x:p.dateKey,y:p.n}));
+      const scatN=plantN.map(p=>({x:p.dateKey,y:p.n}));
+      chart("chartPlantaoBox",{type:"scatter",data:{datasets:[
+        {label:"Diurno",data:scatD,backgroundColor:"rgba(59,130,246,.55)",pointRadius:4},
+        {label:"Noturno",data:scatN,backgroundColor:"rgba(124,110,249,.55)",pointRadius:4}
+      ]},options:{responsive:true,maintainAspectRatio:false,
+        plugins:{
+          legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},
+          tooltip:{callbacks:{label:c=>`${c.dataset.label} ${c.raw.x}: ${c.raw.y} atend.`}}
+        },
+        scales:{
+          x:{type:"category",grid:{color:gridColor()},ticks:{color:tickColor(),maxRotation:45,font:{size:9}}},
+          y:{grid:{color:gridColor()},ticks:{color:tickColor()},
+             title:{display:true,text:"atendimentos/plantão",color:tickColor(),font:{size:9}}}
+        }
+      }});
+
+      // Tabela resumo por turno
+      const tablePlantao=$("tablePlantao");
+      if(tablePlantao){
+        tablePlantao.innerHTML=`<thead><tr>
+          <th>Turno</th><th>Plantões</th><th>Média atend./plantão</th>
+          <th>Máx. atend.</th><th>Mín. atend.</th><th>Média atend./médico</th>
+          <th>Média espera méd.</th>
+        </tr></thead><tbody>
+        <tr>
+          <td style="font-weight:700">Diurno (7h–19h)</td>
+          <td class="mono">${fmt(plantD.length)}</td>
+          <td class="mono ${mediaD>avg(plantoes,p=>p.n)*1.2?"wnc":""}">${mediaD!=null?mediaD.toFixed(1):"-"}</td>
+          <td class="mono">${fmt(Math.max(...plantD.map(p=>p.n),0))}</td>
+          <td class="mono">${fmt(Math.min(...plantD.map(p=>p.n),Infinity)===Infinity?0:Math.min(...plantD.map(p=>p.n)))}</td>
+          <td class="mono">${mediaDpM!=null?mediaDpM.toFixed(1):"-"}</td>
+          <td class="mono">${avg(plantD,p=>p.medAvgEsp)!=null?Math.round(avg(plantD,p=>p.medAvgEsp))+" min":"-"}</td>
+        </tr>
+        <tr>
+          <td style="font-weight:700">Noturno (19h–7h)</td>
+          <td class="mono">${fmt(plantN.length)}</td>
+          <td class="mono">${mediaN!=null?mediaN.toFixed(1):"-"}</td>
+          <td class="mono">${fmt(Math.max(...plantN.map(p=>p.n),0))}</td>
+          <td class="mono">${fmt(Math.min(...plantN.map(p=>p.n),Infinity)===Infinity?0:Math.min(...plantN.map(p=>p.n)))}</td>
+          <td class="mono">${mediaNpM!=null?mediaNpM.toFixed(1):"-"}</td>
+          <td class="mono">${avg(plantN,p=>p.medAvgEsp)!=null?Math.round(avg(plantN,p=>p.medAvgEsp))+" min":"-"}</td>
+        </tr>
+        <tr style="border-top:2px solid var(--bdr);font-weight:700">
+          <td>TOTAL</td>
+          <td class="mono">${fmt(plantoes.length)}</td>
+          <td class="mono">${avg(plantoes,p=>p.n)!=null?avg(plantoes,p=>p.n).toFixed(1):"-"}</td>
+          <td class="mono">${fmt(Math.max(...plantoes.map(p=>p.n),0))}</td>
+          <td class="mono">${fmt(Math.min(...plantoes.map(p=>p.n),Infinity)===Infinity?0:Math.min(...plantoes.map(p=>p.n)))}</td>
+          <td class="mono">${avg(plantoes.filter(p=>p.medAtivos>0),p=>p.porMedico)!=null?avg(plantoes.filter(p=>p.medAtivos>0),p=>p.porMedico).toFixed(1):"-"}</td>
+          <td class="mono">—</td>
+        </tr></tbody>`;
+      }
     }
     function renderMedTable(rows){
       const q=norm($("searchMed").value);
@@ -3506,6 +3648,56 @@
       </tr>`).join("")}</tbody>`;
       const critRows=[...retCrit.map(r=>({...r,tipo:"Critico"})),...retPiora.map(r=>({...r,tipo:"Piora de risco"}))].sort((a,b)=>a.dh-b.dh).slice(-60).reverse();
       $("tableRetCrit").innerHTML=`<thead><tr><th>Tipo</th><th>Prontuário</th><th>Intervalo</th><th>Risco anterior</th><th>Risco retorno</th><th>Data retorno</th><th>Médico</th></tr></thead><tbody>${critRows.map(r=>`<tr><td class="mono ${r.tipo==="Critico"?"erc":"wnc"}">${esc(r.tipo)}</td><td class="mono">${esc(r.pront)}</td><td class="mono">${r.diffH.toFixed(1)}h</td><td class="mono">${esc(r.prev?.cor||"-")}</td><td class="mono">${esc(r.cor)}</td><td class="mono">${r.dh.toLocaleString("pt-BR")}</td><td>${esc(r.prof||"-")}</td></tr>`).join("")}</tbody>`;
+
+      // ── INDICADOR 3: Retorno ≤72h com mesmo CID ─────────────────
+      const cidCard=$("cardRetCid");
+      if(cidCard&&state.cidRaw.length){
+        cidCard.classList.remove("hidden");
+        // Mapear CID por prontuário+data: para cada atendimento, qual CID foi registrado
+        const cidByProntDate={};
+        state.cidRaw.forEach(c=>{
+          const k=String(c.pront||"").trim()+"|"+String(c.dateKey||"").trim();
+          cidByProntDate[k]=cidByProntDate[k]||[];
+          cidByProntDate[k].push(c.cid||"");
+        });
+        // Para cada retorno, verificar se CID da visita atual = CID da visita anterior
+        const retComCid=ret.filter(r=>{
+          const kAtual=String(r.pront)+"|"+String(r.dateKey);
+          const kAnter=String(r.pront)+"|"+String(r.prev?.dateKey||"");
+          const cidAtual=cidByProntDate[kAtual];
+          const cidAnter=cidByProntDate[kAnter];
+          if(!cidAtual||!cidAnter)return false;
+          // Verifica interseção de CIDs
+          return cidAtual.some(c=>cidAnter.includes(c));
+        }).map(r=>{
+          const kAtual=String(r.pront)+"|"+String(r.dateKey);
+          const kAnter=String(r.pront)+"|"+String(r.prev?.dateKey||"");
+          const cidAtual=cidByProntDate[kAtual]||[];
+          const cidAnter=cidByProntDate[kAnter]||[];
+          const cidsRepetidos=cidAtual.filter(c=>cidAnter.includes(c));
+          return{...r,cidsRepetidos};
+        });
+        const taxaFalha=ret.length?(retComCid.length/ret.length*100).toFixed(1):0;
+        // Agrupar por CID repetido
+        const byCidRep={};
+        retComCid.forEach(r=>r.cidsRepetidos.forEach(c=>{byCidRep[c]=(byCidRep[c]||0)+1;}));
+        const topCidsRep=Object.entries(byCidRep).sort((a,b)=>b[1]-a[1]).slice(0,10);
+        $("kpisRetCid").innerHTML=[
+          kpi("Retornos com mesmo CID",fmt(retComCid.length),`${taxaFalha}% dos retornos ≤72h`,"#ef4444"),
+          kpi("Taxa de falha diagnóstica potencial",taxaFalha+"%",`${retComCid.length} de ${fmt(ret.length)} retornos`,"#f97316"),
+          kpi("CIDs com maior recidiva",fmt(topCidsRep.length),"diagnósticos repetidos em retornos","#a78bfa"),
+        ].join("");
+        $("tableRetMesmoCid").innerHTML=`<thead><tr><th>#</th><th>CID repetido</th><th>Ocorrências</th><th>% dos retornos c/ mesmo CID</th></tr></thead><tbody>${
+          topCidsRep.map(([cid,n],i)=>`<tr>
+            <td class="mono muted">${i+1}</td>
+            <td class="mono" style="font-weight:700">${esc(cid)}</td>
+            <td class="mono ${n>10?"erc":n>5?"wnc":""}">${fmt(n)}</td>
+            <td class="mono">${retComCid.length?(n/retComCid.length*100).toFixed(1):"0"}%</td>
+          </tr>`).join("")
+        }</tbody>`;
+      } else if(cidCard){
+        cidCard.classList.add("hidden");
+      }
     }
     function returnsWithin(rows,hours){
       const byP={};rows.forEach(r=>{
