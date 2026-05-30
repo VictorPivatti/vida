@@ -5308,10 +5308,10 @@
         const pressao=capacidade>0?volMedio/capacidade:0;
         return{h,n:totalN,meds:new Set(),dias:new Set(),medAtivos,volMedio,capacidade,deficit,pressao,nDias:slots.length,slots:slots.length};
       });
-      const horasDeficit=rows.filter(r=>r.deficit>0).length;
-      const maxDeficit=Math.max(...rows.map(r=>r.deficit));
-      const topDef=rows.find(r=>r.deficit===maxDeficit);
-      const mediaMedicos=(rows.reduce((s,r)=>s+r.medAtivos,0)/24).toFixed(1);
+      const horasDeficit=byH.filter(r=>r.deficit>0).length;
+      const maxDeficit=Math.max(...byH.map(r=>r.deficit));
+      const topDef=byH.find(r=>r.deficit===maxDeficit);
+      const mediaMedicos=(byH.reduce((s,r)=>s+r.medAtivos,0)/24).toFixed(1);
       $('kpisEscala').innerHTML=[
         kpi('Médicos distintos',fmt(new Set(d.filter(r=>r.prof).map(r=>r.prof)).size),'ativos no período','#3b82f6'),
         kpi('Média médicos/hora',mediaMedicos,'base histórica do período','#22c55e'),
@@ -5319,14 +5319,14 @@
         kpi('Pico de déficit',maxDeficit>0?(maxDeficit.toFixed(1)+' atend/h'):'—',topDef?`${topDef.h}h — requer reforço`:'cobertura adequada','#f97316'),
       ].join('');
       // Gráfico barras agrupadas: volume vs capacidade
-      const labels=rows.map(r=>r.h+'h');
+      const labels=byH.map(r=>r.h+'h');
       chart('chartEscalaHora',{
         type:'bar',
         data:{
           labels,
           datasets:[
-            {label:'Volume médio/hora',data:rows.map(r=>+r.volMedio.toFixed(1)),backgroundColor:'rgba(59,130,246,.55)',borderRadius:3},
-            {label:'Capacidade instalada',data:rows.map(r=>+r.capacidade.toFixed(1)),backgroundColor:'rgba(34,197,94,.4)',borderRadius:3},
+            {label:'Volume médio/hora',data:byH.map(r=>+r.volMedio.toFixed(1)),backgroundColor:'rgba(59,130,246,.55)',borderRadius:3},
+            {label:'Capacidade instalada',data:byH.map(r=>+r.capacidade.toFixed(1)),backgroundColor:'rgba(34,197,94,.4)',borderRadius:3},
           ]
         },
         options:{
@@ -5342,7 +5342,7 @@
       $('tableEscala').innerHTML=`<thead><tr>
         <th>Hora</th><th>Vol. médio</th><th>Méd. ativos</th><th>Cap. instalada</th>
         <th>Déficit/Superávit</th><th>Pressão</th><th>Ação sugerida</th>
-      </tr></thead><tbody>${rows.map(r=>{
+      </tr></thead><tbody>${byH.map(r=>{
         const pct100=(r.pressao*100).toFixed(0)+'%';
         const defAbs=Math.abs(r.deficit).toFixed(1);
         const defStr=r.deficit>0.5
