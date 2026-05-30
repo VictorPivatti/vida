@@ -715,11 +715,11 @@
       #pane-geral .chart-grid>.card:nth-child(2),
       #pane-geral .chart-grid>.card:nth-child(3){grid-column:span 4}
       #pane-geral .chart-grid>.card:nth-child(4){grid-column:span 8}
-      #pane-retornos .chart-grid>.card:nth-child(1){grid-column:span 8}
+      #pane-retornos .chart-grid>.card:nth-child(1){grid-column:1/-1}
       #pane-retornos .chart-grid>.card:nth-child(2),
       #pane-retornos .chart-grid>.card:nth-child(3){grid-column:span 4}
-      #pane-retornos .chart-grid>.card:nth-child(4),
-      #pane-retornos .chart-grid>.card:nth-child(5){grid-column:span 6}
+      #pane-retornos .chart-grid>.card:nth-child(4){grid-column:span 4}
+      #pane-retornos .chart-grid>.card:nth-child(5),
       #pane-retornos .chart-grid>.card:nth-child(6){grid-column:1/-1}
       #pane-gargalos .chart-grid>.card:nth-child(1){grid-column:span 8}
       #pane-gargalos .chart-grid>.card:nth-child(2){grid-column:span 4}
@@ -2916,7 +2916,13 @@
       return `<div class="k-trend ${good?"okc":"erc"}">${sign}${unit==="pp"?diff.toFixed(1)+" p.p.":Math.round(diff)+(unit?` ${unit}`:"")} (${sign}${pctDiff.toFixed(1)}%) vs período anterior</div>`;
     }
     function returnsFor(rows){
-      const byP={};rows.forEach(r=>{if(!r.pront)return;byP[r.pront]??=[];byP[r.pront].push(r)});Object.values(byP).forEach(v=>v.sort((a,b)=>a.dh-b.dh));
+      const byP={};
+      rows.forEach(r=>{
+        // Paridade com returnsWithin: filtrar pronts vazios/genéricos
+        if(!r.pront||String(r.pront).trim()===''||/^0+$/.test(String(r.pront)))return;
+        byP[r.pront]??=[];byP[r.pront].push(r);
+      });
+      Object.values(byP).forEach(v=>v.sort((a,b)=>a.dh-b.dh));
       const ret=[];Object.entries(byP).forEach(([p,vis])=>{for(let i=1;i<vis.length;i++){const h=(vis[i].dh-vis[i-1].dh)/36e5;if(h>0&&h<=CONFIG.RETURN_HOURS)ret.push({...vis[i],pront:p,diffH:h,prev:vis[i-1]})}});
       return {byP,ret};
     }
@@ -3367,7 +3373,7 @@
       const {byP,ret}=returns72(), d=state.filt, patients=Object.keys(byP).length, multi=Object.values(byP).filter(v=>v.length>1).length;
       const prev=previousRows(), prevRet=returnsFor(prev).ret, retRate=d.length?ret.length/d.length*100:null, prevRate=prev.length?prevRet.length/prev.length*100:null;
       $("kpisRet").innerHTML=[kpi("Retornos ≤72h",fmt(ret.length),`taxa ${pct(ret.length,d.length)} — meta < ${meta("metaRet")}%`,"#ef4444",metricDelta(retRate,prevRate,"pp",true)),kpi("Pacientes unicos",fmt(patients),"prontuários distintos","#3b82f6"),kpi("Multiplas visitas",fmt(multi),pct(multi,patients)+" dos pacientes","#a78bfa")].join("");
-      const r24=ret.filter(r=>r.diffH<=24), r48=ret.filter(r=>r.diffH<=48), r7=ret.concat([]); // base 72h — usa cache returns72()
+      const r24=ret.filter(r=>r.diffH<=24), r48=ret.filter(r=>r.diffH<=48);
       const ret7=returnsWithin(d,168), retCrit=ret.filter(r=>["AMARELO","LARANJA","VERMELHO"].includes(r.cor)), retPiora=ret.filter(r=>riskWeight(r.cor)>riskWeight(r.prev?.cor));
       $("kpisRetAdv").innerHTML=[
         kpi("Retorno <=24h",fmt(r24.length),pct(r24.length,d.length),"#ef4444"),
@@ -3392,9 +3398,10 @@
         if(riskWeight(r.cor)>riskWeight(r.prev?.cor))retByMed[retProfKey].piora++;
       });
       // Adicionar total de atendimentos do médico para calcular taxa
-      const allByMed={};d.forEach(r=>{if(!r.prof)return;allByMed[r.prof]=(allByMed[r.prof]||0)+1});
+      // FIX: usar norm() como chave para paridade com retByMed
+      const allByMed={};d.forEach(r=>{if(!r.prof)return;const k=norm(r.prof);allByMed[k]=(allByMed[k]||0)+1});
       const topMedRet=Object.values(retByMed)
-        .map(x=>({...x,totalAtend:allByMed[x.prof]||0,taxa:allByMed[x.prof]?+(x.total/allByMed[x.prof]*100).toFixed(1):null}))
+        .map(x=>({...x,totalAtend:allByMed[norm(x.prof)]||0,taxa:allByMed[norm(x.prof)]?+(x.total/allByMed[norm(x.prof)]*100).toFixed(1):null}))
         .sort((a,b)=>b.total-a.total).slice(0,15);
       $("tableRetMed").innerHTML=`<thead><tr>
         <th>#</th><th>Médico</th><th>Retornos ≤72h</th><th>Taxa s/ atend.</th><th>Críticos</th><th>Piora de risco</th>
