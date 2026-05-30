@@ -436,20 +436,26 @@
     }
     .topbar .brand{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
     .topbar .logo{
-      width:28px;height:28px;border-radius:6px;flex:none;
+      width:28px;height:28px;border-radius:7px;flex:none;
       background:var(--grad);
-      display:grid;grid-template-columns:1fr 1fr;place-items:center;gap:2px;padding:5px;
+      display:flex;align-items:center;justify-content:center
     }
-    .topbar .logo .vida-logo-dot{width:5px;height:5px;}
     .brand-sep{color:var(--mut);font-size:12px;opacity:.4;flex:none}
     .brand-info{display:flex;flex-direction:column;justify-content:center;gap:1px;min-width:0}
     .brand-title{
-      font-weight:600;font-size:12px;white-space:nowrap;
-      color:var(--txt);line-height:1.2;
-      font-family:'IBM Plex Mono',monospace;letter-spacing:.01em
+      display:flex;align-items:center;gap:5px;
+      font-weight:800;font-size:13px;white-space:nowrap;
+      color:var(--txt);line-height:1.1;
+      font-family:'IBM Plex Mono',monospace;letter-spacing:.06em
+    }
+    .vida-version-badge{
+      font-size:9px;font-weight:700;
+      background:rgba(99,102,241,.13);color:var(--ac);
+      padding:2px 6px;border-radius:99px;letter-spacing:.04em;
+      font-family:'IBM Plex Mono',monospace
     }
     .brand-sub{
-      font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace;
+      font-size:9.5px;color:var(--mut);font-family:'IBM Plex Mono',monospace;
       letter-spacing:.01em;white-space:nowrap;
       overflow:hidden;text-overflow:ellipsis
     }
@@ -636,10 +642,12 @@
     .sidebar-brand-text{display:flex;flex-direction:column;gap:1px;min-width:0}
     .sidebar-brand-title{
       font-size:13px;font-weight:800;color:var(--txt);
-      font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;line-height:1.1
+      font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;line-height:1.1;
+      display:flex;align-items:center;gap:5px
     }
     .sidebar-brand-sub{
-      font-size:10px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+      font-size:9.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      margin-top:1px
     }
     .nav-group{
       display:block;margin:16px 8px 7px;
@@ -1232,7 +1240,7 @@
         </svg>
         <div class="up-brand-text">
           <div class="brand-title">V.I.D.A.</div>
-          <div class="brand-sub">Gestão assistencial · v2.0</div>
+          <div class="brand-sub">Gestão assistencial · v2.5</div>
         </div>
       </div>
 
@@ -1428,21 +1436,13 @@
       <!-- Linha 1: identidade + ações -->
       <div class="topbar-row1">
         <div class="brand">
-          <div class="vida-logo-sm">
-            <div class="vida-logo-dot"></div>
-            <div class="vida-logo-dot"></div>
-            <div class="vida-logo-dot"></div>
-            <div class="vida-logo-dot"></div>
+          <div class="logo" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13h3l2-6 4 12 2-6h5"/></svg>
           </div>
           <div class="brand-info">
-            <div class="brand-title" style="display:flex;align-items:center;gap:0">
-              <div class="vida-wordmark-sm">
-                <span class="vl">V</span><span class="vd">.</span>
-                <span class="vl ac">I</span><span class="vd">.</span>
-                <span class="vl">D</span><span class="vd">.</span>
-                <span class="vl ac">A</span><span class="vd">.</span>
-              </div>
-              <span class="vida-version">v2.0</span>
+            <div class="brand-title">
+              V.I.D.A.
+              <span class="vida-version-badge">v2.5</span>
             </div>
             <div class="brand-sub" id="topbarUnitSub">Visualização Integrada de Dados Assistenciais</div>
           </div>
@@ -1522,8 +1522,8 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13h3l2-6 4 12 2-6h5"/></svg>
           </div>
           <div class="sidebar-brand-text">
-            <div class="sidebar-brand-title">V.I.D.A.</div>
-            <div class="sidebar-brand-sub">Painéis de análise</div>
+            <div class="sidebar-brand-title">V.I.D.A.<span class="vida-version-badge" style="font-size:8px;padding:1px 5px">v2.5</span></div>
+            <div class="sidebar-brand-sub" id="sidebarUnitSub">UPA Tiago Cardoso Santos</div>
           </div>
         </div>
         <div class="nav-group">Operação</div>
@@ -2233,6 +2233,9 @@
       if(uAddr){uAddr.textContent=UC.endereco||"";uAddr.style.display=UC.endereco?"block":"none"}
       if(uPhone)uPhone.innerHTML=UC.telefone?`<strong>Telefone</strong> &nbsp; ${UC.telefone}<br>`:"";
       if(uCnes)uCnes.innerHTML=UC.cnes?`<strong>CNES</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${UC.cnes}${UC.gestao?`<br><strong>Gestão</strong> &nbsp;&nbsp;&nbsp;&nbsp; ${UC.gestao}`:""}`:"";;
+      // Atualizar topbar e sidebar com nome da unidade
+      const _tsub=$("topbarUnitSub");if(_tsub)_tsub.textContent=UC.nome||"Visualização Integrada de Dados Assistenciais";
+      const _sbsub=$("sidebarUnitSub");if(_sbsub)_sbsub.textContent=UC.nome||"UPA Tiago Cardoso Santos";
       // Print cover
       const pc=$("printUnit");
       if(pc){
