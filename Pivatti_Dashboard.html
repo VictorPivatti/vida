@@ -286,10 +286,11 @@
     .up-dropzone.ready .up-drop-filename{display:block}
     .up-dropzone.ready .up-drop-label-wrap{display:none}
 
-    /* Theme toggle — dentro da footer row */
+    /* Theme toggle — canto superior direito */
     .up-theme-row{
-      display:flex;align-items:center;gap:8px;
-      flex:none
+      position:fixed;top:28px;right:28px;
+      z-index:2;display:flex;align-items:center;gap:8px;
+      animation:upFadeDown .7s cubic-bezier(.16,1,.3,1) both
     }
     .up-theme-label{
       font-size:10px;font-family:'IBM Plex Mono',monospace;
@@ -1174,20 +1175,9 @@
       <div class="up-drop-filename" id="histFileName"></div>
     </label>
 
-    <!-- Rodapé: descrição + tema -->
+    <!-- Rodapé: descrição -->
     <div class="up-footer-row">
       <p class="up-desc">Carregue a base de atendimentos para iniciar a análise. Aceita múltiplos arquivos e anos.</p>
-      <div class="up-theme-row">
-        <span class="up-theme-label">tema</span>
-        <div class="up-theme-btns">
-          <button class="up-theme-btn" type="button" data-theme-choice="light" title="Claro" aria-label="Modo claro">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-          </button>
-          <button class="up-theme-btn" type="button" data-theme-choice="dark" title="Escuro" aria-label="Modo escuro">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          </button>
-        </div>
-      </div>
     </div>
 
     <!-- Progress -->
@@ -1212,6 +1202,18 @@
 
   <!-- Configurar unidade: canto inferior esquerdo -->
   <button class="up-config-btn" onclick="openUnitConfig()">⚙ configurar unidade</button>
+
+  <!-- Theme toggle: canto superior direito -->
+  <div class="up-theme-row">
+    <div class="up-theme-btns">
+      <button class="up-theme-btn" type="button" data-theme-choice="light" title="Claro" aria-label="Modo claro">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+      <button class="up-theme-btn" type="button" data-theme-choice="dark" title="Escuro" aria-label="Modo escuro">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </div>
 
 </section>
 
