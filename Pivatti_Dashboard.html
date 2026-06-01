@@ -134,13 +134,13 @@
       opacity:.6
     }
 
-    /* ── Marca topo centralizada ── */
+    /* ── Marca canto superior esquerdo ── */
     .up-wordmark{
-      position:absolute;top:36px;left:50%;transform:translateX(-50%);
+      position:fixed;top:28px;left:28px;
       z-index:2;display:flex;align-items:center;gap:11px;
       animation:upFadeDown .7s cubic-bezier(.16,1,.3,1) both
     }
-    @keyframes upFadeDown{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+    @keyframes upFadeDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 
     .up-logo-mark{
       width:34px;height:34px;border-radius:9px;flex:none;
@@ -202,10 +202,25 @@
       -webkit-background-clip:text;background-clip:text
     }
 
-    /* Subtítulo */
+    /* Nome completo abaixo do título */
+    .up-fullname{
+      font-family:'IBM Plex Mono',monospace;
+      font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+      color:var(--mut);font-weight:500;
+      margin-top:10px;margin-bottom:36px;
+      line-height:1.7;text-align:center
+    }
+
+    /* Rodapé do centro: desc + tema lado a lado */
+    .up-footer-row{
+      display:flex;align-items:center;justify-content:space-between;
+      gap:24px;margin-top:20px;width:100%
+    }
+    /* Subtítulo movido para a linha de rodapé */
     .up-desc{
-      font-size:13px;color:var(--txt2);line-height:1.65;
-      max-width:360px;margin:0 auto 32px;font-weight:400
+      font-size:11.5px;color:var(--mut);line-height:1.6;
+      font-weight:400;text-align:left;max-width:260px;
+      font-family:'IBM Plex Mono',monospace;letter-spacing:.01em
     }
 
     /* ── Zona de drop única ── */
@@ -271,10 +286,10 @@
     .up-dropzone.ready .up-drop-filename{display:block}
     .up-dropzone.ready .up-drop-label-wrap{display:none}
 
-    /* Theme toggle compacto abaixo do drop */
+    /* Theme toggle — dentro da footer row */
     .up-theme-row{
-      display:flex;align-items:center;justify-content:center;gap:8px;
-      margin-top:16px
+      display:flex;align-items:center;gap:8px;
+      flex:none
     }
     .up-theme-label{
       font-size:10px;font-family:'IBM Plex Mono',monospace;
@@ -1110,7 +1125,7 @@
   <a href="#main-content" class="skip-link">Ir para o conteúdo</a>
   <section id="upload">
 
-  <!-- Marca: topo centralizado -->
+  <!-- Marca: canto superior esquerdo -->
   <div class="up-wordmark">
     <div class="up-logo-mark">
       <svg width="18" height="18" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1132,14 +1147,15 @@
     </div>
   </div>
 
-  <!-- Bloco central: título + drop -->
+  <!-- Bloco central -->
   <div class="up-center">
 
     <div class="up-eyebrow">sistema de análise</div>
 
     <h1 class="up-title">V.I.D.A.</h1>
 
-    <p class="up-desc">Carregue a base de atendimentos para iniciar a análise. Aceita múltiplos arquivos e anos.</p>
+    <!-- Nome completo por extenso -->
+    <p class="up-fullname">Visualização Integrada<br>de Dados Assistenciais</p>
 
     <!-- Drop zone único -->
     <label class="up-dropzone" id="histDrop">
@@ -1158,16 +1174,19 @@
       <div class="up-drop-filename" id="histFileName"></div>
     </label>
 
-    <!-- Theme toggle compacto -->
-    <div class="up-theme-row">
-      <span class="up-theme-label">tema</span>
-      <div class="up-theme-btns">
-        <button class="up-theme-btn" type="button" data-theme-choice="light" title="Claro" aria-label="Modo claro">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-        </button>
-        <button class="up-theme-btn" type="button" data-theme-choice="dark" title="Escuro" aria-label="Modo escuro">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        </button>
+    <!-- Rodapé: descrição + tema -->
+    <div class="up-footer-row">
+      <p class="up-desc">Carregue a base de atendimentos para iniciar a análise. Aceita múltiplos arquivos e anos.</p>
+      <div class="up-theme-row">
+        <span class="up-theme-label">tema</span>
+        <div class="up-theme-btns">
+          <button class="up-theme-btn" type="button" data-theme-choice="light" title="Claro" aria-label="Modo claro">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          </button>
+          <button class="up-theme-btn" type="button" data-theme-choice="dark" title="Escuro" aria-label="Modo escuro">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1178,7 +1197,7 @@
     </div>
 
     <!-- autoLoadHint -->
-    <div id="autoLoadHint" style="margin-top:8px;font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;min-height:16px;text-align:center"></div>
+    <div id="autoLoadHint" style="margin-top:6px;font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;min-height:14px;text-align:center"></div>
 
   </div>
 
