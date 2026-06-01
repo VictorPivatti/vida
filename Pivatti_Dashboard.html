@@ -1436,6 +1436,8 @@
           <button class="btn" id="triBtn">+ Triagem</button>
           <button class="btn" id="cidBtn">+ CID</button>
           <button class="btn" id="procBtn">+ Procedimentos</button>
+          <button class="btn" id="examesBtn" title="Carregar relatório PDF de exames (Autolac)">+ Exames Lab.</button>
+          <input id="examesFile" class="hidden" type="file" accept=".pdf">
           <input id="procFile" class="hidden" type="file" accept=".xls,.xlsx,.csv">
           <button class="btn btn-icon" onclick="openUnitConfig()" title="Configurar unidade" aria-label="Configurar unidade"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></button>
           <button class="btn btn-icon" id="metasBtn" title="Configurar metas" aria-label="Configurar metas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
@@ -1509,6 +1511,7 @@
         <button class="nav-item" data-label="Médicos" data-pane="medicos"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>Médicos</span></button>
         <button class="nav-item" data-label="Triagem" data-pane="triagem"><svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Triagem</span></button>
         <button class="nav-item" data-label="Procedimentos" data-pane="procedimentos"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M3 7h10"/><path d="M3 12h5"/><path d="M3 17h10"/></svg><span>Procedimentos</span></button>
+        <button class="nav-item" data-label="Exames Lab." data-pane="exames"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg></button>
         <button class="nav-item" data-label="Retornos ≤72h" data-pane="retornos"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg><span>Retornos ≤72h</span></button>
         <div class="nav-divider"></div>
         <div class="nav-group">Análise</div>
@@ -1692,6 +1695,25 @@
           <div class="card full"><div class="card-title">Médicos com mais retornos ≤72h</div><div class="table-wrap"><table class="table" id="tableRetMed"></table></div></div>
           <div class="card full"><div class="card-title">Retornos críticos e potencialmente evitáveis</div><div class="table-wrap"><table class="table" id="tableRetCrit"></table></div></div>
           <div class="card full" id="cardRetCid" class="hidden"><div class="card-title">Retorno ≤72h com mesmo diagnóstico — falha diagnóstica potencial</div><div class="grid" id="kpisRetCid"></div><div class="table-wrap" style="margin-top:8px"><table class="table" id="tableRetMesmoCid"></table></div></div>
+        </div>
+      </section>
+
+      <section class="pane" id="pane-exames">
+        <div class="page-header"><h1 class="page-title">Exames Laboratoriais</h1><p class="page-desc">Autolac — Lista de Conferência por Convênio</p></div>
+        <div id="examesEmpty" class="card" style="padding:34px;text-align:center;margin-bottom:12px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Nenhum relatório de exames carregado</div>
+          <div class="mono muted" style="font-size:12px;margin-bottom:16px;line-height:1.6">Carregue o PDF "Lista de Conferência por Convênio" exportado pelo sistema Autolac.</div>
+          <button class="btn primary" onclick="$('examesFile').click()" style="margin:0 auto">+ Carregar PDF de exames</button>
+        </div>
+        <div id="examesContent" class="hidden">
+          <div class="grid" id="kpisExames"></div>
+          <div id="examesCrossNote" class="hidden" style="margin-bottom:10px;padding:10px 14px;background:rgba(124,110,249,.07);border:1px solid var(--ac);border-radius:8px;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--mut)"></div>
+          <div class="chart-grid">
+            <div class="card"><div class="card-title">Top 12 exames solicitados</div><div class="chart tall"><canvas id="chartExamesTop"></canvas></div></div>
+            <div class="card"><div class="card-title">Grupos clínicos</div><div class="chart tall"><canvas id="chartExamesGrupos"></canvas></div></div>
+            <div class="card full"><div class="card-title">Ranking por médico solicitante</div><div class="table-wrap"><table class="table" id="tableExames"></table></div></div>
+          </div>
+          <div id="examesValidacao" style="font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace;padding:6px 10px;background:var(--sur2);border-radius:6px;margin-top:4px"></div>
         </div>
       </section>
 
@@ -2106,7 +2128,7 @@
       cid:{idAtend:4,cid:5,data:6,medico:8,desc:9}
     };
 
-    const state={raw:[],filt:[],triRaw:[],triFilt:[],cidRaw:[],cidFilt:[],procRaw:[],procFilt:[],charts:{},recepOverride:{},quality:[],files:{hist:"",tri:"",cid:"",proc:""},pending:{tri:null,cid:null,proc:null},theme:"dark",triSource:"none",_retCache:null,_retCacheKey:"",recepcionados:{}}; // triSource: "none"|"hist"|"file"
+    const state={raw:[],filt:[],triRaw:[],triFilt:[],cidRaw:[],cidFilt:[],procRaw:[],procFilt:[],examesRaw:[],examesMeta:{},charts:{},recepOverride:{},quality:[],files:{hist:"",tri:"",cid:"",proc:""},pending:{tri:null,cid:null,proc:null},theme:"dark",triSource:"none",_retCache:null,_retCacheKey:"",recepcionados:{}}; // triSource: "none"|"hist"|"file"
     const RECEP_KEY="upa_dash_recepcionados";
     const RECEP_OVERRIDE_KEY="upa_dash_recep_override";
 
@@ -4392,6 +4414,232 @@
       setTimeout(applyLayout, 300);
     });
     
+
+    // ══════════════════════════════════════════════════════════
+    // MÓDULO EXAMES LABORATORIAIS (Autolac PDF)
+    // ══════════════════════════════════════════════════════════
+
+    function loadPdfJs(){
+      if(window.pdfjsLib)return Promise.resolve(window.pdfjsLib);
+      return new Promise((res,rej)=>{
+        const s=document.createElement("script");
+        s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+        s.onload=()=>{
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc=
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+          res(window.pdfjsLib);
+        };
+        s.onerror=rej;
+        document.head.appendChild(s);
+      });
+    }
+
+    async function loadExamesPdf(file){
+      const btn=$("examesBtn");
+      if(btn)btn.textContent="Processando...";
+      try{
+        const lib=await loadPdfJs();
+        const buf=await file.arrayBuffer();
+        const records=await parseExamesPdf(lib,buf);
+        if(!records||!records.length){showToast("Nenhuma guia encontrada no PDF","err");return;}
+        state.examesRaw=records;
+        // Extrair meta do PDF (período e prestador capturados no parse)
+        if(btn){
+          btn.textContent="Exames: "+fmt(records.length)+" guias";
+          btn.classList.add("ok");
+        }
+        showToast("Exames carregados: "+fmt(records.length)+" guias","ok",3000);
+        if(document.querySelector('.nav-item.active')?.dataset?.pane==="exames")renderExames();
+      }catch(e){
+        console.error("[VIDA] Erro ao processar PDF de exames:",e);
+        showToast("Erro ao processar PDF: "+e.message,"err",6000);
+        if(btn)btn.textContent="+ Exames Lab.";
+      }
+    }
+
+    async function parseExamesPdf(lib,buf){
+      const pdf=await lib.getDocument({data:buf}).promise;
+      const allLines=[];
+      let periodo="",prestador="";
+      for(let p=1;p<=pdf.numPages;p++){
+        const page=await pdf.getPage(p);
+        const tc=await page.getTextContent();
+        const byY={};
+        for(const item of tc.items){
+          if(!item.str||!item.str.trim())continue;
+          const y=Math.round(item.transform[5]/3)*3;
+          (byY[y]=byY[y]||[]).push({x:Math.round(item.transform[4]),s:item.str.trim()});
+        }
+        Object.keys(byY).map(Number).sort((a,b)=>b-a).forEach(y=>{
+          const items=byY[y].sort((a,b)=>a.x-b.x);
+          const text=items.map(i=>i.s).join(" ");
+          allLines.push({text,x0:items[0].x});
+          // Capturar período e prestador do cabeçalho
+          if(!periodo&&text.includes("Período:")){
+            const m=text.match(/Período:\s*([\d\/: à]+)/);
+            if(m)periodo=m[1].trim();
+          }
+          if(!prestador&&text.includes("Prestador:")){
+            prestador=text.replace("Prestador:","").trim();
+          }
+        });
+      }
+      // Parser
+      const records=[];
+      let cur=null;
+      for(const {text,x0} of allLines){
+        const gm=text.match(/^(06-\d+)\s+(.*)/);
+        if(gm){
+          const rest=gm[2];
+          const fm=rest.match(/(\d+)\s+(\d{2}\/\d{2}\/\d{4})\s+(\d+)\s+(\d+)\s+([\d,.]+)\s+([\d,.]+)/);
+          if(fm){
+            const val=parseFloat(fm[6].replace(/\./g,"").replace(",","."))||0;
+            cur={guia:gm[1],data:fm[2],n_exames:parseInt(fm[3]),n_sub:parseInt(fm[4]),valor:val,doctor:null,exames:[]};
+            records.push(cur);
+          }
+          continue;
+        }
+        if(cur&&x0>35&&!text.includes("Solicitante")){
+          const em=text.match(/^([A-ZÀ-ÖØ-Þ\/\-\+\s\.\(\)]+?)\s+[\d,]+\s+[\d,]+\s*$/);
+          if(em){
+            const nome=em[1].trim();
+            if(nome.length>2&&!/^(Total|Lista|Período|Conv|Prest|Local|Usu|Autolac|Pág)/.test(nome)){
+              cur.exames.push(nome);
+            }
+          }
+        }
+        if(text.includes("Solicitante Responsável:")&&cur){
+          cur.doctor=text.split("Solicitante Responsável:")[1].trim()||null;
+        }
+      }
+      // Guardar meta
+      state.examesMeta={periodo,prestador,
+        validacao:{guias:records.length,exames:records.reduce((s,r)=>s+r.n_exames,0),
+          valor:records.reduce((s,r)=>s+r.valor,0)}};
+      return records;
+    }
+
+    function grupoExame(n){
+      n=n.toUpperCase();
+      if(/TROPONINA|CREATINOFOSFOQUINASE|CPK|CK-MB/.test(n))return"Cardíaco";
+      if(/HEMOGRAMA|LEUCOCIT|PLAQUETA|ERITROCIT/.test(n))return"Hematologia";
+      if(/PCR|PROTEINA C|VHS/.test(n))return"Inflamatório";
+      if(/CREATININA|UREIA|TFG/.test(n))return"Renal";
+      if(/TGO|TGP|BILIRRUB|GAMA GT|FOSFATASE|AMILASE|LIPASE/.test(n))return"Hepático/Pancreático";
+      if(/SODIO|POTASSIO|CLORO|CALCIO|MAGNESIO|FOSFORO/.test(n))return"Eletrólitos";
+      if(/GLICOSE|HBA1C|INSULINA|LACTATO/.test(n))return"Metabólico";
+      if(/URINA|GRAM DE GOTA|UROCULTURA/.test(n))return"Urinário";
+      if(/PROTROMBINA|TROMBOPLASTINA|RNI|FIBRINOG|PTT/.test(n))return"Coagulação";
+      if(/TSH|T3|T4|TIREOIDE/.test(n))return"Tireoide";
+      return"Outros";
+    }
+
+    function renderExames(){
+      const emEl=$("examesEmpty"),ctEl=$("examesContent");
+      if(!state.examesRaw.length){
+        if(emEl)emEl.classList.remove("hidden");
+        if(ctEl)ctEl.classList.add("hidden");
+        return;
+      }
+      if(emEl)emEl.classList.add("hidden");
+      if(ctEl)ctEl.classList.remove("hidden");
+
+      const recs=state.examesRaw;
+      const totGuias=recs.length;
+      const totEx=recs.reduce((s,r)=>s+r.n_exames,0);
+      const totVal=recs.reduce((s,r)=>s+r.valor,0);
+
+      // Agrupamento por médico
+      const byDoc={};
+      recs.forEach(r=>{
+        const k=r.doctor||"SEM MÉDICO";
+        if(!byDoc[k])byDoc[k]={guias:0,exames:0,valor:0,exsList:[]};
+        byDoc[k].guias++;byDoc[k].exames+=r.n_exames;byDoc[k].valor+=r.valor;
+        byDoc[k].exsList.push(...r.exames);
+      });
+      const ranking=Object.entries(byDoc)
+        .filter(([k])=>k!=="SEM MÉDICO")
+        .map(([doc,s])=>({
+          doc,guias:s.guias,exames:s.exames,valor:s.valor,
+          mediaGuia:s.guias?+(s.exames/s.guias).toFixed(1):0,
+          custoGuia:s.guias?+(s.valor/s.guias).toFixed(2):0,
+          alerta:s.guias?s.exames/s.guias>9:false,
+          pctVal:totVal?+(s.valor/totVal*100).toFixed(1):0,
+          vivverAtend:0,pctSolicit:null,custoPorAtend:null
+        }))
+        .sort((a,b)=>b.guias-a.guias);
+
+      // Cross-reference com Vivver
+      const hasVivver=state.filt.length>0;
+      if(hasVivver){
+        const vByDoc={};
+        state.filt.forEach(r=>{if(!r.prof)return;const k=norm(r.prof);vByDoc[k]=(vByDoc[k]||0)+1;});
+        ranking.forEach(r=>{
+          r.vivverAtend=vByDoc[norm(r.doc)]||0;
+          if(r.vivverAtend>0){
+            r.pctSolicit=+(r.guias/r.vivverAtend*100).toFixed(1);
+            r.custoPorAtend=+(r.valor/r.vivverAtend).toFixed(2);
+          }
+        });
+        // Nota de cruzamento
+        const note=$("examesCrossNote");
+        if(note){
+          const vPer=state.raw.length?(
+            new Date(state.raw[0].dh).toLocaleDateString("pt-BR",{month:"short",year:"2-digit"})+" – "+
+            new Date(state.raw[state.raw.length-1].dh).toLocaleDateString("pt-BR",{month:"short",year:"2-digit"})
+          ):"?";
+          note.innerHTML="⚠ Cruzamento ativo: Vivver ("+vPer+") × Autolac ("+
+            (state.examesMeta.periodo||"?")+") | Colunas % Solic. e R$/atend. normalizam o volume de exames pelo total de atendimentos do médico no Vivver.";
+          note.classList.remove("hidden");
+        }
+      }
+
+      // KPIs
+      const totMed=ranking.length;
+      const mediaGlobal=totGuias?+(totEx/totGuias).toFixed(1):0;
+      $("kpisExames").innerHTML=[
+        kpi("Guias processadas",fmt(totGuias),state.examesMeta.periodo||"período","#3b82f6"),
+        kpi("Total de exames",fmt(totEx),state.examesMeta.prestador||"laboratório","#22c55e"),
+        kpi("Valor total","R$ "+totVal.toLocaleString("pt-BR",{minimumFractionDigits:2}),"custo com exames","#a78bfa"),
+        kpi("Médicos solicitantes",fmt(totMed),"com guias no período","#f97316"),
+        kpi("Média exames/guia",String(mediaGlobal),mediaGlobal>9?"⚠ acima de 9 — revisar":"≤ 9 dentro do esperado",mediaGlobal>9?"#ef4444":"#06b6d4"),
+        kpi("Custo médio/guia","R$ "+(totVal/totGuias).toFixed(2),"por atendimento com exame","#eab308")
+      ].join("");
+
+      // Top exames
+      const exCnt={};
+      recs.forEach(r=>r.exames.forEach(e=>{exCnt[e]=(exCnt[e]||0)+1;}));
+      const topEx=Object.entries(exCnt).sort((a,b)=>b[1]-a[1]).slice(0,12).reverse();
+      chart("chartExamesTop",{type:"bar",data:{labels:topEx.map(([n])=>n.length>28?n.slice(0,26)+"…":n),datasets:[{label:"Solicitações",data:topEx.map(([,v])=>v),backgroundColor:"#3b82f6",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+
+      // Grupos
+      const gpCnt={};
+      recs.forEach(r=>r.exames.forEach(e=>{const g=grupoExame(e);gpCnt[g]=(gpCnt[g]||0)+1;}));
+      const gpArr=Object.entries(gpCnt).sort((a,b)=>b[1]-a[1]);
+      const gpColors=["#185FA5","#1D9E75","#BA7517","#A32D2D","#534AB7","#0F6E56","#993C1D","#3B6D11","#888780","#442C89"];
+      chart("chartExamesGrupos",{type:"doughnut",data:{labels:gpArr.map(([n])=>n),datasets:[{data:gpArr.map(([,v])=>v),backgroundColor:gpColors,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true,font:{size:10}}}}}});
+
+      // Tabela
+      const maxG=ranking[0]?.guias||1;
+      const crossTh=hasVivver?`<th title="Atendimentos no histórico Vivver">Atend. Vivver</th><th title="% pacientes com exame solicitado">% Solic.</th><th title="Custo de exames por atendimento">R$/atend.</th>`:"";
+      $("tableExames").innerHTML=`<thead><tr><th>#</th><th>Médico</th><th>Guias</th><th>Exames</th><th>Méd./guia</th><th>Valor</th><th>% total</th><th>R$/guia</th>${crossTh}<th>Vol.</th></tr></thead><tbody>`+
+        ranking.map((r,i)=>{
+          const pct=Math.round(r.guias/maxG*100);
+          const bc=r.alerta?"#ef4444":r.mediaGuia>8?"#f59e0b":"#3b82f6";
+          const mgStyle=r.alerta?"color:#ef4444;font-weight:700":r.mediaGuia>8?"color:#f59e0b":"";
+          const alertBadge=r.alerta?` <span style="font-size:9px;background:#FCEBEB;color:#A32D2D;padding:2px 5px;border-radius:99px">⚠ alto</span>`:"" ;
+          const crossTds=hasVivver?`<td class="mono">${r.vivverAtend>0?fmt(r.vivverAtend):"—"}</td><td class="mono ${r.pctSolicit!=null&&r.pctSolicit>30?"erc":r.pctSolicit!=null&&r.pctSolicit>20?"wnc":""}">${r.pctSolicit!=null?r.pctSolicit+"%":"—"}</td><td class="mono">${r.custoPorAtend!=null?"R$ "+r.custoPorAtend.toFixed(2):"—"}</td>`:"";
+          return `<tr><td class="mono muted">${i+1}</td><td style="font-weight:600">${esc(shortName(r.doc))}${alertBadge}</td><td class="mono">${r.guias}</td><td class="mono">${fmt(r.exames)}</td><td class="mono" style="${mgStyle}">${r.mediaGuia}</td><td class="mono">R$ ${r.valor.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}</td><td class="mono muted">${r.pctVal}%</td><td class="mono">R$ ${r.custoGuia.toFixed(2)}</td>${crossTds}<td><div style="background:var(--bdr);border-radius:2px;height:4px;width:70px"><div style="width:${pct}%;height:4px;border-radius:2px;background:${bc}"></div></div></td></tr>`;
+        }).join("")+`</tbody>`;
+
+      // Validação
+      const vEl=$("examesValidacao");
+      if(vEl&&state.examesMeta.validacao){
+        const v=state.examesMeta.validacao;
+        vEl.textContent="Validação: "+fmt(v.guias)+" guias • "+fmt(v.exames)+" exames • R$ "+v.valor.toLocaleString("pt-BR",{minimumFractionDigits:2})+" calculados | PDF oficial: conferir totais na última página";
+      }
+    }
+
     function renderPrintCover(){
       const {s,e}=dateRange(), d=state.filt, alerts=topAlerts(d), tMed=avg(d,r=>r.tEspMed), tTri=avg(d,r=>r.tEspTri), tTot=avg(d,r=>r.tTotal);
       $("printCover").innerHTML=`<h2>V.I.D.A. — Relatório Assistencial</h2>
@@ -4497,7 +4745,9 @@
       if(files.length){const num=document.querySelector("#cidDrop .drop-num");if(num){num.style.background="var(--ok)";num.style.color="#fff"}}
       if(files.length&&state.raw.length)loadCid(files);
     });
-    $("triBtn").onclick=()=>$("triFile").click();$("cidBtn").onclick=()=>$("cidFile").click();$("procBtn").onclick=()=>$("procFile").click();
+    $("examesBtn").onclick=()=>$("examesFile").click();
+      $("examesFile").onchange=e=>{const f=e.target.files[0];if(f)loadExamesPdf(f);};
+      $("triBtn").onclick=()=>$("triFile").click();$("cidBtn").onclick=()=>$("cidFile").click();$("procBtn").onclick=()=>$("procFile").click();
     $("triFile").onchange=e=>loadTri(e.target.files[0]);$("cidFile").onchange=e=>loadCid(e.target.files);$("procFile").onchange=e=>loadProcedimentos(e.target.files[0]);
     $("themeBtn").onclick=toggleTheme;$("printBtn").onclick=()=>exportarPDF();$("newBtn").onclick=resetApp;
     document.querySelectorAll("[data-theme-choice]").forEach(btn=>{
@@ -4993,6 +5243,7 @@
         case 'gargalos':      renderGargalos(); break;
         case 'medicos':       renderMedicos(); break;
         case 'procedimentos':  renderProcedimentos(); break;
+        case 'exames':         renderExames(); break;
         case 'retornos':      renderRetornos(); break;
         case 'capacidade':    renderCapacidade(); break;
         case 'evolucao':      renderEvolucao(); break;
