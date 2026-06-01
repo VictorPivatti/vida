@@ -1396,10 +1396,10 @@
         </div>
         <div style="grid-column:1/-1;margin-top:8px;border-top:1px solid var(--bdr);padding-top:12px" id="recepSection">
           <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-weight:700;font-family:'IBM Plex Mono',monospace;margin-bottom:4px">Pacientes recepcionados por mes</div>
-          <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">Informe o total de pacientes registrados na recepcao (do relatorio separado). Brancos e atendimentos sao derivados automaticamente.</div>
+          <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">Informe os recepcionados (relatório separado). Triados, brancos e atendidos são calculados automaticamente — edite para corrigir. Campos com borda <span style="color:var(--ac);font-weight:700">roxa</span> têm valor manual. ↺ restaura o automático.</div>
           <div id="recepTableWrap" style="max-height:220px;overflow-y:auto">
             <table class="table" style="font-size:12px" id="recepInputTable">
-              <thead><tr><th>Mes</th><th>Recepcionados</th><th style="color:var(--mut)">Triados (auto)</th><th style="color:var(--mut)">Brancos (auto)</th></tr></thead>
+              <thead><tr><th>Mês</th><th>Recepcionados</th><th>Triados</th><th>Brancos</th><th>Atendidos</th><th style="color:var(--mut);font-size:9px">↺</th></tr></thead>
               <tbody id="recepInputBody"><tr><td colspan="4" style="color:var(--mut);text-align:center;padding:16px">Carregue o historico para liberar os campos</td></tr></tbody>
             </table>
           </div>
@@ -2106,8 +2106,9 @@
       cid:{idAtend:4,cid:5,data:6,medico:8,desc:9}
     };
 
-    const state={raw:[],filt:[],triRaw:[],triFilt:[],cidRaw:[],cidFilt:[],procRaw:[],procFilt:[],charts:{},quality:[],files:{hist:"",tri:"",cid:"",proc:""},pending:{tri:null,cid:null,proc:null},theme:"dark",triSource:"none",_retCache:null,_retCacheKey:"",recepcionados:{}}; // triSource: "none"|"hist"|"file"
+    const state={raw:[],filt:[],triRaw:[],triFilt:[],cidRaw:[],cidFilt:[],procRaw:[],procFilt:[],charts:{},recepOverride:{},quality:[],files:{hist:"",tri:"",cid:"",proc:""},pending:{tri:null,cid:null,proc:null},theme:"dark",triSource:"none",_retCache:null,_retCacheKey:"",recepcionados:{}}; // triSource: "none"|"hist"|"file"
     const RECEP_KEY="upa_dash_recepcionados";
+    const RECEP_OVERRIDE_KEY="upa_dash_recep_override";
 
     // Parsing assíncrono direto
     // Worker removido — parsing direto no thread principal com async/await
@@ -3925,13 +3926,17 @@
       const meses=[...mesesSet].sort();
       // Dados por mes
       const mData=meses.map(m=>{
-        const triados=triFilt.filter(r=>r.anoMes===m).length;
-        const brancos=triFilt.filter(r=>r.anoMes===m&&r.cor==="BRANCO").length;
-        const atendidos=state.filt.filter(r=>r.anoMes===m).length;
+        const triadosAuto=triFilt.filter(r=>r.anoMes===m).length;
+        const brancosAuto=triFilt.filter(r=>r.anoMes===m&&r.cor==="BRANCO").length;
+        const atendidosAuto=state.filt.filter(r=>r.anoMes===m).length;
+        const ov=state.recepOverride[m]||{};
+        const triados=ov.triados!=null?ov.triados:triadosAuto;
+        const brancos=ov.brancos!=null?ov.brancos:brancosAuto;
+        const atendidos=ov.atendidos!=null?ov.atendidos:atendidosAuto;
         const recep=state.recepcionados[m]||null;
         const evasoes=recep!=null?recep-brancos-atendidos:null;
         const taxa=recep&&recep>0?evasoes/recep*100:null;
-        return{m,label:monthLabel(m),triados,brancos,atendidos,recep,evasoes,taxa};
+        return{m,label:monthLabel(m),triados,brancos,atendidos,triadosAuto,brancosAuto,atendidosAuto,recep,evasoes,taxa};
       });
       const temRecep=mData.some(r=>r.recep!=null);
       sec.style.display="";
@@ -3985,18 +3990,50 @@
         triadosPorMes[r.anoMes]=(triadosPorMes[r.anoMes]||0)+1;
         if(r.cor==="BRANCO")brancosPorMes[r.anoMes]=(brancosPorMes[r.anoMes]||0)+1;
       });
-      body.innerHTML=meses.map(m=>`<tr>
-        <td class="mono">${monthLabel(m)}</td>
-        <td><input type="number" min="0" step="1"
-          style="width:100px;background:var(--sur3);border:1px solid var(--bdr2);border-radius:4px;padding:4px 8px;color:var(--txt);font-family:inherit;font-size:12px"
-          value="${state.recepcionados[m]||""}"
-          placeholder="0"
-          data-mes="${m}"
-          onchange="state.recepcionados[this.dataset.mes]=this.value?Number(this.value):undefined;saveRecepcionados();if(state.triRaw.length)renderEvasao(state.triFilt)">
-        </td>
-        <td class="mono" style="color:var(--txt2)">${fmt(triadosPorMes[m]||0)}</td>
-        <td class="mono" style="color:var(--txt2)">${fmt(brancosPorMes[m]||0)}</td>
-      </tr>`).join("");
+      // Atendidos auto por mês
+      const atendidosPorMes={};
+      state.filt.forEach(r=>{atendidosPorMes[r.anoMes]=(atendidosPorMes[r.anoMes]||0)+1;});
+      const inpStyle='width:80px;background:var(--sur3);border:1px solid var(--bdr2);border-radius:4px;padding:3px 7px;color:var(--txt);font-family:inherit;font-size:12px;text-align:right';
+      const inpStyleOv='width:80px;background:rgba(99,102,241,.08);border:1px solid var(--ac);border-radius:4px;padding:3px 7px;color:var(--txt);font-family:inherit;font-size:12px;text-align:right';
+      body.innerHTML=meses.map(m=>{
+        const ov=state.recepOverride[m]||{};
+        const trAuto=triadosPorMes[m]||0, brAuto=brancosPorMes[m]||0, atAuto=atendidosPorMes[m]||0;
+        const trVal=ov.triados!=null?ov.triados:trAuto;
+        const brVal=ov.brancos!=null?ov.brancos:brAuto;
+        const atVal=ov.atendidos!=null?ov.atendidos:atAuto;
+        const hasOv=ov.triados!=null||ov.brancos!=null||ov.atendidos!=null;
+        const onchg=`(function(el){
+          const m='${m}';
+          const field=el.dataset.field;
+          const val=el.value?Number(el.value):null;
+          if(val===null){delete(state.recepOverride[m]||{})[field];}
+          else{state.recepOverride[m]=state.recepOverride[m]||{};state.recepOverride[m][field]=val;}
+          if(Object.keys(state.recepOverride[m]||{}).length===0)delete state.recepOverride[m];
+          saveRecepcionados();
+          if(state.triRaw.length)renderEvasao(state.triFilt);
+          else if(state.raw.length)renderEvasao(state.filt);
+        })(this)`;
+        return`<tr>
+          <td class="mono">${monthLabel(m)}</td>
+          <td><input type="number" min="0" step="1" style="${inpStyle}"
+            value="${state.recepcionados[m]||''}" placeholder="—" data-mes="${m}"
+            onchange="state.recepcionados[this.dataset.mes]=this.value?Number(this.value):undefined;saveRecepcionados();if(state.triRaw.length)renderEvasao(state.triFilt);else if(state.raw.length)renderEvasao(state.filt)">
+          </td>
+          <td><input type="number" min="0" step="1" style="${ov.triados!=null?inpStyleOv:inpStyle}"
+            value="${trVal}" placeholder="${trAuto}" title="Auto: ${trAuto}. Edite para sobrescrever."
+            data-mes="${m}" data-field="triados" onchange="${onchg}">
+          </td>
+          <td><input type="number" min="0" step="1" style="${ov.brancos!=null?inpStyleOv:inpStyle}"
+            value="${brVal}" placeholder="${brAuto}" title="Auto: ${brAuto}. Edite para sobrescrever."
+            data-mes="${m}" data-field="brancos" onchange="${onchg}">
+          </td>
+          <td><input type="number" min="0" step="1" style="${ov.atendidos!=null?inpStyleOv:inpStyle}"
+            value="${atVal}" placeholder="${atAuto}" title="Auto: ${atAuto}. Edite para sobrescrever."
+            data-mes="${m}" data-field="atendidos" onchange="${onchg}">
+          </td>
+          <td style="text-align:center">${hasOv?`<button onclick="delete state.recepOverride['${m}'];saveRecepcionados();renderRecepTable();if(state.triRaw.length)renderEvasao(state.triFilt);else if(state.raw.length)renderEvasao(state.filt);" style="background:none;border:none;cursor:pointer;color:var(--mut);font-size:13px;padding:2px 5px;border-radius:4px" title="Restaurar valores automáticos">↺</button>`:'<span style="color:var(--bdr2)">—</span>'}</td>
+        </tr>`;
+      }).join('');
     }
     function renderCid(){
       if(!state.cidRaw.length){$("cidEmpty").classList.remove("hidden");$("cidContent").classList.add("hidden");return}
@@ -4353,8 +4390,14 @@
       try{if(window.localStorage){window.localStorage.setItem(PREF_KEY,value);return}}catch(e){}
       try{document.cookie=`${PREF_KEY}=${encodeURIComponent(value)};max-age=31536000;path=/;SameSite=Lax`}catch(e){}
     }
-    function saveRecepcionados(){try{localStorage.setItem(RECEP_KEY,JSON.stringify(state.recepcionados))}catch(e){}}
-    function loadRecepcionados(){try{const r=localStorage.getItem(RECEP_KEY);if(r)state.recepcionados=JSON.parse(r)||{}}catch(e){}}
+    function saveRecepcionados(){
+      try{localStorage.setItem(RECEP_KEY,JSON.stringify(state.recepcionados))}catch(e){}
+      try{localStorage.setItem(RECEP_OVERRIDE_KEY,JSON.stringify(state.recepOverride))}catch(e){}
+    }
+    function loadRecepcionados(){
+      try{const r=localStorage.getItem(RECEP_KEY);if(r)state.recepcionados=JSON.parse(r)||{}}catch(e){}
+      try{const r=localStorage.getItem(RECEP_OVERRIDE_KEY);if(r)state.recepOverride=JSON.parse(r)||{}}catch(e){}
+    }
     function savePrefs(){
       try{
         const ids=["metaTri","metaMed","metaTotal","metaRet","metaVol","capMed","capTri"];
@@ -4456,7 +4499,7 @@
     $("metasClose").onclick=closeMetas;
     $("metasClose2").onclick=closeMetas;
     $("metasModal").addEventListener("click",e=>{if(e.target===$("metasModal"))closeMetas()});
-    $("metasApply").onclick=()=>{savePrefs();applyFilters();closeMetas()};
+    $("metasApply").onclick=()=>{savePrefs();applyFilters();if(state.triRaw.length)renderEvasao(state.triFilt);else if(state.raw.length)renderEvasao(state.filt.map(r=>({...r,cor:r.cor})));closeMetas()};
 
     ["dateStart","dateEnd","turno"].forEach(id=>$(id).addEventListener("change",()=>applyFilters()));
     const fmEl=$("filtroMedico");if(fmEl){let _fmT;fmEl.addEventListener("input",()=>{clearTimeout(_fmT);_fmT=setTimeout(()=>applyFilters(),250);});}
