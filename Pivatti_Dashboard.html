@@ -3076,12 +3076,37 @@
       const evasoes=d.filter(r=>r.evadido).length;
       const evasaoRate=total>0?(evasoes/total*100):0;
       const _evasaoDisp=evasaoDisponivel(d);
+      // Evasão via recepcionados inseridos (quando relatório de saídas não disponível)
+      const mesesGeral=[...new Set(d.map(r=>r.anoMes))];
+      const temRecepGeral=mesesGeral.some(m=>state.recepcionados[m]!=null);
+      let evasaoKpi;
+      if(_evasaoDisp){
+        evasaoKpi=kpi("Taxa de evasão",evasoes>0?evasaoRate.toFixed(1)+"%":"0%",`${fmt(evasoes)} saídas sem atendimento`,evasoes>0?"#ef4444":"var(--ok)");
+      } else if(temRecepGeral){
+        let totRec=0,totBr=0,totAt=0;
+        mesesGeral.forEach(m=>{
+          const recep=state.recepcionados[m]; if(!recep)return;
+          const ov=state.recepOverride[m]||{};
+          const triRows=state.triFilt.filter(r=>r.anoMes===m);
+          const brAuto=triRows.filter(r=>r.cor==="BRANCO").length;
+          const atAuto=d.filter(r=>r.anoMes===m).length;
+          totRec+=recep;
+          totBr+=ov.brancos!=null?ov.brancos:brAuto;
+          totAt+=ov.atendidos!=null?ov.atendidos:atAuto;
+        });
+        const totEv=totRec-totBr-totAt;
+        const totTx=totRec>0?totEv/totRec*100:null;
+        evasaoKpi=kpi("Taxa de evasão",
+          totTx!=null?(totTx<0?"<0%":totTx.toFixed(1)+"%"):"—",
+          totEv>=0?`${fmt(Math.max(0,totEv))} evasões · ${fmt(totRec)} recepcionados`:"Revisar dados",
+          totTx!=null&&totTx>5?"#ef4444":totTx!=null&&totTx>2?"#f97316":"var(--ok)");
+      } else {
+        evasaoKpi=kpi("Evasão","N/D","insira recepcionados em ⚙ Metas para calcular","var(--mut)");
+      }
       $("kpisGeral").innerHTML=[
         kpi("Atendimentos",fmt(total),`${days} dias no período`,"#3b82f6",metricDelta(total,prev.length,"")),
         kpi("Média diária",fmt(curDaily),"atendimentos/dia","#22c55e",metricDelta(curDaily,prevDaily,"")),
-        _evasaoDisp
-          ? kpi("Taxa de evasão",evasoes>0?evasaoRate.toFixed(1)+"%":"0%",`${fmt(evasoes)} saídas sem atendimento`,evasoes>0?"#ef4444":"var(--ok)")
-          : kpi("Evasão","N/D","não rastreada neste relatório — exportar relatório de saídas separado","var(--mut)"),
+        evasaoKpi,
         kpi("Tempo total médio",curTotalTime!=null?Math.round(curTotalTime)+" min":"-","recepção até alta","#f97316",metricDelta(curTotalTime,prevTotalTime,"min",true))
       ].join("");
       const byM=group(d,r=>r.anoMes), keys=Object.keys(byM).map(Number).sort();
