@@ -8,6 +8,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 ## [v3.0] — 2026-06-01
 
 ### Corrigido
+- **Tela inicial reformulada (v3.0 rebranding)**: layout split removido; nova tela centralizada fullscreen com marca V.I.D.A. no topo, título em gradiente violeta, zona de drop única (histórico de atendimentos), toggle de tema compacto, versão discreta no canto inferior direito e botão "configurar unidade" no canto inferior esquerdo. Inputs secundários de Triagem e CID preservados ocultos para JS funcionar normalmente
 - **[B1] Indicador "Retorno ≤72h × mesmo CID"** agora usa `state.cidFilt` (respeitando filtros de data e turno ativos) em vez de `state.cidRaw` bruto. Fallback automático para `cidRaw` quando nenhum filtro de período está aplicado
 - **[B2] Sort redundante em `renderMedTable`** removido — `medRows()` já entrega os dados ordenados por volume; o segundo `.sort()` idêntico era desnecessário e levemente custoso com muitos médicos
 - **[B3] Badge de versão** atualizado de `v2.5` para `v3.0`
