@@ -5,6 +5,23 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [v3.0] — 2026-06-01
+
+### Corrigido
+- **[B1] Indicador "Retorno ≤72h × mesmo CID"** agora usa `state.cidFilt` (respeitando filtros de data e turno ativos) em vez de `state.cidRaw` bruto. Fallback automático para `cidRaw` quando nenhum filtro de período está aplicado
+- **[B2] Sort redundante em `renderMedTable`** removido — `medRows()` já entrega os dados ordenados por volume; o segundo `.sort()` idêntico era desnecessário e levemente custoso com muitos médicos
+- **[B3] Badge de versão** atualizado de `v2.5` para `v3.0`
+- **[M5] Typos de acentuação** na nota de projeção da aba Evolução: `"mes decorrido - projecao linear simples, nao considera"` corrigido para `"mês decorrido — projeção linear simples, não considera"`
+
+### Auditoria completa realizada
+- 7.437 linhas analisadas; 57 pares `chart()` ↔ `<canvas>` verificados — sem discrepâncias
+- Todos os 22 tabs cobertos em `renderActivePane` — sem tab órfão
+- Todas as funções utilitárias core confirmadas: `norm`, `fmt`, `pct`, `avg`, `percentile`, `esc`, `meta`, `ymd`, `shortName`, `monthLabel`
+- `state` inicializado corretamente; guards em `renderProcedimentos` e `renderExames` validados
+- `renderConsistencia` como IIFE dentro de `renderQuality` — intencional e correto
+
+---
+
 ## [v2.5] — 2026-05-30
 
 ### Adicionado

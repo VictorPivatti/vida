@@ -1423,7 +1423,7 @@
           <div class="brand-info">
             <div class="brand-title">
               V.I.D.A.
-              <span class="vida-version-badge">v2.5</span>
+              <span class="vida-version-badge">v3.0</span>
             </div>
             <div class="brand-sub" id="topbarUnitSub">Visualização Integrada de Dados Assistenciais</div>
           </div>
@@ -3617,8 +3617,8 @@
     }
     function renderMedTable(rows){
       const q=norm($("searchMed").value);
-      const data=(q?rows.filter(r=>norm(r.prof).includes(q)):rows)
-        .slice().sort((a,b)=>b.total-a.total);
+      // FIX v3.0: medRows() já ordena por total; só re-sortear se há filtro de busca
+      const data=q?rows.filter(r=>norm(r.prof).includes(q)).slice():rows.slice();
       // pp: retorna célula com número absoluto + % em linha menor
       const pp=(n,tot,cls="muted")=>`<span style="font-weight:600">${fmt(n)}</span><br><span style="font-size:10px;opacity:.75">${tot>0?(n/tot*100).toFixed(1)+"%":"--"}</span>`;
       $("tableMed").innerHTML=`<thead><tr>
@@ -3718,12 +3718,13 @@
 
       // ── INDICADOR 3: Retorno ≤72h com mesmo CID ─────────────────
       const cidCard=$("cardRetCid");
-      if(cidCard&&state.cidRaw.length){
+      // FIX v3.0: cidFilt respeita filtros de data/turno; fallback para cidRaw se filtro vazio
+      const _cidSrc=state.cidFilt.length?state.cidFilt:state.cidRaw;
+      if(cidCard&&_cidSrc.length){
         cidCard.classList.remove("hidden");
         // Mapear CID por prontuário+data: para cada atendimento, qual CID foi registrado
         const cidByProntDate={};
-        // cidRaw salva o prontuário como idAtend (campo p[4] do arquivo CID)
-        state.cidRaw.forEach(c=>{
+        _cidSrc.forEach(c=>{
           const k=String(c.idAtend||"").trim()+"|"+String(c.dateKey||"").trim();
           cidByProntDate[k]=cidByProntDate[k]||[];
           cidByProntDate[k].push(c.cid||"");
@@ -3877,7 +3878,7 @@
               <div class="proj-bar-track">
                 <div class="proj-bar-fill" style="width:${barW}%"></div>
               </div>
-              <div class="proj-note">${pj.pctElapsed}% do mes decorrido - projecao linear simples, nao considera sazonalidade intra-mensal</div>
+              <div class="proj-note">${pj.pctElapsed}% do mês decorrido — projeção linear simples, não considera sazonalidade intra-mensal</div>
             </div>`;
         }
       }
