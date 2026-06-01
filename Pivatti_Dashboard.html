@@ -3463,26 +3463,21 @@
       d.forEach(r=>{
         if(!r.prof)return;
         const profKey=norm(r.prof);
-        map[profKey]??={prof:r.prof,total:0,D:0,N:0,tri:[],med:[],tot:[],risks:{},
-          plantaoCount:{},  // contagem por plantão: key="dateKey_turno"
-        };
+        map[profKey]??={prof:r.prof,total:0,D:0,N:0,tri:[],med:[],tot:[],risks:{},plantaoCount:{}};
         const x=map[profKey];
         x.total++;x[r.turno]++;
         if(r.tEspTri!=null)x.tri.push(r.tEspTri);
         if(r.tEspMed!=null)x.med.push(r.tEspMed);
         if(r.tTotal!=null)x.tot.push(r.tTotal);
         x.risks[r.cor]=(x.risks[r.cor]||0)+1;
-        // Contar atendimentos por plantão (dateKey+turno) para filtrar válidos (>10)
         const pKey=r.dateKey+"_"+r.turno;
         x.plantaoCount[pKey]=(x.plantaoCount[pKey]||0)+1;
       });
-      const MIN_PLT=10; // plantão válido = mais de 10 atendimentos
+      const MIN_PLT=10;
       return Object.values(map).sort((a,b)=>b.total-a.total).map((x,i)=>{
-        // Separar plantões válidos por turno
         const pltDKeys=Object.keys(x.plantaoCount).filter(k=>k.endsWith("_D")&&x.plantaoCount[k]>MIN_PLT);
         const pltNKeys=Object.keys(x.plantaoCount).filter(k=>k.endsWith("_N")&&x.plantaoCount[k]>MIN_PLT);
         const plantD=pltDKeys.length, plantN=pltNKeys.length, plantTotal=plantD+plantN;
-        // Atendimentos apenas dos plantões válidos (numerador da média)
         const atPlantD=pltDKeys.reduce((s,k)=>s+x.plantaoCount[k],0);
         const atPlantN=pltNKeys.reduce((s,k)=>s+x.plantaoCount[k],0);
         const mediaD=plantD>0?Math.round(atPlantD/plantD):null;
@@ -3495,7 +3490,7 @@
         const _ge60=_rows.filter(r=>r.idade!=null&&r.idade>=60).length;
         const _ge80=_rows.filter(r=>r.idade!=null&&r.idade>=80).length;
         return {...x,i:i+1,triAvg:avg(x.tri,v=>v),medAvg:avg(x.med,v=>v),totAvg:avg(x.tot,v=>v),
-          plantD,plantN,plantTotal,mediaPlantao,mediaD,mediaN,atPlantD,atPlantN,
+          plantD,plantN,plantTotal,mediaPlantao,mediaD,mediaN,
           pontos:_pontos,le2:_le2,le12:_le12,ge60:_ge60,ge80:_ge80};
       });
     }
@@ -3600,11 +3595,9 @@
     }
     function renderMedTable(rows){
       const q=norm($("searchMed").value);
-      // Ordenar por total desc
       const data=(q?rows.filter(r=>norm(r.prof).includes(q)):rows)
         .slice().sort((a,b)=>b.total-a.total);
-      // Helper: percentual com 1 decimal
-      const pp=(n,tot)=>tot>0?(n/tot*100).toFixed(1)+"%":"—";
+      const pp=(n,tot)=>tot>0?(n/tot*100).toFixed(1)+"%":"--";
       $("tableMed").innerHTML=`<thead><tr>
         <th>#</th><th>Médico</th><th>Total</th>
         <th title="% pacientes ≤ 2 anos">≤2%</th>
@@ -3612,11 +3605,11 @@
         <th title="% pacientes ≥ 60 anos">≥60%</th>
         <th title="% pacientes ≥ 80 anos">≥80%</th>
         <th title="% fichas amarelas">Amarelo%</th>
-        <th title="% fichas laranja + vermelho">L/V%</th>
+        <th title="% fichas laranja+vermelho">L/V%</th>
         <th title="Plantões diurnos válidos (>10 atend.)">Plt. D</th>
         <th title="Plantões noturnos válidos (>10 atend.)">Plt. N</th>
-        <th title="Média de atend. nos plantões diurnos válidos">Média D.</th>
-        <th title="Média de atend. nos plantões noturnos válidos">Média N.</th>
+        <th title="Média atend./plantão diurno válido">Média D.</th>
+        <th title="Média atend./plantão noturno válido">Média N.</th>
         <th title="Média geral por plantão válido">At./Plt</th>
         <th title="Espera média para atendimento médico">Esp. méd. (min)</th>
       </tr></thead><tbody>${data.map((r,i)=>{
@@ -3626,27 +3619,27 @@
         const pLe2=pp(r.le2??0,tot), pLe12=pp(r.le12??0,tot);
         const pGe60=pp(r.ge60??0,tot), pGe80=pp(r.ge80??0,tot);
         const pAm=pp(amCount,tot), pLv=pp(lvCount,tot);
-        const lvPct=lvCount/tot*100, amPct=amCount/tot*100;
+        const amPct=amCount/tot*100, lvPct=lvCount/tot*100;
         const mpColor=r.mediaPlantao!=null&&r.mediaPlantao>=30?"okc":r.mediaPlantao!=null&&r.mediaPlantao>=20?"wnc":"";
         const medColor=r.medAvg!=null&&r.medAvg>meta("metaMed")?"erc":r.medAvg!=null&&r.medAvg>meta("metaMed")*0.8?"wnc":"";
-        return\`<tr>
-          <td class="mono muted">\${i+1}</td>
-          <td style="font-weight:600">\${esc(shortName(r.prof))}</td>
-          <td class="mono">\${fmt(r.total)}</td>
-          <td class="mono muted">\${pLe2}</td>
-          <td class="mono muted">\${pLe12}</td>
-          <td class="mono muted">\${pGe60}</td>
-          <td class="mono muted">\${pGe80}</td>
-          <td class="mono \${amPct>20?"erc":amPct>10?"wnc":"muted"}">\${pAm}</td>
-          <td class="mono \${lvPct>5?"erc":lvPct>2?"wnc":"muted"}">\${pLv}</td>
-          <td class="mono">\${r.plantD>0?r.plantD:"—"}</td>
-          <td class="mono">\${r.plantN>0?r.plantN:"—"}</td>
-          <td class="mono \${mpColor}">\${r.mediaD!=null?r.mediaD:"—"}</td>
-          <td class="mono \${r.mediaN!=null&&r.mediaN>=20?"wnc":""}">\${r.mediaN!=null?r.mediaN:"—"}</td>
-          <td class="mono \${mpColor}">\${r.mediaPlantao!=null?r.mediaPlantao:"—"}</td>
-          <td class="mono \${medColor}">\${r.medAvg==null?"—":Math.round(r.medAvg)}</td>
-        </tr>\`;
-      }).join("")}</tbody>\`;
+        return`<tr>
+          <td class="mono muted">${i+1}</td>
+          <td style="font-weight:600">${esc(shortName(r.prof))}</td>
+          <td class="mono">${fmt(r.total)}</td>
+          <td class="mono muted">${pLe2}</td>
+          <td class="mono muted">${pLe12}</td>
+          <td class="mono muted">${pGe60}</td>
+          <td class="mono muted">${pGe80}</td>
+          <td class="mono ${amPct>20?"erc":amPct>10?"wnc":"muted"}">${pAm}</td>
+          <td class="mono ${lvPct>5?"erc":lvPct>2?"wnc":"muted"}">${pLv}</td>
+          <td class="mono">${r.plantD>0?r.plantD:"-"}</td>
+          <td class="mono">${r.plantN>0?r.plantN:"-"}</td>
+          <td class="mono ${mpColor}">${r.mediaD!=null?r.mediaD:"-"}</td>
+          <td class="mono">${r.mediaN!=null?r.mediaN:"-"}</td>
+          <td class="mono ${mpColor}">${r.mediaPlantao!=null?r.mediaPlantao:"-"}</td>
+          <td class="mono ${medColor}">${r.medAvg==null?"-":Math.round(r.medAvg)}</td>
+        </tr>`;
+      }).join("")}</tbody>`;
     }
     function returns72(){
       // Cache: recalcula só quando state.filt muda (verificado por hash leve)
