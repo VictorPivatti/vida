@@ -3597,15 +3597,16 @@
       const q=norm($("searchMed").value);
       const data=(q?rows.filter(r=>norm(r.prof).includes(q)):rows)
         .slice().sort((a,b)=>b.total-a.total);
-      const pp=(n,tot)=>tot>0?(n/tot*100).toFixed(1)+"%":"--";
+      // pp: retorna célula com número absoluto + % em linha menor
+      const pp=(n,tot,cls="muted")=>`<span style="font-weight:600">${fmt(n)}</span><br><span style="font-size:10px;opacity:.75">${tot>0?(n/tot*100).toFixed(1)+"%":"--"}</span>`;
       $("tableMed").innerHTML=`<thead><tr>
         <th>#</th><th>Médico</th><th>Total</th>
-        <th title="% pacientes ≤ 2 anos">≤2%</th>
-        <th title="% pacientes ≤ 12 anos">≤12%</th>
-        <th title="% pacientes ≥ 60 anos">≥60%</th>
-        <th title="% pacientes ≥ 80 anos">≥80%</th>
-        <th title="% fichas amarelas">Amarelo%</th>
-        <th title="% fichas laranja+vermelho">L/V%</th>
+        <th title="Pacientes ≤ 2 anos">≤2</th>
+        <th title="Pacientes ≤ 12 anos">≤12</th>
+        <th title="Pacientes ≥ 60 anos">≥60</th>
+        <th title="Pacientes ≥ 80 anos">≥80</th>
+        <th title="Fichas amarelas">Amarelo</th>
+        <th title="Fichas laranja+vermelho">L/V</th>
         <th title="Plantões diurnos válidos (>10 atend.)">Plt. D</th>
         <th title="Plantões noturnos válidos (>10 atend.)">Plt. N</th>
         <th title="Média atend./plantão diurno válido">Média D.</th>
@@ -3616,9 +3617,6 @@
         const amCount=r.risks["AMARELO"]||0;
         const lvCount=(r.risks["LARANJA"]||0)+(r.risks["VERMELHO"]||0);
         const tot=r.total||1;
-        const pLe2=pp(r.le2??0,tot), pLe12=pp(r.le12??0,tot);
-        const pGe60=pp(r.ge60??0,tot), pGe80=pp(r.ge80??0,tot);
-        const pAm=pp(amCount,tot), pLv=pp(lvCount,tot);
         const amPct=amCount/tot*100, lvPct=lvCount/tot*100;
         const mpColor=r.mediaPlantao!=null&&r.mediaPlantao>=30?"okc":r.mediaPlantao!=null&&r.mediaPlantao>=20?"wnc":"";
         const medColor=r.medAvg!=null&&r.medAvg>meta("metaMed")?"erc":r.medAvg!=null&&r.medAvg>meta("metaMed")*0.8?"wnc":"";
@@ -3626,12 +3624,12 @@
           <td class="mono muted">${i+1}</td>
           <td style="font-weight:600">${esc(shortName(r.prof))}</td>
           <td class="mono">${fmt(r.total)}</td>
-          <td class="mono muted">${pLe2}</td>
-          <td class="mono muted">${pLe12}</td>
-          <td class="mono muted">${pGe60}</td>
-          <td class="mono muted">${pGe80}</td>
-          <td class="mono ${amPct>20?"erc":amPct>10?"wnc":"muted"}">${pAm}</td>
-          <td class="mono ${lvPct>5?"erc":lvPct>2?"wnc":"muted"}">${pLv}</td>
+          <td class="mono muted" style="line-height:1.3">${pp(r.le2??0,tot)}</td>
+          <td class="mono muted" style="line-height:1.3">${pp(r.le12??0,tot)}</td>
+          <td class="mono muted" style="line-height:1.3">${pp(r.ge60??0,tot)}</td>
+          <td class="mono muted" style="line-height:1.3">${pp(r.ge80??0,tot)}</td>
+          <td class="mono ${amPct>20?"erc":amPct>10?"wnc":"muted"}" style="line-height:1.3">${pp(amCount,tot)}</td>
+          <td class="mono ${lvPct>5?"erc":lvPct>2?"wnc":"muted"}" style="line-height:1.3">${pp(lvCount,tot)}</td>
           <td class="mono">${r.plantD>0?r.plantD:"-"}</td>
           <td class="mono">${r.plantN>0?r.plantN:"-"}</td>
           <td class="mono ${mpColor}">${r.mediaD!=null?r.mediaD:"-"}</td>
