@@ -3512,7 +3512,7 @@
       // ── INDICADOR 4: Produção por plantão ──────────────────────
       // Agrupa atendimentos por dateKey+turno (cada plantão = 12h)
       const plantaoMap={};
-      d.forEach(r=>{
+      state.filt.forEach(r=>{
         const k=r.dateKey+"_"+r.turno;
         plantaoMap[k]=plantaoMap[k]||{dateKey:r.dateKey,turno:r.turno,meds:new Set(),n:0,tri:[],med:[]};
         plantaoMap[k].n++;
