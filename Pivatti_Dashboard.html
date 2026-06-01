@@ -3965,11 +3965,10 @@
       });
       const temRecep=mData.some(r=>r.recep!=null);
       sec.style.display="";
-      // KPIs do periodo — restringir atendidos aos mesmos meses da triagem
-      const mesesSet2=new Set(meses);
-      const totTriados=triFilt.length;
-      const totBrancos=triFilt.filter(r=>r.cor==="BRANCO").length;
-      const totAtendidos=state.filt.filter(r=>mesesSet2.has(r.anoMes)).length;
+      // KPIs do periodo — usar mData que já aplica overrides de triados/brancos/atendidos
+      const totTriados=mData.reduce((s,r)=>s+r.triados,0);
+      const totBrancos=mData.reduce((s,r)=>s+r.brancos,0);
+      const totAtendidos=mData.reduce((s,r)=>s+r.atendidos,0);
       const totRecep=temRecep?mData.reduce((s,r)=>s+(r.recep||0),0):null;
       const totEvasoes=totRecep!=null?totRecep-totBrancos-totAtendidos:null;
       const totTaxa=totRecep&&totRecep>0?totEvasoes/totRecep*100:null;
