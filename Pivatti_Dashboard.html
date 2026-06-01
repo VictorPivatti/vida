@@ -3528,21 +3528,26 @@
       const mediaDpM=avg(plantD.filter(p=>p.medAtivos>0),p=>p.porMedico);
       const mediaNpM=avg(plantN.filter(p=>p.medAtivos>0),p=>p.porMedico);
 
-      // Gráfico: scatter dos plantões — X=data, Y=volume, cor por turno
-      const scatD=plantD.map(p=>({x:p.dateKey,y:p.n}));
-      const scatN=plantN.map(p=>({x:p.dateKey,y:p.n}));
-      chart("chartPlantaoBox",{type:"scatter",data:{datasets:[
-        {label:"Diurno",data:scatD,backgroundColor:"rgba(59,130,246,.55)",pointRadius:4},
-        {label:"Noturno",data:scatN,backgroundColor:"rgba(124,110,249,.55)",pointRadius:4}
-      ]},options:{responsive:true,maintainAspectRatio:false,
+      // Gráfico: barras agrupadas por dia, D=azul N=roxo
+      const allDates=[...new Set([...plantD,...plantN].map(p=>p.dateKey))].sort();
+      const dByDate=Object.fromEntries(plantD.map(p=>[p.dateKey,p.n]));
+      const nByDate=Object.fromEntries(plantN.map(p=>[p.dateKey,p.n]));
+      chart("chartPlantaoBox",{type:"bar",data:{
+        labels:allDates.map(dk=>{const d=new Date(dk+"T12:00:00");return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});}),
+        datasets:[
+          {label:"Diurno",data:allDates.map(dk=>dByDate[dk]||0),backgroundColor:"rgba(59,130,246,.7)",borderRadius:2},
+          {label:"Noturno",data:allDates.map(dk=>nByDate[dk]||0),backgroundColor:"rgba(124,110,249,.7)",borderRadius:2}
+        ]
+      },options:{responsive:true,maintainAspectRatio:false,
         plugins:{
           legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},
-          tooltip:{callbacks:{label:c=>`${c.dataset.label} ${c.raw.x}: ${c.raw.y} atend.`}}
+          tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y} atend.`}}
         },
         scales:{
-          x:{type:"category",grid:{color:gridColor()},ticks:{color:tickColor(),maxRotation:45,font:{size:9}}},
+          x:{grid:{color:gridColor()},ticks:{color:tickColor(),maxRotation:60,font:{size:8}}},
           y:{grid:{color:gridColor()},ticks:{color:tickColor()},
-             title:{display:true,text:"atendimentos/plantão",color:tickColor(),font:{size:9}}}
+             title:{display:true,text:"atendimentos/plantão",color:tickColor(),font:{size:9}},
+             beginAtZero:true}
         }
       }});
 
@@ -3685,8 +3690,9 @@
         cidCard.classList.remove("hidden");
         // Mapear CID por prontuário+data: para cada atendimento, qual CID foi registrado
         const cidByProntDate={};
+        // cidRaw salva o prontuário como idAtend (campo p[4] do arquivo CID)
         state.cidRaw.forEach(c=>{
-          const k=String(c.pront||"").trim()+"|"+String(c.dateKey||"").trim();
+          const k=String(c.idAtend||"").trim()+"|"+String(c.dateKey||"").trim();
           cidByProntDate[k]=cidByProntDate[k]||[];
           cidByProntDate[k].push(c.cid||"");
         });
@@ -5567,9 +5573,9 @@
               return v != null ? +v.toFixed(1) : null;
             }),
             borderColor: MON_COLORS[m] || '#64748b',
-            backgroundColor: (MON_COLORS[m] || '#64748b').replace(')', ',.15)').replace('rgb','rgba') || 'transparent',
-            tension: .35, pointRadius: 5, pointHoverRadius: 7,
-            borderWidth: 2, fill: false, spanGaps: true
+            backgroundColor: 'transparent',
+            tension: .35, pointRadius: allMonths.length===1?6:4, pointHoverRadius: 7,
+            borderWidth: allMonths.length===1?3:2, fill: false, spanGaps: true
           }))
         },
         options: {
