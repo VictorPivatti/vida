@@ -874,6 +874,42 @@
       transition:width .3s ease
     }
     .kpi:hover::after{width:64px}
+    /* ── KPI info button & formula panel ── */
+    .card.kpi{position:relative}
+    .kpi-info-btn{
+      position:absolute;top:10px;right:10px;z-index:2;
+      background:none;border:none;padding:2px;
+      cursor:pointer;color:var(--txt2);
+      opacity:.4;transition:opacity .18s,color .18s;
+      line-height:1;display:flex;align-items:center
+    }
+    .kpi-info-btn:hover,.kpi-info-btn.active{opacity:1;color:var(--ac)}
+    .kpi-info-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .kpi-formula-panel{
+      margin-top:10px;padding-top:10px;
+      border-top:1px solid var(--bdr)
+    }
+    .kpi-formula-expr{
+      font-size:10px;font-family:'IBM Plex Mono',monospace;
+      color:var(--ac);margin-bottom:7px;padding-bottom:6px;
+      border-bottom:1px solid var(--bdr);line-height:1.5
+    }
+    .kpi-formula-table{width:100%;border-collapse:collapse}
+    .kpi-formula-table td{
+      font-size:11px;padding:2px 0;
+      color:var(--txt2);line-height:1.6
+    }
+    .kpi-formula-table td:last-child{
+      text-align:right;color:var(--txt);
+      font-family:'IBM Plex Mono',monospace;
+      font-weight:600;padding-left:12px;white-space:nowrap
+    }
+    .kpi-formula-table tr.kpi-formula-total td{
+      border-top:1px solid var(--bdr);padding-top:5px;
+      color:var(--txt);font-weight:600
+    }
+    .kpi-formula-table tr.kpi-formula-total td:last-child{color:var(--ac)}
+
     .k-label{
       font-size:9px;color:var(--mut);text-transform:uppercase;
       letter-spacing:.14em;font-weight:600;margin-bottom:14px;
@@ -3120,7 +3156,33 @@
       if(!alerts.length)alerts.push(["ok","Sem alerta crítico no período","Metas principais dentro do esperado com os dados disponíveis."]);
       return alerts;
     }
-    function kpi(label,value,sub,color,trend="",cls=""){return`<div class="card kpi ${cls}" style="--k:${color}"><div class="kpi-stripe"></div><div class="k-label">${esc(label)}</div><div class="k-value">${esc(value)}</div><div class="k-sub">${sub}</div>${trend}</div>`}
+    function kpi(label,value,sub,color,trend="",cls="",formula=null){
+      const fAttr=formula?` data-formula="${JSON.stringify(formula).replace(/"/g,'&quot;')}"`:'' ;
+      const infoBtn=formula?`<button class="kpi-info-btn" aria-label="Ver cálculo" onclick="toggleKpiInfo(this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></button>`:'';
+      return`<div class="card kpi ${cls}"${fAttr} style="--k:${color}"><div class="kpi-stripe"></div>${infoBtn}<div class="k-label">${esc(label)}</div><div class="k-value">${esc(value)}</div><div class="k-sub">${sub}</div>${trend}<div class="kpi-formula-panel" hidden></div></div>`;
+    }
+    function toggleKpiInfo(btn){
+      const card=btn.closest('.kpi');
+      const panel=card.querySelector('.kpi-formula-panel');
+      const isOpen=!panel.hidden;
+      // Fechar todos os painéis abertos
+      document.querySelectorAll('.kpi-formula-panel:not([hidden])').forEach(p=>p.hidden=true);
+      document.querySelectorAll('.kpi-info-btn.active').forEach(b=>b.classList.remove('active'));
+      if(isOpen)return;
+      let formula=null;
+      try{formula=JSON.parse(card.dataset.formula);}catch(e){return;}
+      if(!formula)return;
+      let rows='';
+      if(formula.linhas){
+        formula.linhas.forEach((r,i)=>{
+          const isTot=i===formula.linhas.length-1&&formula.linhas.length>1;
+          rows+=`<tr class="${isTot?'kpi-formula-total':''}"><td>${r[0]}</td><td>${r[1]}</td></tr>`;
+        });
+      }
+      panel.innerHTML=`<div class="kpi-formula-expr">${formula.expr}</div>${rows?`<table class="kpi-formula-table">${rows}</table>`:''}`;
+      panel.hidden=false;
+      btn.classList.add('active');
+    }
     function renderAll(){
       if(!state.raw.length) return;
       markDirty();
@@ -3177,10 +3239,10 @@
         evasaoKpi=kpi("Evasão","N/D","insira recepcionados em ⚙ Metas para calcular","var(--mut)");
       }
       $("kpisGeral").innerHTML=[
-        kpi("Atendimentos",fmt(total),`${days} dias no período`,"#3b82f6",metricDelta(total,prevVal(prev.length,prev,m_g,pm_g.length),"")),
-        kpi("Média diária",fmt(curDaily),"atendimentos/dia","#22c55e",metricDelta(curDaily,prevVal(prevDaily,prev,m_g,pm_g.length),"")),
+        kpi("Atendimentos",fmt(total),`${days} dias no período`,"#3b82f6",metricDelta(total,prevVal(prev.length,prev,m_g,pm_g.length),""),"",{expr:`${fmt(total)} registros no período filtrado`,linhas:[["registros totais",fmt(total)],["dias distintos",days],["resultado",fmt(total)+" atendimentos"]]}),
+        kpi("Média diária",fmt(curDaily),"atendimentos/dia","#22c55e",metricDelta(curDaily,prevVal(prevDaily,prev,m_g,pm_g.length),""),"",{expr:`${fmt(total)} ÷ ${days} dias = ${fmt(curDaily)}/dia`,linhas:[["atendimentos no período",fmt(total)],["dias com atendimento",days],["média diária",fmt(curDaily)+"/dia"]]}),
         evasaoKpi,
-        kpi("Tempo total médio",curTotalTime!=null?Math.round(curTotalTime)+" min":"-","recepção até alta","#f97316",metricDelta(curTotalTime,prevVal(prevTotalTime,prev,m_g,pm_g.length),"min",true))
+        kpi("Tempo total médio",curTotalTime!=null?Math.round(curTotalTime)+" min":"-","recepção até alta","#f97316",metricDelta(curTotalTime,prevVal(prevTotalTime,prev,m_g,pm_g.length),"min",true),"",curTotalTime!=null?{expr:`média(recepção → alta) entre ${fmt(totalN)} registros`,linhas:[["registros com tempo total",fmt(totalN)],["registros sem dado",fmt(total-totalN)],["tempo médio",Math.round(curTotalTime)+" min"]]}:null)
       ].join("");
       const byM=group(d,r=>r.anoMes), keys=Object.keys(byM).map(Number).sort();
       const volVals=keys.map(k=>byM[k]);
@@ -3308,10 +3370,10 @@
       const pTotalN=prev.filter(r=>r.tTotal!=null).length, pTotalOk=prev.filter(r=>r.tTotal!=null&&r.tTotal<=meta("metaTotal")).length;
       const triRate=triN?triOk/triN*100:null, medRate=medN?medOk/medN*100:null, totalRate=totalN?totalOk/totalN*100:null;
       $("kpisInd").innerHTML=[
-        kpi("Triagem na meta",pct(triOk,triN),`meta <= ${meta("metaTri")} min`,"#22c55e",metricDelta(triRate,prevVal(pTriN?pTriOk/pTriN*100:null,prev,m.length,pm.length),"pp")),
-        kpi("Médico na meta",pct(medOk,medN),`meta <= ${meta("metaMed")} min`,"#f97316",metricDelta(medRate,prevVal(pMedN?pMedOk/pMedN*100:null,prev,m.length,pm.length),"pp")),
-        kpi("Total na meta",pct(totalOk,totalN),`meta <= ${meta("metaTotal")} min`,"#a78bfa",metricDelta(totalRate,prevVal(pTotalN?pTotalOk/pTotalN*100:null,prev,m.length,pm.length),"pp")),
-        kpi("Volume medio mensal",fmt(monthAvg),`meta >= ${fmt(meta("metaVol"))}`,"#3b82f6",metricDelta(monthAvg,prevVal(pm.length?Math.round(prev.length/pm.length):null,prev,m.length,pm.length),""))
+        kpi("Triagem na meta",pct(triOk,triN),`meta <= ${meta("metaTri")} min`,"#22c55e",metricDelta(triRate,prevVal(pTriN?pTriOk/pTriN*100:null,prev,m.length,pm.length),"pp"),"",triN>0?{expr:`${pct(triOk,triN)} = ${fmt(triOk)} ÷ ${fmt(triN)}`,linhas:[["na meta (≤"+meta("metaTri")+"min)",fmt(triOk)],["com dado de espera",fmt(triN)],["sem dado de espera",fmt(d.length-triN)],["conformidade",pct(triOk,triN)]]}:null),
+        kpi("Médico na meta",pct(medOk,medN),`meta <= ${meta("metaMed")} min`,"#f97316",metricDelta(medRate,prevVal(pMedN?pMedOk/pMedN*100:null,prev,m.length,pm.length),"pp"),"",medN>0?{expr:`${pct(medOk,medN)} = ${fmt(medOk)} ÷ ${fmt(medN)}`,linhas:[["atendidos na meta (≤"+meta("metaMed")+"min)",fmt(medOk)],["com dado de espera médica",fmt(medN)],["sem dado de espera médica",fmt(d.length-medN)],["conformidade",pct(medOk,medN)]]}:null),
+        kpi("Total na meta",pct(totalOk,totalN),`meta <= ${meta("metaTotal")} min`,"#a78bfa",metricDelta(totalRate,prevVal(pTotalN?pTotalOk/pTotalN*100:null,prev,m.length,pm.length),"pp"),"",totalN>0?{expr:`${pct(totalOk,totalN)} = ${fmt(totalOk)} ÷ ${fmt(totalN)}`,linhas:[["tempo total na meta (≤"+meta("metaTotal")+"min)",fmt(totalOk)],["com tempo total registrado",fmt(totalN)],["sem registro de tempo total",fmt(d.length-totalN)],["conformidade",pct(totalOk,totalN)]]}:null),
+        kpi("Volume medio mensal",fmt(monthAvg),`meta >= ${fmt(meta("metaVol"))}`,"#3b82f6",metricDelta(monthAvg,prevVal(pm.length?Math.round(prev.length/pm.length):null,prev,m.length,pm.length),""),"",m.length>0?{expr:`${fmt(monthAvg)} = ${fmt(d.length)} ÷ ${m.length} ${m.length===1?"mês":"meses"}`,linhas:[["atendimentos no período",fmt(d.length)],["meses com atendimentos",m.length],["média mensal",fmt(monthAvg)+"/mês"],["meta configurada","≥ "+fmt(meta("metaVol"))+"/mês"]]}:null)
       ].join("");
       chart("chartIndTri",{type:"bar",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{data:m.map(x=>x.triN?+(x.triOk/x.triN*100).toFixed(1):null),backgroundColor:m.map(x=>x.triN&&x.triOk/x.triN>=.9?"#22c55e":"#ef4444"),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},targetLine:{lines:[{value:90,label:"meta 90%",color:"#eab308"}]}},scales:{...axes(),y:{grid:{color:gridColor()},ticks:{color:tickColor(),callback:v=>v+"%"},max:100}}}});
       const tempoVals=m.flatMap(x=>[x.triAvg,x.medAvg,x.totAvg]).filter(Number.isFinite);
@@ -4069,7 +4131,7 @@
         kpi("Atendidos",fmt(totAtendidos),"atendimento medico registrado","#22c55e"),
         kpi("Recepcionados",totRecep!=null?fmt(totRecep):noRecepMsg,"total registrado na recepcao","#a78bfa","",totRecep==null?"kpi-warn":""),
         kpi("Evasoes",totEvasoes!=null?(totEvasoes<0?"<0 (revisar)":fmt(totEvasoes)):noRecepMsg,"saíram sem atendimento (excl. brancos)","#ef4444","",totEvasoes==null?"kpi-warn":""),
-        kpi("Taxa de Evasao",totTaxa!=null?(totTaxa<0?"<0%":totTaxa.toFixed(1)+"%"):noRecepMsg,"(Recep - Brancos - Atend.) / Recep","#f97316","",totTaxa==null?"kpi-warn":"")
+        kpi("Taxa de Evasao",totTaxa!=null?(totTaxa<0?"<0%":totTaxa.toFixed(1)+"%"):noRecepMsg,"(Recep - Brancos - Atend.) / Recep","#f97316","",totTaxa==null?"kpi-warn":"",totTaxa!=null?{expr:"(Recepcionados − Brancos − Atendidos) ÷ Recepcionados",linhas:[["recepcionados (entrada)",fmt(totRecep)],["classificados brancos",fmt(totBrancos)],["atendimentos médicos",fmt(totAtendidos)],["evasões",totEvasoes<0?"<0 (revisar)":fmt(Math.max(0,totEvasoes))],["taxa de evasão",totTaxa<0?"<0%":totTaxa.toFixed(1)+"%"]]}:null)
       ].join("");
       // Grafico tendencia mensal
       const comTaxa=mData.filter(r=>r.taxa!=null);
