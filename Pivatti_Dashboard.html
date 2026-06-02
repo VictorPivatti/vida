@@ -3074,6 +3074,14 @@
       const span=e-s, prevEnd=new Date(s.getTime()-1), prevStart=new Date(prevEnd.getTime()-span);
       return rowsInRange(state.raw,prevStart,prevEnd);
     }
+    // prevVal: retorna prev só se cobertura for >= 50% do período atual
+    // evita comparações absurdas quando período anterior cai fora do dataset
+    function prevVal(val,prevRows,curMonths,prevMonths){
+      if(val==null||!Number.isFinite(val))return null;
+      if(!prevMonths||curMonths>0&&prevMonths<curMonths*0.5)return null;
+      if(!prevRows||prevRows.length<curMonths*10)return null;
+      return val;
+    }
     function metricDelta(cur,prev,unit="",inverse=false){
       if(cur==null||prev==null||!Number.isFinite(cur)||!Number.isFinite(prev)||prev===0)return"";
       const diff=cur-prev, pctDiff=diff/Math.abs(prev)*100, good=inverse?diff<=0:diff>=0;
@@ -3132,7 +3140,7 @@
 
     function renderGeral(){
       const d=state.filt,total=d.length,days=new Set(d.map(r=>r.dateKey)).size,meds=new Set(d.filter(r=>r.prof).map(r=>norm(r.prof))).size;
-      const prev=previousRows(), prevDays=new Set(prev.map(r=>r.dateKey)).size;
+      const prev=previousRows(), prevDays=new Set(prev.map(r=>r.dateKey)).size, pm_g=monthlyStats(prev), m_g=new Set(d.map(r=>r.anoMes)).size;
       const curDaily=days?Math.round(total/days):0, prevDaily=prevDays?Math.round(prev.length/prevDays):null;
       const curTotalTime=avg(d,r=>r.tTotal), prevTotalTime=avg(prev,r=>r.tTotal);
       const {ret}=returns72(), retRate=total?ret.length/total*100:0;
@@ -3169,10 +3177,10 @@
         evasaoKpi=kpi("Evasão","N/D","insira recepcionados em ⚙ Metas para calcular","var(--mut)");
       }
       $("kpisGeral").innerHTML=[
-        kpi("Atendimentos",fmt(total),`${days} dias no período`,"#3b82f6",metricDelta(total,prev.length,"")),
-        kpi("Média diária",fmt(curDaily),"atendimentos/dia","#22c55e",metricDelta(curDaily,prevDaily,"")),
+        kpi("Atendimentos",fmt(total),`${days} dias no período`,"#3b82f6",metricDelta(total,prevVal(prev.length,prev,m_g,pm_g.length),"")),
+        kpi("Média diária",fmt(curDaily),"atendimentos/dia","#22c55e",metricDelta(curDaily,prevVal(prevDaily,prev,m_g,pm_g.length),"")),
         evasaoKpi,
-        kpi("Tempo total médio",curTotalTime!=null?Math.round(curTotalTime)+" min":"-","recepção até alta","#f97316",metricDelta(curTotalTime,prevTotalTime,"min",true))
+        kpi("Tempo total médio",curTotalTime!=null?Math.round(curTotalTime)+" min":"-","recepção até alta","#f97316",metricDelta(curTotalTime,prevVal(prevTotalTime,prev,m_g,pm_g.length),"min",true))
       ].join("");
       const byM=group(d,r=>r.anoMes), keys=Object.keys(byM).map(Number).sort();
       const volVals=keys.map(k=>byM[k]);
@@ -3300,10 +3308,10 @@
       const pTotalN=prev.filter(r=>r.tTotal!=null).length, pTotalOk=prev.filter(r=>r.tTotal!=null&&r.tTotal<=meta("metaTotal")).length;
       const triRate=triN?triOk/triN*100:null, medRate=medN?medOk/medN*100:null, totalRate=totalN?totalOk/totalN*100:null;
       $("kpisInd").innerHTML=[
-        kpi("Triagem na meta",pct(triOk,triN),`meta <= ${meta("metaTri")} min`,"#22c55e",metricDelta(triRate,pTriN?pTriOk/pTriN*100:null,"pp")),
-        kpi("Médico na meta",pct(medOk,medN),`meta <= ${meta("metaMed")} min`,"#f97316",metricDelta(medRate,pMedN?pMedOk/pMedN*100:null,"pp")),
-        kpi("Total na meta",pct(totalOk,totalN),`meta <= ${meta("metaTotal")} min`,"#a78bfa",metricDelta(totalRate,pTotalN?pTotalOk/pTotalN*100:null,"pp")),
-        kpi("Volume medio mensal",fmt(monthAvg),`meta >= ${fmt(meta("metaVol"))}`,"#3b82f6",metricDelta(monthAvg,pm.length?Math.round(prev.length/pm.length):null,""))
+        kpi("Triagem na meta",pct(triOk,triN),`meta <= ${meta("metaTri")} min`,"#22c55e",metricDelta(triRate,prevVal(pTriN?pTriOk/pTriN*100:null,prev,m.length,pm.length),"pp")),
+        kpi("Médico na meta",pct(medOk,medN),`meta <= ${meta("metaMed")} min`,"#f97316",metricDelta(medRate,prevVal(pMedN?pMedOk/pMedN*100:null,prev,m.length,pm.length),"pp")),
+        kpi("Total na meta",pct(totalOk,totalN),`meta <= ${meta("metaTotal")} min`,"#a78bfa",metricDelta(totalRate,prevVal(pTotalN?pTotalOk/pTotalN*100:null,prev,m.length,pm.length),"pp")),
+        kpi("Volume medio mensal",fmt(monthAvg),`meta >= ${fmt(meta("metaVol"))}`,"#3b82f6",metricDelta(monthAvg,prevVal(pm.length?Math.round(prev.length/pm.length):null,prev,m.length,pm.length),""))
       ].join("");
       chart("chartIndTri",{type:"bar",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{data:m.map(x=>x.triN?+(x.triOk/x.triN*100).toFixed(1):null),backgroundColor:m.map(x=>x.triN&&x.triOk/x.triN>=.9?"#22c55e":"#ef4444"),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},targetLine:{lines:[{value:90,label:"meta 90%",color:"#eab308"}]}},scales:{...axes(),y:{grid:{color:gridColor()},ticks:{color:tickColor(),callback:v=>v+"%"},max:100}}}});
       const tempoVals=m.flatMap(x=>[x.triAvg,x.medAvg,x.totAvg]).filter(Number.isFinite);
