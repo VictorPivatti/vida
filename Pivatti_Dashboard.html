@@ -342,6 +342,85 @@
     }
     .up-config-btn:hover{color:var(--txt);border-color:var(--bdr2);background:var(--sur)}
 
+    /* ── Banner de dados salvos ── */
+    .up-saved-banner{
+      width:100%;display:flex;align-items:center;gap:10px;
+      background:rgba(34,197,94,.07);
+      border:1px solid rgba(34,197,94,.2);
+      border-radius:10px;padding:10px 14px;
+      margin-bottom:14px;
+      animation:upFadeUp .5s cubic-bezier(.16,1,.3,1) both
+    }
+    .up-saved-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);flex-shrink:0;box-shadow:0 0 6px var(--ok)}
+    .up-saved-text{font-size:11.5px;font-family:'IBM Plex Mono',monospace;color:var(--ok);flex:1;line-height:1.4}
+    .up-saved-btn{
+      font-size:10px;font-family:'IBM Plex Mono',monospace;
+      color:var(--ok);border:1px solid rgba(34,197,94,.35);
+      border-radius:5px;padding:4px 10px;background:none;
+      cursor:pointer;white-space:nowrap;flex-shrink:0;
+      transition:background .15s,border-color .15s
+    }
+    .up-saved-btn:hover{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.5)}
+
+    /* ── Drag overlay fullscreen ── */
+    #upDragOverlay{
+      position:fixed;inset:0;z-index:100;
+      background:rgba(124,110,249,.08);
+      border:3px dashed rgba(124,110,249,.45);
+      display:none;flex-direction:column;
+      align-items:center;justify-content:center;gap:14px;
+      pointer-events:none
+    }
+    #upDragOverlay.active{display:flex}
+    [data-theme="light"] #upDragOverlay{background:rgba(124,110,249,.05)}
+    .up-drag-icon{
+      width:72px;height:72px;border-radius:18px;
+      background:rgba(124,110,249,.15);
+      border:1.5px solid rgba(124,110,249,.3);
+      display:flex;align-items:center;justify-content:center;
+      color:var(--ac)
+    }
+    .up-drag-label{font-size:18px;font-weight:700;color:var(--ac);letter-spacing:-.01em}
+    .up-drag-sub{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--mut)}
+
+    /* ── Unidade no rodapé ── */
+    .up-unit-footer{
+      position:fixed;bottom:18px;left:22px;z-index:2;
+      display:flex;flex-direction:column;gap:3px;
+      animation:upFadeUp .8s cubic-bezier(.16,1,.3,1) .25s both
+    }
+    .up-unit-name-tag{
+      font-family:'IBM Plex Mono',monospace;font-size:9.5px;
+      color:var(--ac);font-weight:600;letter-spacing:.04em;
+      display:none
+    }
+    .up-unit-name-tag.visible{display:block}
+
+    /* ── Drop zone: loading state ── */
+    .up-dropzone.loading{
+      border-style:solid;border-color:var(--ac);
+      background:rgba(124,110,249,.04);
+      pointer-events:none;cursor:default
+    }
+    .up-dropzone.loading .up-drop-icon{
+      background:rgba(124,110,249,.1);border-color:rgba(124,110,249,.3);color:var(--ac)
+    }
+    .up-dropzone.loading .up-drop-label{color:var(--ac)}
+    .up-drop-spinner{
+      display:none;width:18px;height:18px;
+      border:2px solid rgba(124,110,249,.2);border-top-color:var(--ac);
+      border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .up-drop-progress-row{
+      display:none;align-items:center;justify-content:center;gap:8px;margin-top:6px
+    }
+    .up-dropzone.loading .up-drop-progress-row{display:flex}
+    .up-dropzone.loading .up-drop-spinner{display:block}
+    .up-drop-progress-text{
+      font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--ac);opacity:.85
+    }
+
     /* ── Elementos obsoletos: esconder ── */
     .upload-left,.upload-right,.up-brand,.upload-hero-block,
     .upload-hero-words,.up-sub,.up-address,.vida-deco-wrap,
@@ -1157,6 +1236,13 @@
     <!-- Nome completo por extenso -->
     <p class="up-fullname">Visualização Integrada<br>de Dados Assistenciais</p>
 
+    <!-- Banner dados salvos (visível via JS quando IDB tem dados) -->
+    <div class="up-saved-banner" id="upSavedBanner" style="display:none">
+      <div class="up-saved-dot"></div>
+      <div class="up-saved-text" id="upSavedText">dados salvos do banco local</div>
+      <button class="up-saved-btn" id="upSavedBtn">↩ retomar</button>
+    </div>
+
     <!-- Drop zone único -->
     <label class="up-dropzone" id="histDrop">
       <input id="histFile" type="file" accept=".xlsx,.xls,.csv" multiple>
@@ -1172,6 +1258,10 @@
         <div class="up-drop-sub">Arraste ou clique &nbsp;·&nbsp; .xlsx &nbsp;·&nbsp; .xls &nbsp;·&nbsp; .csv</div>
       </div>
       <div class="up-drop-filename" id="histFileName"></div>
+      <div class="up-drop-progress-row">
+        <div class="up-drop-spinner"></div>
+        <div class="up-drop-progress-text" id="upDropProgressText">processando…</div>
+      </div>
     </label>
 
     <!-- Rodapé: descrição -->
@@ -1199,8 +1289,24 @@
   <!-- Versão: canto inferior direito -->
   <div class="up-version">v3.0</div>
 
-  <!-- Configurar unidade: canto inferior esquerdo -->
-  <button class="up-config-btn" onclick="openUnitConfig()">⚙ configurar unidade</button>
+  <!-- Drag overlay fullscreen -->
+  <div id="upDragOverlay" role="status" aria-live="polite">
+    <div class="up-drag-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+    </div>
+    <div class="up-drag-label">solte para carregar</div>
+    <div class="up-drag-sub">histórico de atendimentos · .xlsx .xls .csv</div>
+  </div>
+
+  <!-- Unidade + configurar: canto inferior esquerdo -->
+  <div class="up-unit-footer">
+    <span class="up-unit-name-tag" id="upUnitNameTag"></span>
+    <button class="up-config-btn" onclick="openUnitConfig()">⚙ configurar unidade</button>
+  </div>
 
   <!-- Theme toggle: canto superior direito -->
   <div class="up-theme-row">
@@ -2108,6 +2214,15 @@
       // Atualizar topbar e sidebar com nome da unidade
       const _tsub=$("topbarUnitSub");if(_tsub)_tsub.textContent=UC.nome||"Visualização Integrada de Dados Assistenciais";
       const _sbsub=$("sidebarUnitSub");if(_sbsub)_sbsub.textContent=UC.nome||"UPA Tiago Cardoso Santos";
+      // Tag de unidade na tela inicial
+      const unitTag=$("upUnitNameTag");
+      if(unitTag){
+        const parts=[];
+        if(UC.nome)parts.push(UC.nome);
+        if(UC.endereco)parts.push(UC.endereco.split(',')[0]); // só cidade
+        unitTag.textContent=parts.join(' — ');
+        unitTag.classList.toggle('visible',!!UC.nome);
+      }
       // Print cover
       const pc=$("printUnit");
       if(pc){
@@ -2199,7 +2314,17 @@
       } else if(v>=100){
         _progressStart = null;
       }
-      s.textContent = txt;
+      s.innerHTML = txt;
+      // Loading state visual no drop zone
+      const drop=$('histDrop'), pt=$('upDropProgressText');
+      if(drop&&!drop.classList.contains('ready')){
+        if(v>0&&v<100){
+          drop.classList.add('loading');
+          if(pt)pt.textContent=msg||(detail?detail:'processando…');
+        } else {
+          drop.classList.remove('loading');
+        }
+      }
     }
 
     // ── Leitura de arquivo — sem XLSX.read() para xlsx ─────────────────
@@ -4609,6 +4734,35 @@
       }
       loadHist(files);
     });
+
+    // ── Drag overlay fullscreen ──────────────────────────────────
+    (function(){
+      const overlay=$('upDragOverlay');
+      if(!overlay)return;
+      let _dragCount=0;
+      document.addEventListener('dragenter',e=>{
+        if(!e.dataTransfer?.types?.includes('Files'))return;
+        _dragCount++;
+        overlay.classList.add('active');
+      });
+      document.addEventListener('dragleave',()=>{
+        _dragCount=Math.max(0,_dragCount-1);
+        if(_dragCount===0)overlay.classList.remove('active');
+      });
+      document.addEventListener('dragover',e=>e.preventDefault());
+      document.addEventListener('drop',e=>{
+        e.preventDefault();
+        _dragCount=0;
+        overlay.classList.remove('active');
+        const files=e.dataTransfer?.files;
+        if(files&&files.length){
+          // Redirecionar para histDrop handler
+          const fn=$("histFileName");
+          if(fn){fn.textContent=files.length===1?files[0].name:`${files.length} arquivos`;$("histDrop").classList.add("ready")}
+          loadHist(files);
+        }
+      });
+    })();
     bindDrop($("triDrop"),$("triFileUp"),files=>{
       state.pending.tri=files[0]||null;
       $("triDrop").classList.add("ready");
@@ -7082,7 +7236,20 @@
         const statusEl = $('status');
         const uploadEl = $('upload');
         const hint = document.getElementById('autoLoadHint');
-        if(hint) hint.textContent = `Carregando ${s.atendimentos.toLocaleString('pt-BR')} atendimentos do banco local…`;
+        // Banner de dados salvos
+        const banner=$('upSavedBanner'), savedText=$('upSavedText'), savedBtn=$('upSavedBtn');
+        if(banner&&savedText){
+          // Descobrir período dos dados
+          const count=s.atendimentos;
+          savedText.textContent=`${count.toLocaleString('pt-BR')} registros salvos`;
+          banner.style.display='flex';
+          // Botão retomar: esconder banner e disparar o load
+          if(savedBtn) savedBtn.onclick=()=>{
+            banner.style.display='none';
+            if(hint)hint.textContent='';
+          };
+        }
+        if(hint) hint.textContent='';
 
         // Lê em paralelo para economizar tempo
         const [rows, cidRows, triRows] = await Promise.all([
