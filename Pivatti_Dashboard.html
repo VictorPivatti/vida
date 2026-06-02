@@ -2253,15 +2253,8 @@
           sub.textContent="Visualização Integrada de Dados Assistenciais";
         }
       }
-      // Upload screen
-      const uName=$("upUnitName");
-      const uAddr=$("upUnitAddr");
-      const uPhone=$("upUnitPhone");
-      const uCnes=$("upUnitCnes");
-      if(uName){uName.textContent=UC.nome||"";uName.style.display=UC.nome?"block":"none"}
-      if(uAddr){uAddr.textContent=UC.endereco||"";uAddr.style.display=UC.endereco?"block":"none"}
-      if(uPhone)uPhone.innerHTML=UC.telefone?`<strong>Telefone</strong> &nbsp; ${UC.telefone}<br>`:"";
-      if(uCnes)uCnes.innerHTML=UC.cnes?`<strong>CNES</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${UC.cnes}${UC.gestao?`<br><strong>Gestão</strong> &nbsp;&nbsp;&nbsp;&nbsp; ${UC.gestao}`:""}`:"";;
+      // Upload screen (IDs legados removidos no rebranding v3.0 — apenas unitTag persiste)
+;
       // Atualizar topbar e sidebar com nome da unidade
       const _tsub=$("topbarUnitSub");if(_tsub)_tsub.textContent=UC.nome||"Visualização Integrada de Dados Assistenciais";
       const _sbsub=$("sidebarUnitSub");if(_sbsub)_sbsub.textContent=UC.nome||"UPA Tiago Cardoso Santos";
@@ -5116,8 +5109,10 @@
         return'Outros';
       };
 
-      const enfRows=state.procRaw.filter(r=>catOf(r.esp)==='enf');
-      const tecRows=state.procRaw.filter(r=>catOf(r.esp)==='tec');
+      // FIX v3.0: usar procFilt quando disponível (respeita filtros ativos), fallback para procRaw
+      const procBase=state.procFilt.length?state.procFilt:state.procRaw;
+      const enfRows=procBase.filter(r=>catOf(r.esp)==='enf');
+      const tecRows=procBase.filter(r=>catOf(r.esp)==='tec');
 
       // ── KPIs gerais ───────────────────────────────────────
       const enfProfs=new Set(enfRows.map(r=>r.prof)).size;
@@ -7601,7 +7596,7 @@
         return recep>0?ev/recep*100:null;
       }).filter(v=>v!=null);
       const taxaMedia=taxasEvasao.length?taxasEvasao.reduce((a,b)=>a+b,0)/taxasEvasao.length:null;
-      if(taxaMedia!=null&&taxaMedia>10)alerts['triagem']=true;
+      if(taxaMedia!=null&&taxaMedia>meta('metaRet'))alerts['triagem']=true;
 
       // Aplicar/remover pontos
       document.querySelectorAll('.nav-item[data-pane]').forEach(btn=>{
