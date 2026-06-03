@@ -3242,7 +3242,7 @@
         kpi("Atendimentos",fmt(total),`${days} dias no período`,"#3b82f6",metricDelta(total,prevVal(prev.length,prev,m_g,pm_g.length),""),"",{expr:`${fmt(total)} registros no período filtrado`,linhas:[["registros totais",fmt(total)],["dias distintos",days],["resultado",fmt(total)+" atendimentos"]]}),
         kpi("Média diária",fmt(curDaily),"atendimentos/dia","#22c55e",metricDelta(curDaily,prevVal(prevDaily,prev,m_g,pm_g.length),""),"",{expr:`${fmt(total)} ÷ ${days} dias = ${fmt(curDaily)}/dia`,linhas:[["atendimentos no período",fmt(total)],["dias com atendimento",days],["média diária",fmt(curDaily)+"/dia"]]}),
         evasaoKpi,
-        kpi("Tempo total médio",curTotalTime!=null?Math.round(curTotalTime)+" min":"-","recepção até alta","#f97316",metricDelta(curTotalTime,prevVal(prevTotalTime,prev,m_g,pm_g.length),"min",true),"",curTotalTime!=null?{expr:`média(recepção → alta) entre ${fmt(totalN)} registros`,linhas:[["registros com tempo total",fmt(totalN)],["registros sem dado",fmt(total-totalN)],["tempo médio",Math.round(curTotalTime)+" min"]]}:null)
+        kpi("Tempo total médio",curTotalTime!=null?Math.round(curTotalTime)+" min":"-","recepção até alta","#f97316",metricDelta(curTotalTime,prevVal(prevTotalTime,prev,m_g,pm_g.length),"min",true),"",curTotalTime!=null?(()=>{const _n=d.filter(r=>r.tTotal!=null).length;return{expr:`média(recepção → alta) — ${fmt(_n)} de ${fmt(total)} registros`,linhas:[["com tempo total registrado",fmt(_n)],["sem dado de tempo",fmt(total-_n)],["tempo médio calculado",Math.round(curTotalTime)+" min"]]};})()):null)
       ].join("");
       const byM=group(d,r=>r.anoMes), keys=Object.keys(byM).map(Number).sort();
       const volVals=keys.map(k=>byM[k]);
