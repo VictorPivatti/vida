@@ -302,42 +302,7 @@ select {
 .sum-cell .val { font-size: 17px; font-weight: 700; letter-spacing: -0.4px; }
 </style>
 
-<!-- Firebase -->
-<script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getDatabase, ref, set, onValue, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyPlaceholderKeyReplaceThis",
-    authDomain: "controle-pivatti.firebaseapp.com",
-    databaseURL: "https://controle-pivatti-default-rtdb.firebaseio.com",
-    projectId: "controle-pivatti",
-    storageBucket: "controle-pivatti.appspot.com",
-    messagingSenderId: "000000000000",
-    appId: "1:000000000000:web:placeholder"
-  };
-
-  window._firebaseReady = false;
-  window._db = null;
-  window._dbRef = null;
-  window._allData = {};
-
-  try {
-    const app = initializeApp(firebaseConfig);
-    window._db = getDatabase(app);
-    window._dbRef = ref(window._db, 'transacoes');
-    
-    onValue(window._dbRef, (snapshot) => {
-      window._allData = snapshot.val() || {};
-      window._firebaseReady = true;
-      if (typeof render === 'function') render();
-    });
-  } catch(e) {
-    console.warn('Firebase não configurado ainda, usando localStorage como fallback');
-    window._firebaseReady = true;
-    window._useLocalFallback = true;
-  }
-</script>
 </head>
 <body>
 
@@ -510,45 +475,51 @@ const CAT_NAMES = { mercado:'🛒 Mercado', combustivel:'⛽ Combustível', saud
 const CAT_COLORS = { mercado:'#3b82f6', combustivel:'#ef4444', saude:'#10b981', lazer:'#8b5cf6', ecommerce:'#f97316', restaurante:'#f59e0b', outros:'#6b7280' };
 const CARD_LABELS = { nubank:'Nubank', c6v:'C6 Victor', c6c:'C6 Carol', mp:'Mercado Pago', inter:'Inter', dinheiro:'Dinheiro' };
 
+const DB_URL = "https://controle-pivatti-default-rtdb.firebaseio.com";
+
 function key() { return `fin_${cy}_${cm}`; }
 
-function load() {
-  if (window._useLocalFallback) {
+async function load() {
+  try {
+    const k = key();
+    const res = await fetch(`${DB_URL}/transacoes/${k}.json`);
+    const data = await res.json();
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    return Object.values(data);
+  } catch(e) {
     try { return JSON.parse(localStorage.getItem(key())||'[]'); } catch { return []; }
   }
-  const k = key();
-  const data = window._allData && window._allData[k];
-  if (!data) return [];
-  if (Array.isArray(data)) return data;
-  return Object.values(data);
 }
 
-function save(d) {
-  if (window._useLocalFallback) {
+async function save(d) {
+  try {
+    const k = key();
+    await fetch(`${DB_URL}/transacoes/${k}.json`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(d)
+    });
     localStorage.setItem(key(), JSON.stringify(d));
-    return;
+  } catch(e) {
+    localStorage.setItem(key(), JSON.stringify(d));
   }
-  if (!window._db) return;
-  const { getDatabase, ref, set } = window._firebaseFns || {};
-  import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js').then(({ ref, set }) => {
-    const k = key().replace(/[.#$/\[\]]/g, '_');
-    set(ref(window._db, 'transacoes/' + k), d);
-  });
 }
+
 function fmt(n) { return 'R$ ' + Math.abs(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
-function totals() {
+function totals(txs) {
   const t = {}; Object.keys(LIMITS).forEach(k=>t[k]=0);
-  load().forEach(tx=>{ if(t[tx.cat]!==undefined) t[tx.cat]+=tx.amount; });
+  (txs||[]).forEach(tx=>{ if(t[tx.cat]!==undefined) t[tx.cat]+=tx.amount; });
   return t;
 }
 
-function render() {
+async function render() {
   const label = MONTHS[cm]+' '+cy;
   document.getElementById('month-chip').textContent = label;
   document.getElementById('all-label').textContent = 'Todos os gastos — '+label;
 
-  const tot = totals();
+  const tot = totals(txs);
   const spent = Object.values(tot).reduce((a,b)=>a+b,0);
   const free = TETO - spent;
   const pct = Math.min(100, Math.round(spent/TETO*100));
@@ -621,7 +592,7 @@ function renderTxs(list, all) {
   }).join('');
 }
 
-function addTx() {
+async function addTx() {
   const desc = document.getElementById('tx-desc').value.trim();
   const amt = parseFloat(document.getElementById('tx-amt').value);
   const cat = document.getElementById('tx-cat').value;
@@ -633,17 +604,17 @@ function addTx() {
     setTimeout(()=>{el.style.borderColor='';el.style.boxShadow='';},1200);
     return;
   }
-  const txs = load();
+  const txs = await load();
   txs.push({desc,amount:amt,cat,card,date:new Date().toISOString()});
-  save(txs);
+  await save(txs);
   document.getElementById('tx-desc').value='';
   document.getElementById('tx-amt').value='';
-  render();
+  await render();
   showTab('overview');
 }
 
-function delTx(idx) {
-  const txs=load(); txs.splice(idx,1); save(txs); render();
+async async function delTx(idx) {
+  const txs=await load(); txs.splice(idx,1); await save(txs); render();
 }
 
 function changeMonth(d) {
@@ -663,6 +634,15 @@ function showTab(t) {
 }
 
 render();
+</script>
+
+<script>
+// Poll Firebase every 5 seconds for real-time sync
+setInterval(async () => {
+  if (document.getElementById('tab-overview').style.display !== 'none') {
+    await render();
+  }
+}, 5000);
 </script>
 </body>
 </html>
