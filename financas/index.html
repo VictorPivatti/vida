@@ -325,6 +325,15 @@ select {
   <!-- OVERVIEW -->
   <div id="tab-overview">
     <div class="sec">
+      <button onclick="render()" style="
+  background:none;border:1px solid var(--border);border-radius:8px;
+  color:var(--muted);font-family:'Instrument Sans',sans-serif;
+  font-size:12px;font-weight:600;padding:6px 14px;cursor:pointer;
+  margin-bottom:16px;width:100%;transition:all 0.15s;
+" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" 
+   onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+  ↻ Atualizar dados
+</button>
       <div class="sec-label">Resumo do mês</div>
       <div class="balance-card">
         <div class="bal-grid">
@@ -617,11 +626,11 @@ async async function delTx(idx) {
   const txs=await load(); txs.splice(idx,1); await save(txs); render();
 }
 
-function changeMonth(d) {
+async function changeMonth(d) {
   cm+=d;
   if(cm>11){cm=0;cy++;}
   if(cm<0){cm=11;cy--;}
-  render();
+  await render();
 }
 
 function showTab(t) {
@@ -637,12 +646,10 @@ render();
 </script>
 
 <script>
-// Poll Firebase every 5 seconds for real-time sync
-setInterval(async () => {
-  if (document.getElementById('tab-overview').style.display !== 'none') {
-    await render();
-  }
-}, 5000);
+// Auto-refresh when tab becomes visible
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) render();
+});
 </script>
 </body>
 </html>
