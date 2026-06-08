@@ -23,9 +23,8 @@
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <!-- html2canvas e jsPDF: carregados sob demanda em exportarPDF() -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <style>
     /* ─────────────────────────────────────────────────────────────
        TOKENS
@@ -70,7 +69,7 @@
     button,input,select,textarea{font:inherit;color:inherit}
     ::-webkit-scrollbar{width:6px;height:6px}
     ::-webkit-scrollbar-track{background:transparent}
-    ::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:99px;transition:background .15s}
+    ::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:99px;transition:background var(--t-fast)}
     ::-webkit-scrollbar-thumb:hover{background:var(--ac);box-shadow:0 0 4px var(--ac)}
 
     /* ─────────────────────────────────────────────────────────────
@@ -84,13 +83,215 @@
     .erc{color:var(--er)}
 
     /* ─────────────────────────────────────────────────────────────
+       TOKENS DE ANIMAÇÃO — sistema unificado
+    ───────────────────────────────────────────────────────────── */
+    :root {
+      --t-fast:  150ms ease-out;
+      --t-base:  200ms ease-out;
+      --t-modal: 250ms cubic-bezier(.16,1,.3,1);
+      --t-slow:  350ms ease-out;
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       FOCUS STATES — visíveis por teclado, invisíveis por mouse
+    ───────────────────────────────────────────────────────────── */
+    *:focus:not(:focus-visible){outline:none}
+    *:focus-visible{outline:2px solid var(--ac);outline-offset:2px;border-radius:4px}
+    .nav-item:focus-visible{outline:2px solid var(--ac);outline-offset:-2px;border-radius:var(--radius)}
+    .btn:focus-visible,.pill:focus-visible{outline:2px solid var(--ac);outline-offset:3px;box-shadow:0 0 0 4px var(--ac-glow)}
+    .modal-input-row input:focus-visible,.modal-input-row select:focus-visible{outline:none}
+    .field:focus-visible{outline:2px solid var(--ac);outline-offset:0;border-color:var(--ac);box-shadow:0 0 0 3px var(--ac-glow)}
+    .modal-close:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+    .skip-link:focus{top:8px;outline:3px solid var(--ac);outline-offset:2px}
+
+    /* ─────────────────────────────────────────────────────────────
+       PREFERS-REDUCED-MOTION
+    ───────────────────────────────────────────────────────────── */
+    @media(prefers-reduced-motion:reduce){
+      *,*::before,*::after{
+        animation-duration:.01ms!important;
+        animation-iteration-count:1!important;
+        transition-duration:.01ms!important;
+        scroll-behavior:auto!important
+      }
+      .loading-spinner,.up-drop-spinner{
+        animation-duration:1.5s!important;
+        animation-iteration-count:infinite!important
+      }
+      .nav-alert{animation:none!important;box-shadow:0 0 0 2px var(--sur)!important}
+      .pane.active{animation:none!important}
+      .toast{animation:none!important}
+      .up-center,.up-wordmark,.up-theme-row,.up-version{
+        animation:none!important;opacity:1!important;transform:none!important
+      }
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       TOKENS APLICADOS — substituindo valores ad hoc
+    ───────────────────────────────────────────────────────────── */
+    .nav-item{transition:background var(--t-fast),color var(--t-fast),transform var(--t-fast)}
+    .btn{transition:background var(--t-fast),color var(--t-fast),border-color var(--t-fast),transform var(--t-fast),box-shadow var(--t-fast)}
+    .pill{transition:background var(--t-fast),color var(--t-fast),border-color var(--t-fast),box-shadow var(--t-fast)}
+    .up-dropzone{transition:border-color var(--t-base),background var(--t-base),box-shadow var(--t-base),transform var(--t-base)}
+    .modal-overlay.open{animation:fadeUp var(--t-fast) ease}
+    .modal{animation:modalIn var(--t-modal)}
+    .toast{animation:toastIn var(--t-modal)}
+    .pane.active{animation:fadeUp var(--t-base) ease}
+    .kpi::before,.kpi::after{transition:opacity var(--t-base),width var(--t-base) ease}
+    .card{transition:border-color var(--t-fast)}
+    .up-theme-btn{transition:background var(--t-fast),color var(--t-fast)}
+
+    /* ─────────────────────────────────────────────────────────────
+       HIERARQUIA DE BOTÕES
+    ───────────────────────────────────────────────────────────── */
+    .btn.primary{
+      background:var(--ac2);
+      border-color:transparent;
+      color:#fff;
+      box-shadow:0 2px 8px rgba(98,84,232,.25);
+      font-weight:600
+    }
+    .btn.primary:hover{background:#5040d0;filter:none;box-shadow:0 4px 14px rgba(98,84,232,.35)}
+    .btn.primary:active{background:#4535c0}
+    .btn.ghost{
+      border-color:transparent;background:transparent;
+      color:var(--txt2);font-weight:400;padding-left:4px;padding-right:4px
+    }
+    .btn.ghost:hover{color:var(--txt);background:var(--sur3);border-color:transparent;box-shadow:none;transform:none}
+    .card-title .btn.export{padding:3px 7px;font-size:10px;font-weight:500;border-radius:var(--radius);gap:3px}
+
+    /* ─────────────────────────────────────────────────────────────
+       SKELETON SHIMMER
+    ───────────────────────────────────────────────────────────── */
+    @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+    .skeleton{
+      border-radius:var(--radius);
+      background:linear-gradient(90deg,var(--sur2) 25%,var(--sur3) 50%,var(--sur2) 75%);
+      background-size:600px 100%;
+      animation:shimmer 1.4s ease-in-out infinite
+    }
+    @media(prefers-reduced-motion:reduce){.skeleton{animation:none;background:var(--sur2)}}
+    .skeleton-kpi{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--radius);padding:16px 18px 18px;overflow:hidden}
+    .skeleton-kpi .s-label{height:9px;width:60%;margin-bottom:16px}
+    .skeleton-kpi .s-value{height:36px;width:45%;margin-bottom:12px}
+    .skeleton-kpi .s-sub{height:10px;width:80%}
+    .skeleton-chart{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--radius);padding:14px 16px}
+    .skeleton-chart .s-title{height:10px;width:40%;margin-bottom:16px}
+    .skeleton-chart .s-canvas{height:270px;border-radius:4px}
+    .skeleton-kpi-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--kpi-min,190px)),1fr));
+      gap:var(--card-gap,12px);margin-bottom:var(--card-gap,12px)
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       ZONA DE PERIGO
+    ───────────────────────────────────────────────────────────── */
+    .danger-zone{margin-top:16px;border:1px solid rgba(239,68,68,.25);border-radius:var(--radius-lg);overflow:hidden}
+    .danger-zone-header{
+      display:flex;align-items:center;gap:8px;padding:10px 14px;
+      background:rgba(239,68,68,.06);border-bottom:1px solid rgba(239,68,68,.15);
+      cursor:pointer;user-select:none;transition:background var(--t-fast)
+    }
+    .danger-zone-header:hover{background:rgba(239,68,68,.1)}
+    .danger-zone-title{
+      font-size:10px;font-weight:700;text-transform:uppercase;
+      letter-spacing:.12em;color:var(--er);font-family:'IBM Plex Mono',monospace;flex:1
+    }
+    .danger-zone-chev{font-size:11px;color:var(--er);opacity:.7;transition:transform var(--t-base)}
+    .danger-zone.open .danger-zone-chev{transform:rotate(180deg)}
+    .danger-zone-body{display:none;padding:14px;background:rgba(239,68,68,.03)}
+    .danger-zone.open .danger-zone-body{display:block}
+    .danger-zone-desc{font-size:11px;color:var(--txt2);line-height:1.6;font-family:'IBM Plex Mono',monospace;margin-bottom:12px}
+    .danger-zone-desc strong{color:var(--er);font-weight:600}
+    .danger-zone-stats{
+      display:flex;gap:16px;margin-bottom:14px;padding:8px 12px;
+      background:var(--sur2);border:1px solid var(--bdr);border-radius:var(--radius);
+      font-size:11px;font-family:'IBM Plex Mono',monospace;flex-wrap:wrap
+    }
+    .danger-zone-stats span{color:var(--txt2)}
+    .danger-zone-stats strong{color:var(--txt);font-weight:600}
+    .btn-danger{
+      border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.08);color:var(--er);
+      border-radius:var(--radius);padding:6px 14px;font-size:12px;
+      font-family:'IBM Plex Mono',monospace;cursor:pointer;
+      display:inline-flex;align-items:center;gap:6px;
+      transition:background var(--t-fast),border-color var(--t-fast)
+    }
+    .btn-danger:hover{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.6)}
+    .btn-danger:focus-visible{outline:2px solid var(--er);outline-offset:2px}
+    .danger-confirm-overlay{
+      display:none;position:fixed;inset:0;z-index:200;
+      background:rgba(4,8,14,.72);align-items:center;justify-content:center;padding:20px
+    }
+    .danger-confirm-overlay.open{display:flex;animation:fadeUp var(--t-modal)}
+    .danger-confirm-modal{
+      background:var(--sur);border:1px solid rgba(239,68,68,.3);border-radius:var(--radius-lg);
+      padding:26px;width:min(420px,100%);box-shadow:0 8px 40px rgba(239,68,68,.15),var(--sh)
+    }
+    .danger-confirm-icon{
+      width:44px;height:44px;border-radius:50%;background:rgba(239,68,68,.1);
+      border:1px solid rgba(239,68,68,.25);display:flex;align-items:center;
+      justify-content:center;margin:0 auto 16px;color:var(--er)
+    }
+    .danger-confirm-title{font-size:16px;font-weight:600;text-align:center;margin-bottom:8px;color:var(--txt)}
+    .danger-confirm-msg{font-size:12px;color:var(--txt2);text-align:center;line-height:1.6;font-family:'IBM Plex Mono',monospace;margin-bottom:20px}
+    .danger-confirm-actions{display:flex;gap:8px;justify-content:center}
+    .undo-toast{
+      position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:500;
+      background:var(--sur);border:1px solid var(--bdr2);border-radius:10px;
+      padding:12px 16px;display:none;align-items:center;gap:12px;
+      box-shadow:var(--sh);font-size:13px;white-space:nowrap
+    }
+    .undo-toast.visible{display:flex;animation:toastIn var(--t-modal)}
+    .undo-bar{height:3px;background:var(--er);border-radius:99px;transition:width linear}
+    .undo-btn{
+      background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--er);
+      border-radius:5px;padding:3px 10px;font-size:11px;font-family:'IBM Plex Mono',monospace;
+      cursor:pointer;font-weight:600;transition:background var(--t-fast)
+    }
+    .undo-btn:hover{background:rgba(239,68,68,.2)}
+
+    /* ─────────────────────────────────────────────────────────────
+       SIDEBAR COLAPSÁVEL
+    ───────────────────────────────────────────────────────────── */
+    .nav-group{
+      display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;
+      padding:4px 8px;border-radius:var(--radius);margin:14px 0 4px;
+      transition:background var(--t-fast),color var(--t-fast)
+    }
+    .nav-group:first-child{margin-top:4px}
+    .nav-group:hover{background:var(--sur3);color:var(--txt)}
+    .nav-group-chev{
+      margin-left:auto;font-size:9px;color:var(--mut);
+      transition:transform var(--t-base),opacity var(--t-fast);opacity:.6;flex-shrink:0
+    }
+    .nav-group.collapsed .nav-group-chev{transform:rotate(-90deg)}
+    .nav-group:hover .nav-group-chev{opacity:1}
+    .nav-group-count{
+      font-size:9px;font-weight:700;font-family:'IBM Plex Mono',monospace;
+      background:var(--ac-glow);color:var(--ac);padding:1px 5px;
+      border-radius:99px;display:none;letter-spacing:.02em
+    }
+    .nav-group.collapsed .nav-group-count{display:inline-block}
+    .nav-item.group-collapsed{display:none!important}
+    .nav-divider.group-collapsed{display:none!important}
+    .nav-item.group-expanding{animation:navItemIn 180ms ease-out both}
+    @keyframes navItemIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+    @media(max-width:1120px){
+      .nav-group-chev,.nav-group-count{display:none}
+      .nav-item.group-collapsed{display:flex!important}
+    }
+
+
+    /* ─────────────────────────────────────────────────────────────
        SKIP LINK
     ───────────────────────────────────────────────────────────── */
     .skip-link{
       position:absolute;top:-100px;left:8px;z-index:9999;
       padding:7px 14px;background:var(--ac);color:#fff;
       border-radius:6px;font-weight:600;text-decoration:none;font-size:13px;
-      transition:top .15s
+      transition:top var(--t-fast)
     }
     .skip-link:focus{top:8px}
 
@@ -231,7 +432,7 @@
       background:var(--sur);
       padding:32px 28px;
       cursor:pointer;
-      transition:border-color .25s, background .25s, box-shadow .25s, transform .2s;
+      transition:border-color var(--t-base),background var(--t-base),box-shadow var(--t-base),transform var(--t-base);
       box-shadow:var(--sh2);
       text-align:center
     }
@@ -260,7 +461,7 @@
       background:var(--sur2);border:1px solid var(--bdr2);
       display:flex;align-items:center;justify-content:center;
       margin:0 auto 16px;color:var(--ac);
-      transition:background .25s,border-color .25s,box-shadow .25s
+      transition:background var(--t-base),border-color var(--t-base),box-shadow var(--t-base)
     }
     .up-dropzone:hover .up-drop-icon,.up-dropzone.drag .up-drop-icon{
       background:rgba(124,110,249,.1);border-color:rgba(124,110,249,.3);
@@ -303,7 +504,7 @@
       width:30px;height:26px;border:0;border-radius:5px;
       display:grid;place-items:center;cursor:pointer;
       color:var(--txt2);background:transparent;
-      transition:background .15s,color .15s
+      transition:background var(--t-fast),color .15s
     }
     .up-theme-btn:hover{color:var(--txt);background:var(--sur3)}
     .up-theme-btn.active{color:#fff;background:var(--ac)}
@@ -358,7 +559,7 @@
       color:var(--ok);border:1px solid rgba(34,197,94,.35);
       border-radius:5px;padding:4px 10px;background:none;
       cursor:pointer;white-space:nowrap;flex-shrink:0;
-      transition:background .15s,border-color .15s
+      transition:background var(--t-fast),border-color .15s
     }
     .up-saved-btn:hover{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.5)}
 
@@ -582,7 +783,7 @@
       width:36px;height:36px;
       margin:1px auto;
       border-radius:8px;cursor:pointer;
-      transition:background .15s,color .15s,transform .15s;
+      transition:background var(--t-fast),color .15s,transform .15s;
       flex:none;color:var(--txt2);
       border:none;background:transparent;
     }
@@ -613,7 +814,7 @@
       color:var(--txt);font-size:11px;font-weight:500;
       padding:5px 11px;border-radius:6px;
       white-space:nowrap;pointer-events:none;
-      opacity:0;transition:opacity .15s,transform .15s;
+      opacity:0;transition:opacity var(--t-fast),transform var(--t-fast);
       font-family:'Inter',sans-serif;letter-spacing:.01em;
       box-shadow:var(--sh2);z-index:100
     }
@@ -700,7 +901,7 @@
         color:var(--txt);font-size:11px;font-weight:500;
         padding:5px 11px;border-radius:6px;
         white-space:nowrap;pointer-events:none;
-        opacity:0;transition:opacity .15s,transform .15s;
+        opacity:0;transition:opacity var(--t-fast),transform var(--t-fast);
         font-family:'Inter',sans-serif;letter-spacing:.01em;
         box-shadow:var(--sh2);z-index:100
       }
@@ -714,7 +915,7 @@
     .page-title{font-size:20px;font-weight:700;letter-spacing:-.03em;margin-bottom:2px;font-family:'Inter',sans-serif}
     .page-desc{font-size:12px;color:var(--mut);font-family:'IBM Plex Mono',monospace}
     .pane{display:none}
-    .pane.active{display:block;animation:fadeUp .22s ease}
+    .pane.active{display:block;animation:fadeUp var(--t-base) ease}
     @keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
     :root{--kpi-min:190px;--chart-min:360px;--card-gap:12px}
     .grid{
@@ -759,11 +960,11 @@
       align-items:flex-start;justify-content:center;padding:20px;
       overflow-y:auto
     }
-    .modal-overlay.open{display:flex;animation:fadeUp .18s ease}
+    .modal-overlay.open{display:flex;animation:fadeUp var(--t-fast) ease}
     .modal{
       background:var(--sur);border:1px solid var(--bdr2);border-radius:16px;
       padding:26px;width:min(620px,100%);box-shadow:var(--sh);
-      animation:modalIn .22s cubic-bezier(.22,1,.36,1)
+      animation:modalIn var(--t-modal)
     }
     @keyframes modalIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
     .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
@@ -772,7 +973,7 @@
       width:28px;height:28px;border-radius:7px;
       border:1px solid var(--bdr2);background:var(--sur2);
       color:var(--txt2);cursor:pointer;display:grid;place-items:center;
-      font-size:14px;transition:.15s
+      font-size:14px;transition:all var(--t-fast)
     }
     .modal-close:hover{background:var(--sur3);color:var(--txt)}
     .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -784,7 +985,7 @@
     .modal-input-row{
       display:flex;align-items:center;gap:7px;
       background:var(--sur2);border:1px solid var(--bdr2);
-      border-radius:8px;padding:8px 11px;transition:border-color .15s
+      border-radius:8px;padding:8px 11px;transition:border-color var(--t-fast)
     }
     .modal-input-row:focus-within{border-color:var(--ac);box-shadow:0 0 0 3px var(--ac-glow)}
     .modal-input-row span{font-size:13px;color:var(--mut)}
@@ -802,7 +1003,7 @@
     .card{
       background:var(--sur);border:1px solid var(--bdr);border-radius:var(--radius);
       padding:14px 16px;box-shadow:none;overflow:hidden;
-      transition:border-color .15s
+      transition:border-color var(--t-fast)
     }
     .card:hover{border-color:var(--bdr2)}
     .card.full{grid-column:1/-1}
@@ -1038,7 +1239,7 @@
     .quality-item{
       display:flex;gap:11px;align-items:flex-start;
       padding:11px 14px;background:var(--sur2);
-      border:1px solid var(--bdr);border-radius:9px;transition:background .15s
+      border:1px solid var(--bdr);border-radius:9px;transition:background var(--t-fast)
     }
     .quality-item:hover{background:var(--sur3)}
     .dot{width:8px;height:8px;border-radius:99px;margin-top:5px;flex:none}
@@ -1077,7 +1278,7 @@
     .exec-alert{
       display:flex;gap:11px;align-items:flex-start;
       background:var(--sur2);border:1px solid var(--bdr);
-      border-radius:9px;padding:11px 14px;transition:background .15s
+      border-radius:9px;padding:11px 14px;transition:background var(--t-fast)
     }
     .exec-alert:hover{background:var(--sur3)}
     .exec-alert strong{display:block;font-size:13px;font-weight:600}
@@ -1156,7 +1357,7 @@
     .hm-sazon-cell{min-height:20px;min-width:26px;border-radius:3px;border:1px solid var(--bdr);position:relative;cursor:default}
     .hm-sazon-cell:hover::after{content:attr(data-tip);position:absolute;left:50%;bottom:120%;transform:translateX(-50%);white-space:nowrap;background:var(--sur4);border:1px solid var(--bdr2);border-radius:7px;padding:5px 10px;color:var(--txt);z-index:10;font-size:11px;box-shadow:var(--sh2)}
     #toast-container{position:fixed;bottom:24px;right:24px;z-index:400;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-    .toast{display:flex;align-items:center;gap:10px;background:var(--sur);border:1px solid var(--bdr2);border-radius:10px;padding:11px 14px;box-shadow:var(--sh);font-size:13px;pointer-events:all;animation:toastIn .25s cubic-bezier(.16,1,.3,1);min-width:280px}
+    .toast{display:flex;align-items:center;gap:10px;background:var(--sur);border:1px solid var(--bdr2);border-radius:10px;padding:11px 14px;box-shadow:var(--sh);font-size:13px;pointer-events:all;animation:toastIn var(--t-modal);min-width:280px}
     @keyframes toastIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
     @keyframes toastOut{to{opacity:0;transform:translateY(8px)}}
     .toast.ok .toast-dot{background:var(--ok)}.toast.warn .toast-dot{background:var(--wn)}.toast.err .toast-dot{background:var(--er)}
@@ -1248,6 +1449,172 @@
     /* ── Upload v3.0: estilos adicionais (legado removido) ── */
     .vida-mark-svg{display:block;flex:none}
 
+  
+    /* ─────────────────────────────────────────────────────────────
+       UPLOAD DROPDOWN — topbar
+    ───────────────────────────────────────────────────────────── */
+    .upload-dropdown{position:relative;flex:none}
+    .upload-menu{
+      display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:200;
+      background:var(--sur);border:1px solid var(--bdr2);border-radius:10px;
+      box-shadow:var(--sh);min-width:280px;overflow:hidden;
+      animation:fadeUp var(--t-base) ease
+    }
+    .upload-dropdown.open .upload-menu{display:block}
+    .upload-menu-item{
+      display:flex;align-items:center;gap:10px;width:100%;
+      padding:10px 14px;background:transparent;border:none;
+      color:var(--txt);cursor:pointer;text-align:left;
+      transition:background var(--t-fast);border-bottom:1px solid var(--bdr)
+    }
+    .upload-menu-item:last-child{border-bottom:none}
+    .upload-menu-item:hover{background:var(--sur2)}
+    .upload-menu-item:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
+    .upload-menu-item svg{color:var(--ac);flex-shrink:0}
+    .upload-menu-label{font-size:12px;font-weight:600;color:var(--txt);line-height:1.2}
+    .upload-menu-sub{font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-top:1px}
+    .upload-menu-status{
+      margin-left:auto;font-size:9px;font-weight:700;font-family:'IBM Plex Mono',monospace;
+      padding:2px 6px;border-radius:99px;white-space:nowrap;flex-shrink:0
+    }
+    .upload-menu-status.loaded{background:rgba(34,197,94,.12);color:var(--ok)}
+    #uploadMenuChev{transition:transform var(--t-base)}
+    .upload-dropdown.open #uploadMenuChev{transform:rotate(180deg)}
+
+  
+    .chart-empty-state{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      min-height:180px;color:var(--mut);font-size:12px;font-family:'IBM Plex Mono',monospace;
+      text-align:center;gap:4px;padding:20px
+    }
+
+  
+    /* ─────────────────────────────────────────────────────────────
+       MÓDULO TENDÊNCIA CID — alertas sazonais
+    ───────────────────────────────────────────────────────────── */
+    .trend-alert-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:10px;margin-bottom:14px}
+    .trend-alert{
+      background:var(--sur);border:1px solid var(--bdr);border-radius:var(--radius);
+      padding:12px 14px;display:flex;flex-direction:column;gap:6px;
+      transition:border-color var(--t-fast)
+    }
+    .trend-alert.rising{border-left:3px solid #ef4444}
+    .trend-alert.falling{border-left:3px solid #22c55e}
+    .trend-alert.stable{border-left:3px solid var(--ac)}
+    .trend-alert-header{display:flex;align-items:center;gap:8px}
+    .trend-alert-badge{
+      font-size:9px;font-weight:700;font-family:'IBM Plex Mono',monospace;
+      padding:2px 7px;border-radius:99px;white-space:nowrap;flex-shrink:0
+    }
+    .badge-rising{background:rgba(239,68,68,.12);color:#ef4444}
+    .badge-falling{background:rgba(34,197,94,.12);color:#22c55e}
+    .badge-stable{background:var(--ac-glow);color:var(--ac)}
+    .trend-alert-cid{font-size:11px;font-weight:600;color:var(--txt);font-family:'IBM Plex Mono',monospace}
+    .trend-alert-desc{font-size:12px;color:var(--txt);line-height:1.4;flex:1}
+    .trend-alert-meta{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;display:flex;gap:10px;flex-wrap:wrap}
+    .trend-sparkline{height:32px;width:100%;display:flex;align-items:flex-end;gap:2px}
+    .trend-bar{flex:1;border-radius:2px 2px 0 0;min-height:3px;transition:height var(--t-base)}
+    .trend-empty-alert{
+      grid-column:1/-1;text-align:center;padding:24px;
+      color:var(--mut);font-size:12px;font-family:'IBM Plex Mono',monospace
+    }
+    .trend-section-header{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:10px;gap:8px;flex-wrap:wrap
+    }
+    .trend-section-title{font-size:13px;font-weight:600;color:var(--txt)}
+    .trend-section-sub{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace}
+    .trend-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+    .trend-filter-btn{
+      font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--bdr2);
+      background:transparent;color:var(--txt2);cursor:pointer;
+      font-family:'IBM Plex Mono',monospace;transition:all var(--t-fast)
+    }
+    .trend-filter-btn.active{background:var(--ac);border-color:var(--ac);color:#fff}
+    .trend-filter-btn:hover:not(.active){background:var(--sur2)}
+    .trend-threshold-note{
+      font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;
+      padding:8px 12px;background:var(--sur2);border-radius:var(--radius);
+      border:1px solid var(--bdr);margin-bottom:12px;line-height:1.5
+    }
+
+  
+    /* ─────────────────────────────────────────────────────────────
+       MÓDULO DOENÇAS NOTIFICÁVEIS
+    ───────────────────────────────────────────────────────────── */
+    .notif-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:10px;margin-bottom:14px}
+    .notif-card{
+      background:var(--sur);border:1px solid var(--bdr);border-radius:var(--radius);
+      padding:12px 14px;display:flex;flex-direction:column;gap:6px;
+      border-left:3px solid var(--wn);transition:border-color var(--t-fast)
+    }
+    .notif-card.zero{border-left-color:var(--bdr2);opacity:.6}
+    .notif-card-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .notif-count{
+      font-size:20px;font-weight:600;color:var(--wn);font-family:'IBM Plex Mono',monospace;
+      flex-shrink:0;min-width:28px
+    }
+    .notif-count.zero{color:var(--mut);font-size:15px}
+    .notif-name{font-size:12px;font-weight:600;color:var(--txt);flex:1;line-height:1.3}
+    .notif-grupo{
+      font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+      padding:2px 6px;border-radius:99px;background:var(--sur2);color:var(--mut);
+      white-space:nowrap
+    }
+    .notif-cids{font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace;line-height:1.5}
+    .notif-cids span{
+      display:inline-block;background:var(--sur2);border:1px solid var(--bdr);
+      border-radius:4px;padding:1px 5px;margin:1px 2px 1px 0;cursor:default
+    }
+    .notif-patients{font-size:11px;color:var(--txt2);font-family:'IBM Plex Mono',monospace}
+    .notif-trend{display:flex;align-items:center;gap:4px;font-size:11px;font-family:'IBM Plex Mono',monospace}
+    .notif-trend.up{color:#ef4444}
+    .notif-trend.down{color:#22c55e}
+    .notif-trend.stable{color:var(--mut)}
+    .notif-summary-bar{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:10px 14px;background:var(--sur2);border:1px solid var(--bdr);
+      border-radius:var(--radius);margin-bottom:12px;flex-wrap:wrap;gap:8px
+    }
+    .notif-summary-stat{text-align:center}
+    .notif-summary-num{font-size:18px;font-weight:600;color:var(--txt);font-family:'IBM Plex Mono',monospace}
+    .notif-summary-lbl{font-size:10px;color:var(--mut);margin-top:1px}
+    .notif-grupo-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+    .notif-filter-btn{
+      font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--bdr2);
+      background:transparent;color:var(--txt2);cursor:pointer;
+      font-family:'IBM Plex Mono',monospace;transition:all var(--t-fast)
+    }
+    .notif-filter-btn.active{background:var(--wn);border-color:var(--wn);color:#fff}
+    .notif-filter-btn:hover:not(.active){background:var(--sur2)}
+    .notif-prazo-note{
+      font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;
+      padding:8px 12px;background:rgba(245,200,66,.07);border-radius:var(--radius);
+      border:1px solid rgba(245,200,66,.2);margin-bottom:12px;line-height:1.6
+    }
+    .notif-checklist{
+      background:var(--sur);border:1px solid var(--bdr);border-radius:var(--radius);
+      overflow:hidden;margin-bottom:14px
+    }
+    .notif-checklist-header{
+      padding:10px 14px;background:rgba(245,200,66,.07);
+      border-bottom:1px solid rgba(245,200,66,.2);
+      font-size:12px;font-weight:600;color:var(--txt);
+      display:flex;align-items:center;gap:8px
+    }
+    .notif-checklist-item{
+      display:flex;align-items:flex-start;gap:10px;padding:9px 14px;
+      border-bottom:1px solid var(--bdr);font-size:12px;line-height:1.4
+    }
+    .notif-checklist-item:last-child{border-bottom:none}
+    .notif-check-num{
+      font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--mut);
+      flex-shrink:0;width:20px;text-align:right
+    }
+    .notif-check-body{flex:1}
+    .notif-check-doenca{font-weight:600;color:var(--txt)}
+    .notif-check-detail{font-size:11px;color:var(--txt2);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+
   </style>
 </head>
 <body>
@@ -1290,7 +1657,7 @@
     <div class="up-saved-banner" id="upSavedBanner" style="display:none">
       <div class="up-saved-dot"></div>
       <div class="up-saved-text" id="upSavedText">dados salvos do banco local</div>
-      <button class="up-saved-btn" id="upSavedBtn">↩ retomar</button>
+      <button type="button" class="up-saved-btn" id="upSavedBtn">↩ retomar</button>
     </div>
 
     <!-- Drop zone único -->
@@ -1355,17 +1722,17 @@
   <!-- Unidade + configurar: canto inferior esquerdo -->
   <div class="up-unit-footer">
     <span class="up-unit-name-tag" id="upUnitNameTag"></span>
-    <button class="up-config-btn" onclick="openUnitConfig()">⚙ configurar unidade</button>
+    <button type="button" class="up-config-btn" onclick="openUnitConfig()">Configurar unidade</button>
   </div>
 
   <!-- Theme toggle: canto superior direito -->
   <div class="up-theme-row">
     <div class="up-theme-btns">
       <button class="up-theme-btn" type="button" data-theme-choice="light" title="Claro" aria-label="Modo claro">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
       </button>
       <button class="up-theme-btn" type="button" data-theme-choice="dark" title="Escuro" aria-label="Modo escuro">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
     </div>
   </div>
@@ -1378,8 +1745,8 @@
     <div class="modal-overlay" id="metasModal" role="dialog" aria-modal="true" aria-labelledby="metasModalTitle">
       <div class="modal">
         <div class="modal-header">
-          <div class="modal-title" id="metasModalTitle">⚙ Configurar metas</div>
-          <button class="modal-close" id="metasClose">✕</button>
+          <div class="modal-title" id="metasModalTitle">Configurar metas</div>
+          <button type="button" class="modal-close" id="metasClose">✕</button>
         </div>
         <div class="modal-grid">
           <div class="modal-field">
@@ -1414,12 +1781,12 @@
         <div style="grid-column:1/-1;margin-top:8px;border-top:1px solid var(--bdr);padding-top:12px">
           <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-weight:700;font-family:'IBM Plex Mono',monospace;margin-bottom:10px">Metas Manchester por classificação de risco</div>
           <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
-            <div class="modal-field"><div class="modal-label" style="color:#ef4444">🔴 Vermelho — imediato</div><div class="modal-input-row"><span>≤</span><input id="metaVermelho" type="number" min="0" value="0"><small>min</small></div></div>
-            <div class="modal-field"><div class="modal-label" style="color:#f97316">🟠 Laranja — muito urgente</div><div class="modal-input-row"><span>≤</span><input id="metaLaranja" type="number" min="1" value="15"><small>min</small></div></div>
-            <div class="modal-field"><div class="modal-label" style="color:#eab308">🟡 Amarelo — urgente</div><div class="modal-input-row"><span>≤</span><input id="metaAmarelo" type="number" min="1" value="60"><small>min</small></div></div>
-            <div class="modal-field"><div class="modal-label" style="color:#22c55e">🟢 Verde — pouco urgente</div><div class="modal-input-row"><span>≤</span><input id="metaVerde" type="number" min="1" value="120"><small>min</small></div></div>
-            <div class="modal-field"><div class="modal-label" style="color:#3b82f6">🔵 Azul — não urgente</div><div class="modal-input-row"><span>≤</span><input id="metaAzul" type="number" min="1" value="240"><small>min</small></div></div>
-            <div class="modal-field"><div class="modal-label" style="color:#94a3b8">⚪ Branco — sem classificação</div><div class="modal-input-row"><span>≤</span><input id="metaBranco" type="number" min="1" value="240"><small>min</small></div></div>
+            <div class="modal-field"><div class="modal-label" style="color:#ef4444">Vermelho — imediato</div><div class="modal-input-row"><span>≤</span><input id="metaVermelho" type="number" min="0" value="0"><small>min</small></div></div>
+            <div class="modal-field"><div class="modal-label" style="color:#f97316">Laranja — muito urgente</div><div class="modal-input-row"><span>≤</span><input id="metaLaranja" type="number" min="1" value="15"><small>min</small></div></div>
+            <div class="modal-field"><div class="modal-label" style="color:#eab308">Amarelo — urgente</div><div class="modal-input-row"><span>≤</span><input id="metaAmarelo" type="number" min="1" value="60"><small>min</small></div></div>
+            <div class="modal-field"><div class="modal-label" style="color:#22c55e">Verde — pouco urgente</div><div class="modal-input-row"><span>≤</span><input id="metaVerde" type="number" min="1" value="120"><small>min</small></div></div>
+            <div class="modal-field"><div class="modal-label" style="color:#3b82f6">Azul — não urgente</div><div class="modal-input-row"><span>≤</span><input id="metaAzul" type="number" min="1" value="240"><small>min</small></div></div>
+            <div class="modal-field"><div class="modal-label" style="color:#94a3b8">Branco — sem classificação</div><div class="modal-input-row"><span>≤</span><input id="metaBranco" type="number" min="1" value="240"><small>min</small></div></div>
           </div>
         </div>
         <div style="grid-column:1/-1;margin-top:8px;border-top:1px solid var(--bdr);padding-top:12px" id="recepSection">
@@ -1433,8 +1800,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn" id="metasClose2">Fechar</button>
-          <button class="btn primary" id="metasApply">Aplicar</button>
+          <button type="button" class="btn" id="metasClose2">Fechar</button>
+          <button type="button" class="btn primary" id="metasApply">Aplicar</button>
         </div>
       </div>
     </div>
@@ -1446,7 +1813,7 @@
       <div class="topbar-row1">
         <div class="brand">
           <div class="logo" aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13h3l2-6 4 12 2-6h5"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h3l2-6 4 12 2-6h5"/></svg>
           </div>
           <div class="brand-info">
             <div class="brand-title">
@@ -1461,19 +1828,52 @@
           <input id="cidFile" class="hidden" type="file" accept=".xlsx,.xls,.csv" multiple>
           <input id="histFileSwitch" class="hidden" type="file" accept=".xlsx,.xls,.csv" multiple>
           <div class="file-name" id="fileName" style="display:flex;align-items:center;gap:6px;max-width:220px;overflow:hidden"></div>
-          <button class="btn" id="triBtn">+ Triagem</button>
-          <button class="btn" id="cidBtn">+ CID</button>
-          <button class="btn" id="procBtn">+ Procedimentos</button>
-          <button class="btn" id="examesBtn" title="Carregar relatório PDF de exames (Autolac)">+ Exames Lab.</button>
+          <div class="upload-dropdown" id="uploadDropdown">
+            <button type="button" class="btn" id="uploadMenuBtn" onclick="toggleUploadMenu()" aria-haspopup="true" aria-expanded="false" aria-controls="uploadMenuList">
+<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Carregar dados
+              <span id="uploadBadge" style="display:none;background:var(--ok);color:#fff;border-radius:99px;font-size:9px;padding:1px 5px;font-weight:700;font-family:'IBM Plex Mono',monospace"></span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="uploadMenuChev"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="upload-menu" id="uploadMenuList" role="menu" aria-label="Opções de carregamento">
+              <button type="button" class="upload-menu-item" id="triBtn" role="menuitem" onclick="$('triFile').click();toggleUploadMenu()">
+<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h6"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/><path d="m9 12 2 2 4-4"/></svg>
+                <div><div class="upload-menu-label">Triagem</div><div class="upload-menu-sub">Planilha XLS/CSV do Vivver</div></div>
+                <span class="upload-menu-status" id="triStatus"></span>
+              </button>
+              <button type="button" class="upload-menu-item" id="cidBtn" role="menuitem" onclick="$('cidFile').click();toggleUploadMenu()">
+<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                <div><div class="upload-menu-label">CID / Diagnósticos</div><div class="upload-menu-sub">Planilha XLS/CSV do Vivver</div></div>
+                <span class="upload-menu-status" id="cidStatus"></span>
+              </button>
+              <button type="button" class="upload-menu-item" id="procBtn" role="menuitem" onclick="$('procFile').click();toggleUploadMenu()">
+<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V2"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <div><div class="upload-menu-label">Procedimentos (BPA)</div><div class="upload-menu-sub">CSV do Vivver — BPA Individualizado</div></div>
+                <span class="upload-menu-status" id="procStatus"></span>
+              </button>
+              <button type="button" class="upload-menu-item" id="examesBtn" role="menuitem" onclick="$('examesFile').click();toggleUploadMenu()">
+<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v5l7 7 7-7V5a2 2 0 0 0-2-2h-4"/><path d="M9 3V1"/><path d="M15 3V1"/></svg>
+                <div><div class="upload-menu-label">Exames Laboratoriais</div><div class="upload-menu-sub">PDF do Autolac — Lista de Conferência</div></div>
+                <span class="upload-menu-status" id="examesStatus"></span>
+              </button>
+            </div>
+          </div>
           <input id="examesFile" class="hidden" type="file" accept=".pdf">
           <input id="procFile" class="hidden" type="file" accept=".xls,.xlsx,.csv">
-          <button class="btn btn-icon" onclick="openUnitConfig()" title="Configurar unidade" aria-label="Configurar unidade"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></button>
-          <button class="btn btn-icon" id="metasBtn" title="Configurar metas" aria-label="Configurar metas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
-          <button class="btn btn-icon" id="layoutEditBtn" title="Editar layout dos cards" aria-label="Editar layout" onclick="toggleLayoutEdit()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
-          <button class="btn btn-icon" id="themeBtn" title="Alternar tema" aria-label="Alternar tema"><svg id="themeBtnIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
-          <button class="btn export" id="exportBtn" aria-label="Exportar XLSX"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>XLSX</button>
-          <button class="btn primary" id="printBtn" aria-label="Exportar PDF"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF</button>
-          <button class="btn btn-icon" id="newBtn" title="Trocar base de dados (limpa o banco e volta à tela de upload)" aria-label="Trocar base de dados"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></button>
+          <button type="button" class="btn btn-icon" onclick="openUnitConfig()" title="Configurar unidade" aria-label="Configurar unidade">
+<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></button>
+          <button type="button" class="btn btn-icon" id="metasBtn" title="Configurar metas" aria-label="Configurar metas">
+<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+          <button type="button" class="btn btn-icon" id="layoutEditBtn" title="Editar layout dos cards" aria-label="Editar layout" onclick="toggleLayoutEdit()">
+<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
+          <button type="button" class="btn btn-icon" id="themeBtn" title="Alternar tema" aria-label="Alternar tema">
+<svg aria-hidden="true" id="themeBtnIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+          <button type="button" class="btn export" id="exportBtn" aria-label="Exportar XLSX">
+<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>XLSX</button>
+          <button type="button" class="btn primary" id="printBtn" aria-label="Exportar PDF">
+<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF</button>
+          <button type="button" class="btn btn-icon" id="newBtn" title="Trocar base de dados (limpa o banco e volta à tela de upload)" aria-label="Trocar base de dados">
+<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></button>
         </div>
       </div>
 
@@ -1483,11 +1883,11 @@
         <input class="field" id="dateStart" type="date">
         <span style="font-size:11px;color:var(--mut);flex:none">→</span>
         <input class="field" id="dateEnd" type="date">
-        <button class="pill" data-shortcut="7d">7d</button>
-        <button class="pill" data-shortcut="30d">30d</button>
-        <button class="pill" data-shortcut="3m">3m</button>
-        <button class="pill" data-shortcut="year">Ano</button>
-        <button class="pill" data-shortcut="all">Tudo</button>
+        <button type="button" class="pill" data-shortcut="7d">7d</button>
+        <button type="button" class="pill" data-shortcut="30d">30d</button>
+        <button type="button" class="pill" data-shortcut="3m">3m</button>
+        <button type="button" class="pill" data-shortcut="year">Ano</button>
+        <button type="button" class="pill" data-shortcut="all">Tudo</button>
         <div class="topbar-sep"></div>
         <span class="flabel">Turno</span>
         <select class="field" id="turno">
@@ -1503,19 +1903,19 @@
         <span class="flabel">Risco</span>
         <select class="field" id="filtroRisco" style="max-width:88px">
           <option value="all">Todos</option>
-          <option value="VERMELHO">🔴 Vermelho</option>
-          <option value="LARANJA">🟠 Laranja</option>
-          <option value="AMARELO">🟡 Amarelo</option>
-          <option value="VERDE">🟢 Verde</option>
-          <option value="AZUL">🔵 Azul</option>
-          <option value="BRANCO">⚪ Branco</option>
+          <option value="VERMELHO">● Vermelho</option>
+          <option value="LARANJA">● Laranja</option>
+          <option value="AMARELO">● Amarelo</option>
+          <option value="VERDE">● Verde</option>
+          <option value="AZUL">● Azul</option>
+          <option value="BRANCO">● Branco</option>
         </select>
         <div class="topbar-sep"></div>
         <span class="flabel">Cards</span>
         <div style="display:flex;gap:2px;flex:none">
-          <button class="pill density-btn active-pill" data-density="normal" title="Normal">▣</button>
-          <button class="pill density-btn" data-density="compact" title="Compacto">▤</button>
-          <button class="pill density-btn" data-density="wide" title="Amplo">▢</button>
+          <button type="button" class="pill density-btn active-pill" data-density="normal" title="Normal">▣</button>
+          <button type="button" class="pill density-btn" data-density="compact" title="Compacto">▤</button>
+          <button type="button" class="pill density-btn" data-density="wide" title="Amplo">▢</button>
         </div>
                 <span id="dbStatsBadge" class="badge" style="display:none;margin-left:auto;background:rgba(34,211,238,.08);border-color:rgba(34,211,238,.25);color:#22d3ee" title=""></span>
         <span class="badge" id="recordBadge" aria-live="polite">0 registros</span>
@@ -1530,37 +1930,60 @@
       <nav class="sidebar" role="navigation" aria-label="Navegação principal">
         <div id="sidebarUnitSub" style="display:none;font-size:9.5px;color:var(--mut);font-family:'IBM Plex Mono',monospace;padding:2px 8px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.7"></div>
         <div class="nav-group">Operação</div>
-        <button class="nav-item active" data-label="Visão geral" data-pane="geral" aria-current="page"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Visão geral</span></button>
-        <button class="nav-item" data-label="Indicadores" data-pane="indicadores"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l3 3"/><path d="M16 2a6 6 0 0 1 6 6"/></svg><span>Indicadores</span></button>
-        <button class="nav-item" data-label="Fluxo" data-pane="fluxo"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m15 7 5 5-5 5"/><path d="M9 7H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h5"/></svg><span>Fluxo</span></button>
-        <button class="nav-item" data-label="Gargalos" data-pane="gargalos"><svg viewBox="0 0 24 24"><path d="M8 3H6a2 2 0 0 0-2 2v3c0 1.1.9 2 2 2h2"/><path d="M16 3h2a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/><path d="M12 3v2"/><path d="M12 19v2"/><path d="M8 10c0 3.3 2.7 4 4 4s4-.7 4-4"/><path d="M8 14H4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h2"/><path d="M16 14h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg><span>Gargalos</span></button>
+        <button type="button" class="nav-item active" data-label="Visão geral" data-pane="geral" aria-current="page">
+<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Visão geral</span></button>
+        <button type="button" class="nav-item" data-label="Indicadores" data-pane="indicadores">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l3 3"/><path d="M16 2a6 6 0 0 1 6 6"/></svg><span>Indicadores</span></button>
+        <button type="button" class="nav-item" data-label="Fluxo" data-pane="fluxo">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m15 7 5 5-5 5"/><path d="M9 7H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h5"/></svg><span>Fluxo</span></button>
+        <button type="button" class="nav-item" data-label="Gargalos" data-pane="gargalos">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 3H6a2 2 0 0 0-2 2v3c0 1.1.9 2 2 2h2"/><path d="M16 3h2a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/><path d="M12 3v2"/><path d="M12 19v2"/><path d="M8 10c0 3.3 2.7 4 4 4s4-.7 4-4"/><path d="M8 14H4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h2"/><path d="M16 14h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg><span>Gargalos</span></button>
         <div class="nav-divider"></div>
         <div class="nav-group">Equipe</div>
-        <button class="nav-item" data-label="Médicos" data-pane="medicos"><svg viewBox="0 0 24 24"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg><span>Médicos</span></button>
-        <button class="nav-item" data-label="Triagem" data-pane="triagem"><svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h6"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/><path d="m9 12 2 2 4-4"/></svg><span>Triagem</span></button>
-        <button class="nav-item" data-label="Procedimentos" data-pane="procedimentos"><svg viewBox="0 0 24 24"><path d="M12 22V2"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Procedimentos</span></button>
-        <button class="nav-item" data-label="Enfermagem" data-pane="enfermagem"><svg viewBox="0 0 24 24"><path d="M11 2a2 2 0 0 0-2 2v5H4a2 2 0 0 0-2 2v2c0 1.1.9 2 2 2h5v5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-5h5a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-5V4a2 2 0 0 0-2-2z"/></svg><span>Enfermagem</span></button>
-        <button class="nav-item" data-label="Exames Lab." data-pane="exames"><svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v5l7 7 7-7V5a2 2 0 0 0-2-2h-4"/><path d="M9 3V1"/><path d="M15 3V1"/><path d="m14 14-2.5 2.5"/><path d="m16.5 11.5-2 2"/></svg><span>Exames Lab.</span></button>
-        <button class="nav-item" data-label="Retornos ≤72h" data-pane="retornos"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg><span>Retornos ≤72h</span></button>
+        <button type="button" class="nav-item" data-label="Médicos" data-pane="medicos">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg><span>Médicos</span></button>
+        <button type="button" class="nav-item" data-label="Triagem" data-pane="triagem">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h6"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/><path d="m9 12 2 2 4-4"/></svg><span>Triagem</span></button>
+        <button type="button" class="nav-item" data-label="Procedimentos" data-pane="procedimentos">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 22V2"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Procedimentos</span></button>
+        <button type="button" class="nav-item" data-label="Enfermagem" data-pane="enfermagem">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M11 2a2 2 0 0 0-2 2v5H4a2 2 0 0 0-2 2v2c0 1.1.9 2 2 2h5v5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-5h5a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-5V4a2 2 0 0 0-2-2z"/></svg><span>Enfermagem</span></button>
+        <button type="button" class="nav-item" data-label="Exames Lab." data-pane="exames">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v5l7 7 7-7V5a2 2 0 0 0-2-2h-4"/><path d="M9 3V1"/><path d="M15 3V1"/><path d="m14 14-2.5 2.5"/><path d="m16.5 11.5-2 2"/></svg><span>Exames Lab.</span></button>
+        <button type="button" class="nav-item" data-label="Retornos ≤72h" data-pane="retornos">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg><span>Retornos ≤72h</span></button>
         <div class="nav-divider"></div>
         <div class="nav-group">Análise</div>
-        <button class="nav-item" data-label="Capacidade" data-pane="capacidade"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M20 8h2m-1-1v2"/></svg><span>Capacidade</span></button>
-        <button class="nav-item" data-label="Evolução" data-pane="evolucao"><svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg><span>Evolução</span></button>
-        <button class="nav-item" data-label="CID / Diagnósticos" data-pane="cid"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span>CID / Diagnósticos</span></button>
-        <button class="nav-item" data-label="Relatório" data-pane="relatorio"><svg viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 12a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1 1 1 0 0 1 1 1v1a1 1 0 0 0 1 1"/><path d="M14 18a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1 1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1"/></svg><span>Relatório</span></button>
-        <button class="nav-item" data-label="Comparativo" data-pane="comparativo"><svg viewBox="0 0 24 24"><rect x="2" y="14" width="4" height="7"/><rect x="9" y="9" width="4" height="12"/><rect x="16" y="4" width="4" height="17"/><path d="M22 2 12 12l-5-5L2 10"/></svg><span>Comparativo</span></button>
-        <button class="nav-item" data-label="Correlações" data-pane="correlacoes"><svg viewBox="0 0 24 24"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="7" r="2"/><circle cx="7" cy="7" r="2"/><circle cx="17" cy="17" r="2"/><path d="M7 15v-6"/><path d="M15 7H9"/><path d="m9 15 6-6"/></svg><span>Correlações</span></button>
-        <button class="nav-item" data-label="Funil" data-pane="funil"><svg viewBox="0 0 24 24"><path d="M22 3H2l8 9.46V19l4 2V12.46z"/></svg><span>Funil</span></button>
+        <button type="button" class="nav-item" data-label="Capacidade" data-pane="capacidade">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M20 8h2m-1-1v2"/></svg><span>Capacidade</span></button>
+        <button type="button" class="nav-item" data-label="Evolução" data-pane="evolucao">
+<svg aria-hidden="true" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg><span>Evolução</span></button>
+        <button type="button" class="nav-item" data-label="CID / Diagnósticos" data-pane="cid">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span>CID / Diagnósticos</span></button>
+        <button type="button" class="nav-item" data-label="Relatório" data-pane="relatorio">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 12a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1 1 1 0 0 1 1 1v1a1 1 0 0 0 1 1"/><path d="M14 18a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1 1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1"/></svg><span>Relatório</span></button>
+        <button type="button" class="nav-item" data-label="Comparativo" data-pane="comparativo">
+<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="2" y="14" width="4" height="7"/><rect x="9" y="9" width="4" height="12"/><rect x="16" y="4" width="4" height="17"/><path d="M22 2 12 12l-5-5L2 10"/></svg><span>Comparativo</span></button>
+        <button type="button" class="nav-item" data-label="Correlações" data-pane="correlacoes">
+<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="7" r="2"/><circle cx="7" cy="7" r="2"/><circle cx="17" cy="17" r="2"/><path d="M7 15v-6"/><path d="M15 7H9"/><path d="m9 15 6-6"/></svg><span>Correlações</span></button>
+        <button type="button" class="nav-item" data-label="Funil" data-pane="funil">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M22 3H2l8 9.46V19l4 2V12.46z"/></svg><span>Funil</span></button>
         <div class="nav-divider"></div>
         <div class="nav-group">Pacientes & Escala</div>
-        <button class="nav-item" data-label="Perfil do Paciente" data-pane="perfil"><svg viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Perfil do Paciente</span></button>
-        <button class="nav-item" data-label="Pacientes" data-pane="pacientes"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></svg><span>Pacientes</span></button>
-        <button class="nav-item" data-label="Escala / Dimensionamento" data-pane="escala"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg><span>Escala / Dimensionamento</span></button>
-        <button class="nav-item" data-label="Anotações" data-pane="anotacoes"><svg viewBox="0 0 24 24"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3z"/><path d="M15 3v6h6"/><path d="M10 16s.8 1 2 1 2-1 2-1"/><path d="M8 13h.01"/><path d="M16 13h.01"/></svg><span>Anotações</span></button>
+        <button type="button" class="nav-item" data-label="Perfil do Paciente" data-pane="perfil">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Perfil do Paciente</span></button>
+        <button type="button" class="nav-item" data-label="Pacientes" data-pane="pacientes">
+<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></svg><span>Pacientes</span></button>
+        <button type="button" class="nav-item" data-label="Escala / Dimensionamento" data-pane="escala">
+<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg><span>Escala / Dimensionamento</span></button>
+        <button type="button" class="nav-item" data-label="Anotações" data-pane="anotacoes">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3z"/><path d="M15 3v6h6"/><path d="M10 16s.8 1 2 1 2-1 2-1"/><path d="M8 13h.01"/><path d="M16 13h.01"/></svg><span>Anotações</span></button>
         <div class="nav-divider"></div>
         <div class="nav-group">Sistema</div>
-        <button class="nav-item" data-label="Auditoria" data-pane="auditoria"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg><span>Auditoria</span></button>
-        <button class="nav-item" data-label="Qualidade" data-pane="qualidade"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>Qualidade</span></button>
+        <button type="button" class="nav-item" data-label="Auditoria" data-pane="auditoria">
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg><span>Auditoria</span></button>
+        <button type="button" class="nav-item" data-label="Qualidade" data-pane="qualidade">
+<svg aria-hidden="true" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>Qualidade</span></button>
       </nav>
 
       <!-- Área de conteúdo -->
@@ -1576,9 +1999,9 @@
         <div class="grid" id="kpisGeral"></div>
         <div id="projGeralNotice" style="margin-bottom:12px"></div>
         <div class="chart-grid">
-          <div class="card full"><div class="card-title">Volume mensal</div><div class="chart"><canvas id="chartMensal"></canvas></div></div>
-          <div class="card"><div class="card-title">Dia da semana</div><div class="chart" style="height:200px"><canvas id="chartDow"></canvas></div></div>
-          <div class="card"><div class="card-title">Pico horário</div><div class="chart small"><canvas id="chartHora"></canvas></div></div>
+          <div class="card full"><div class="card-title">Volume mensal</div><div class="chart"><canvas id="chartMensal" role="img" aria-label="Gráfico de barras: volume mensal de atendimentos"></canvas></div></div>
+          <div class="card"><div class="card-title">Dia da semana</div><div class="chart" style="height:200px"><canvas id="chartDow" role="img" aria-label="Gráfico de barras: atendimentos por dia da semana"></canvas></div></div>
+          <div class="card"><div class="card-title">Pico horário</div><div class="chart small"><canvas id="chartHora" role="img" aria-label="Gráfico de linha: pico horário de atendimentos"></canvas></div></div>
           <div class="card full"><div class="card-title">Mapa de calor — dia da semana × hora</div><div class="heatmap mono" id="heatmap"></div></div>
         </div>
       </section>
@@ -1587,8 +2010,8 @@
         <div class="page-header"><h1 class="page-title">Indicadores</h1><p class="page-desc">Tempos de espera e atendimento por categoria</p></div>
         <div class="grid" id="kpisInd"></div>
         <div class="chart-grid">
-          <div class="card"><div class="card-title">Triagem dentro da meta (%)</div><div class="chart small"><canvas id="chartIndTri"></canvas></div></div>
-          <div class="card"><div class="card-title">Tempo médio por mês</div><div class="chart small"><canvas id="chartIndTempo"></canvas></div></div>
+          <div class="card"><div class="card-title">Triagem dentro da meta (%)</div><div class="chart small"><canvas id="chartIndTri" role="img" aria-label="Gráfico de barras: triagem dentro da meta por mês"></canvas></div></div>
+          <div class="card"><div class="card-title">Tempo médio por mês</div><div class="chart small"><canvas id="chartIndTempo" role="img" aria-label="Gráfico de linha: tempo médio de espera por mês"></canvas></div></div>
           <div class="card full"><div class="card-title">Tabela mensal de conformidade</div><div class="table-wrap"><table class="table" id="tableInd"></table></div></div>
           <div class="card full"><div class="card-title">Conformidade Manchester por classificação de risco</div><div class="table-wrap"><table class="table" id="tableManchester"></table></div></div>
           <div class="card full"><div class="card-title">Dispersão de espera médica — percentis</div><div id="cardDispersao" style="padding:0 4px"></div></div>
@@ -1599,10 +2022,10 @@
         <div class="page-header"><h1 class="page-title">Fluxo de Atendimento</h1><p class="page-desc">Distribuição e ritmo dos atendimentos</p></div>
         <div class="grid" id="kpisFluxo"></div>
         <div class="chart-grid">
-          <div class="card full"><div class="card-title">Evolução dos tempos médios</div><div class="chart"><canvas id="chartTempos"></canvas></div></div>
-          <div class="card"><div class="card-title">Classificação de risco</div><div class="chart small"><canvas id="chartRisco"></canvas></div></div>
-          <div class="card"><div class="card-title">Turno</div><div class="chart small"><canvas id="chartTurno"></canvas></div></div>
-          <div class="card full"><div class="card-title">Permanência prolongada — pacientes em observação</div><div id="cardPermanencia" style="padding:4px 0"></div><div class="chart small" style="margin-top:8px"><canvas id="chartPermanenciaMes"></canvas></div></div>
+          <div class="card full"><div class="card-title">Evolução dos tempos médios</div><div class="chart"><canvas id="chartTempos" role="img" aria-label="Gráfico de linha: evolução dos tempos médios"></canvas></div></div>
+          <div class="card"><div class="card-title">Classificação de risco</div><div class="chart small"><canvas id="chartRisco" role="img" aria-label="Gráfico de barras: distribuição por classificação de risco"></canvas></div></div>
+          <div class="card"><div class="card-title">Turno</div><div class="chart small"><canvas id="chartTurno" role="img" aria-label="Gráfico de barras: distribuição por turno"></canvas></div></div>
+          <div class="card full"><div class="card-title">Permanência prolongada — pacientes em observação</div><div id="cardPermanencia" style="padding:4px 0"></div><div class="chart small" style="margin-top:8px"><canvas id="chartPermanenciaMes" role="img" aria-label="Gráfico de barras: permanência prolongada por mês"></canvas></div></div>
         </div>
       </section>
 
@@ -1612,10 +2035,10 @@
         <div id="alertaVermelho" style="margin-bottom:16px"></div>
         <div class="chart-grid">
           <div class="card full"><div class="card-title">Ranking de gargalos por dia e hora</div><div class="table-wrap"><table class="table" id="tableGargalos"></table></div></div>
-          <div class="card full"><div class="card-title">VERMELHO fora do protocolo (&gt;10 min) por mês</div><div class="chart small"><canvas id="chartVermelhoMes"></canvas></div></div>
-          <div class="card"><div class="card-title">Espera médica por faixa crítica</div><div class="chart small"><canvas id="chartGargMed"></canvas></div></div>
-          <div class="card"><div class="card-title">Carga assistencial estimada</div><div class="chart small"><canvas id="chartCarga"></canvas></div></div>
-          <div class="card full"><div class="card-title">Comparativo por dia da semana</div><div class="chart small"><canvas id="chartDowGarg"></canvas></div></div>
+          <div class="card full"><div class="card-title">VERMELHO fora do protocolo (&gt;10 min) por mês</div><div class="chart small"><canvas id="chartVermelhoMes" role="img" aria-label="Gráfico de barras: vermelhos fora do protocolo por mês"></canvas></div></div>
+          <div class="card"><div class="card-title">Espera médica por faixa crítica</div><div class="chart small"><canvas id="chartGargMed" role="img" aria-label="Gráfico de barras: espera médica por faixa crítica"></canvas></div></div>
+          <div class="card"><div class="card-title">Carga assistencial estimada</div><div class="chart small"><canvas id="chartCarga" role="img" aria-label="Gráfico de barras: carga assistencial estimada"></canvas></div></div>
+          <div class="card full"><div class="card-title">Comparativo por dia da semana</div><div class="chart small"><canvas id="chartDowGarg" role="img" aria-label="Gráfico de barras: comparativo por dia da semana"></canvas></div></div>
           <div class="card full"><div class="card-title">Resumo por dia da semana</div><div class="table-wrap"><table class="table" id="tableDow"></table></div></div>
         </div>
       </section>
@@ -1624,19 +2047,24 @@
         <div class="page-header"><h1 class="page-title">Médicos</h1><p class="page-desc">Produção individual e comparativo de equipe</p></div>
         <div class="grid" id="kpisMed"></div>
         <div class="chart-grid">
-          <div class="card"><div class="card-title">Top médicos</div><div class="chart tall"><canvas id="chartMed"></canvas></div></div>
-          <div class="card"><div class="card-title">Risco por médico — top 12</div><div class="chart tall"><canvas id="chartMedRisco"></canvas></div></div>
-          <div class="card full"><div class="card-title">Produção por plantão (12h)</div><div class="chart" style="height:240px"><canvas id="chartPlantaoBox"></canvas></div><div class="table-wrap" style="margin-top:8px"><table class="table" id="tablePlantao"></table></div></div>
-          <div class="card full"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center">Ranking médico<button class="btn export" id="exportMedBtn" style="font-size:11px;padding:4px 10px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>XLSX</button></div><div class="search"><input class="field mono" id="searchMed" placeholder="Buscar médico…"></div><div class="table-wrap"><table class="table" id="tableMed"></table></div></div>
+          <div class="card"><div class="card-title">Top médicos</div><div class="chart tall"><canvas id="chartMed" role="img" aria-label="Gráfico de barras: top médicos por volume"></canvas></div></div>
+          <div class="card"><div class="card-title">Risco por médico — top 12</div><div class="chart tall"><canvas id="chartMedRisco" role="img" aria-label="Gráfico de barras empilhadas: risco por médico"></canvas></div></div>
+          <div class="card full"><div class="card-title">Produção por plantão (12h)</div><div class="chart" style="height:240px"><canvas id="chartPlantaoBox" role="img" aria-label="Gráfico de barras: produção por plantão diurno e noturno"></canvas></div><div class="table-wrap" style="margin-top:8px"><table class="table" id="tablePlantao"></table></div></div>
+          <div class="card full"><div class="card-title" style="display:flex;justify-content:space-between;align-items:center">Ranking médico<button type="button" class="btn export" id="exportMedBtn" style="font-size:11px;padding:4px 10px">
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>XLSX</button></div><div class="search"><input class="field mono" id="searchMed" placeholder="Buscar médico…"></div><div class="table-wrap"><table class="table" id="tableMed"></table></div></div>
         </div>
       </section>
 
       <section class="pane" id="pane-procedimentos">
         <div class="page-header"><h1 class="page-title">Produtividade Assistencial</h1><p class="page-desc">Procedimentos realizados por profissional — BPA individualizado</p></div>
         <div id="procEmpty" class="card" style="padding:34px;text-align:center;margin-bottom:12px">
-          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Nenhum relatório de procedimentos carregado</div>
-          <div class="mono muted" style="font-size:12px;margin-bottom:16px;line-height:1.6">Carregue o arquivo "Procedimentos realizados por profissional" exportado pelo Vivver.</div>
-          <button class="btn primary" onclick="$('procFile').click()" style="margin:0 auto">+ Carregar procedimentos</button>
+          <div style="margin:0 auto 16px;width:44px;height:44px;border-radius:12px;background:var(--sur2);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--ac)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V2"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Relatório de procedimentos não carregado</div>
+          <div class="mono muted" style="font-size:12px;margin-bottom:6px;line-height:1.6">Carregue o arquivo "Procedimentos realizados por profissional" exportado pelo Vivver.</div>
+          <div class="mono muted" style="font-size:11px;margin-bottom:16px;line-height:1.6;color:var(--ac)">No Vivver: <strong>Relatórios → BPA Individualizado → Procedimentos por Profissional → exportar CSV</strong></div>
+          <button type="button" class="btn primary" onclick="$('procFile').click()" style="margin:0 auto">+ Carregar procedimentos</button>
         </div>
         <div id="procContent" class="hidden">
           <!-- Filtros -->
@@ -1669,8 +2097,8 @@
               <span id="kpiMedTotal" class="mono muted" style="font-size:11px"></span>
             </div>
             <div class="chart-grid">
-              <div class="card"><div class="card-title">Ranking — volume total BPA</div><div class="chart tall"><canvas id="chartMedTotal"></canvas></div></div>
-              <div class="card"><div class="card-title">Perfil por tipo de procedimento</div><div class="chart tall"><canvas id="chartMedPerfil"></canvas></div></div>
+              <div class="card"><div class="card-title">Ranking — volume total BPA</div><div class="chart tall"><canvas id="chartMedTotal" role="img" aria-label="Gráfico de barras: ranking de médicos por volume BPA"></canvas></div></div>
+              <div class="card"><div class="card-title">Perfil por tipo de procedimento</div><div class="chart tall"><canvas id="chartMedPerfil" role="img" aria-label="Gráfico de barras: perfil de procedimentos médicos"></canvas></div></div>
               <div class="card full"><div class="card-title">Detalhamento por médico</div><div class="table-wrap"><table class="table" id="tableProcMedicos"></table></div></div>
             </div>
           </div>
@@ -1682,8 +2110,8 @@
               <span id="kpiEnfTotal" class="mono muted" style="font-size:11px"></span>
             </div>
             <div class="chart-grid">
-              <div class="card"><div class="card-title">Ranking — volume total BPA</div><div class="chart tall"><canvas id="chartEnfTotal"></canvas></div></div>
-              <div class="card"><div class="card-title">Triagens × outros procedimentos</div><div class="chart tall"><canvas id="chartEnfPerfil"></canvas></div></div>
+              <div class="card"><div class="card-title">Ranking — volume total BPA</div><div class="chart tall"><canvas id="chartEnfTotal" role="img" aria-label="Gráfico de barras: ranking de enfermeiros por volume BPA"></canvas></div></div>
+              <div class="card"><div class="card-title">Triagens × outros procedimentos</div><div class="chart tall"><canvas id="chartEnfPerfil" role="img" aria-label="Gráfico de barras: perfil de procedimentos dos enfermeiros"></canvas></div></div>
               <div class="card full"><div class="card-title">Detalhamento por enfermeiro(a)</div><div class="table-wrap"><table class="table" id="tableProcEnfermeiros"></table></div></div>
             </div>
           </div>
@@ -1695,8 +2123,8 @@
               <span id="kpiTecTotal" class="mono muted" style="font-size:11px"></span>
             </div>
             <div class="chart-grid">
-              <div class="card"><div class="card-title">Ranking — volume total BPA</div><div class="chart tall"><canvas id="chartTecTotal"></canvas></div></div>
-              <div class="card"><div class="card-title">Vias de administração — top procedimentos</div><div class="chart tall"><canvas id="chartTecPerfil"></canvas></div></div>
+              <div class="card"><div class="card-title">Ranking — volume total BPA</div><div class="chart tall"><canvas id="chartTecTotal" role="img" aria-label="Gráfico de barras: ranking de técnicos por volume BPA"></canvas></div></div>
+              <div class="card"><div class="card-title">Vias de administração — top procedimentos</div><div class="chart tall"><canvas id="chartTecPerfil" role="img" aria-label="Gráfico de barras: perfil de procedimentos dos técnicos"></canvas></div></div>
               <div class="card full"><div class="card-title">Detalhamento por técnico(a)</div><div class="table-wrap"><table class="table" id="tableProcTecnicos"></table></div></div>
             </div>
           </div>
@@ -1717,9 +2145,9 @@
         <div class="grid" id="kpisRet"></div>
         <div class="grid" id="kpisRetAdv"></div>
         <div class="chart-grid">
-          <div class="card full"><div class="card-title">Taxa de retorno ≤72h por mês</div><div class="chart"><canvas id="chartRetMes"></canvas></div></div>
-          <div class="card"><div class="card-title">Retornos por hora</div><div class="chart small"><canvas id="chartRetHora"></canvas></div></div>
-          <div class="card"><div class="card-title">Janelas de retorno</div><div class="chart small"><canvas id="chartRetJanelas"></canvas></div></div>
+          <div class="card full"><div class="card-title">Taxa de retorno ≤72h por mês</div><div class="chart"><canvas id="chartRetMes" role="img" aria-label="Gráfico de barras: taxa de retorno em 72h por mês"></canvas></div></div>
+          <div class="card"><div class="card-title">Retornos por hora</div><div class="chart small"><canvas id="chartRetHora" role="img" aria-label="Gráfico de barras: retornos por hora"></canvas></div></div>
+          <div class="card"><div class="card-title">Janelas de retorno</div><div class="chart small"><canvas id="chartRetJanelas" role="img" aria-label="Gráfico de barras: janelas de retorno"></canvas></div></div>
           <div class="card"><div class="card-title">Pacientes com mais visitas</div><div class="table-wrap"><table class="table" id="tableRet"></table></div></div>
           <div class="card full"><div class="card-title">Médicos com mais retornos ≤72h</div><div class="table-wrap"><table class="table" id="tableRetMed"></table></div></div>
           <div class="card full"><div class="card-title">Retornos críticos e potencialmente evitáveis</div><div class="table-wrap"><table class="table" id="tableRetCrit"></table></div></div>
@@ -1733,9 +2161,21 @@
           <p class="page-desc">Triagens por enfermeiro, produção de técnicos e conformidade assistencial</p>
         </div>
         <div id="enfEmpty" class="card" style="padding:34px;text-align:center;margin-bottom:12px">
-          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Nenhum dado de produtividade carregado</div>
-          <div class="mono muted" style="font-size:12px;margin-bottom:16px;line-height:1.6">Carregue a planilha de <strong>Procedimentos do Vivver</strong> e a planilha de <strong>Triagem</strong> para ativar este painel.</div>
-          <button class="btn primary" onclick="$('procFile').click()" style="margin:0 auto;display:block">Carregar Procedimentos</button>
+          <div style="margin:0 auto 16px;width:44px;height:44px;border-radius:12px;background:var(--sur2);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--ac)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2a2 2 0 0 0-2 2v5H4a2 2 0 0 0-2 2v2c0 1.1.9 2 2 2h5v5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-5h5a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-5V4a2 2 0 0 0-2-2z"/></svg>
+          </div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:12px">Painel de Enfermagem requer 2 arquivos</div>
+          <div style="display:inline-flex;flex-direction:column;gap:8px;margin-bottom:16px;text-align:left">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--txt2)">
+              <span style="width:18px;height:18px;border-radius:50%;background:var(--ac-glow);border:1px solid var(--ac);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--ac);flex-shrink:0">1</span>
+              <span><strong style="color:var(--txt)">Procedimentos</strong> — Vivver: BPA Individualizado → Procedimentos por Profissional</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--txt2)">
+              <span style="width:18px;height:18px;border-radius:50%;background:var(--ac-glow);border:1px solid var(--ac);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--ac);flex-shrink:0">2</span>
+              <span><strong style="color:var(--txt)">Triagem</strong> — Vivver: Relatórios → Triagem (opcional, para nome do triador)</span>
+            </div>
+          </div>
+          <button type="button" class="btn primary" onclick="$('procFile').click()" style="margin:0 auto;display:block">+ Carregar Procedimentos</button>
         </div>
         <div id="enfContent" class="hidden">
           <!-- KPIs gerais da equipe -->
@@ -1744,16 +2184,16 @@
           <!-- Seção Enfermeiros -->
           <div class="section-title" style="margin:18px 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mut)">Enfermeiros</div>
           <div class="chart-grid">
-            <div class="card"><div class="card-title">Triagens por enfermeiro</div><div class="chart tall"><canvas id="chartEnfTriagem"></canvas></div></div>
-            <div class="card"><div class="card-title">Perfil de procedimentos</div><div class="chart tall"><canvas id="chartEnfProcPerfil"></canvas></div></div>
+            <div class="card"><div class="card-title">Triagens por enfermeiro</div><div class="chart tall"><canvas id="chartEnfTriagem" role="img" aria-label="Gráfico de barras: triagens e procedimentos por enfermeiro"></canvas></div></div>
+            <div class="card"><div class="card-title">Perfil de procedimentos</div><div class="chart tall"><canvas id="chartEnfProcPerfil" role="img" aria-label="Gráfico de rosca: perfil de procedimentos dos enfermeiros"></canvas></div></div>
             <div class="card full"><div class="card-title">Ranking de enfermeiros</div><div class="table-wrap"><table class="table" id="tableEnfRanking"></table></div></div>
           </div>
 
           <!-- Seção Técnicos -->
           <div class="section-title" style="margin:18px 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mut)">Técnicos de Enfermagem</div>
           <div class="chart-grid">
-            <div class="card"><div class="card-title">Volume por técnico</div><div class="chart tall"><canvas id="chartTecProd"></canvas></div></div>
-            <div class="card"><div class="card-title">Vias de administração</div><div class="chart tall"><canvas id="chartTecVias"></canvas></div></div>
+            <div class="card"><div class="card-title">Volume por técnico</div><div class="chart tall"><canvas id="chartTecProd" role="img" aria-label="Gráfico de barras: volume por técnico de enfermagem"></canvas></div></div>
+            <div class="card"><div class="card-title">Vias de administração</div><div class="chart tall"><canvas id="chartTecVias" role="img" aria-label="Gráfico de rosca: vias de administração dos técnicos"></canvas></div></div>
             <div class="card full"><div class="card-title">Ranking de técnicos</div><div class="table-wrap"><table class="table" id="tableTecRanking"></table></div></div>
           </div>
         </div>
@@ -1762,16 +2202,20 @@
       <section class="pane" id="pane-exames">
         <div class="page-header"><h1 class="page-title">Exames Laboratoriais</h1><p class="page-desc">Autolac — Lista de Conferência por Convênio</p></div>
         <div id="examesEmpty" class="card" style="padding:34px;text-align:center;margin-bottom:12px">
-          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Nenhum relatório de exames carregado</div>
-          <div class="mono muted" style="font-size:12px;margin-bottom:16px;line-height:1.6">Carregue o PDF "Lista de Conferência por Convênio" exportado pelo sistema Autolac.</div>
-          <button class="btn primary" onclick="$('examesFile').click()" style="margin:0 auto">+ Carregar PDF de exames</button>
+          <div style="margin:0 auto 16px;width:44px;height:44px;border-radius:12px;background:var(--sur2);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--ac)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v5l7 7 7-7V5a2 2 0 0 0-2-2h-4"/><path d="M9 3V1"/><path d="M15 3V1"/><path d="m14 14-2.5 2.5"/><path d="m16.5 11.5-2 2"/></svg>
+          </div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Relatório de exames não carregado</div>
+          <div class="mono muted" style="font-size:12px;margin-bottom:6px;line-height:1.6">Carregue o PDF "Lista de Conferência por Convênio" gerado pelo Autolac.</div>
+          <div class="mono muted" style="font-size:11px;margin-bottom:16px;line-height:1.6;color:var(--ac)">No Autolac: <strong>Conferência → Lista de Conferência por Convênio → Imprimir/Exportar PDF</strong></div>
+          <button type="button" class="btn primary" onclick="$('examesFile').click()" style="margin:0 auto">+ Carregar PDF de exames</button>
         </div>
         <div id="examesContent" class="hidden">
           <div class="grid" id="kpisExames"></div>
           <div id="examesCrossNote" class="hidden" style="margin-bottom:10px;padding:10px 14px;background:rgba(124,110,249,.07);border:1px solid var(--ac);border-radius:8px;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--mut)"></div>
           <div class="chart-grid">
-            <div class="card"><div class="card-title">Top 12 exames solicitados</div><div class="chart tall"><canvas id="chartExamesTop"></canvas></div></div>
-            <div class="card"><div class="card-title">Grupos clínicos</div><div class="chart tall"><canvas id="chartExamesGrupos"></canvas></div></div>
+            <div class="card"><div class="card-title">Top 12 exames solicitados</div><div class="chart tall"><canvas id="chartExamesTop" role="img" aria-label="Gráfico de barras: top 12 exames solicitados"></canvas></div></div>
+            <div class="card"><div class="card-title">Grupos clínicos</div><div class="chart tall"><canvas id="chartExamesGrupos" role="img" aria-label="Gráfico de rosca: grupos clínicos de exames"></canvas></div></div>
             <div class="card full"><div class="card-title">Ranking por médico solicitante</div><div class="table-wrap"><table class="table" id="tableExames"></table></div></div>
           </div>
           <div id="examesValidacao" style="font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace;padding:6px 10px;background:var(--sur2);border-radius:6px;margin-top:4px"></div>
@@ -1782,7 +2226,7 @@
         <div class="page-header"><h1 class="page-title">Capacidade</h1><p class="page-desc">Estimativa de carga e capacidade instalada</p></div>
         <div class="grid" id="kpisCap"></div>
         <div class="chart-grid">
-          <div class="card full"><div class="card-title">Pressão por hora — volume × capacidade configurada</div><div class="chart"><canvas id="chartCapHora"></canvas></div></div>
+          <div class="card full"><div class="card-title">Pressão por hora — volume × capacidade configurada</div><div class="chart"><canvas id="chartCapHora" role="img" aria-label="Gráfico de linha: pressão por hora versus capacidade"></canvas></div></div>
           <div class="card full"><div class="card-title">Horários acima da capacidade</div><div class="table-wrap"><table class="table" id="tableCap"></table></div></div>
         </div>
       </section>
@@ -1793,32 +2237,125 @@
         <div id="projEvolucao" style="margin-bottom:14px"></div>
         <div class="chart-grid">
           <div class="card full"><div class="card-title">Indicadores que mais mudaram entre os dois últimos meses do filtro</div><div class="table-wrap"><table class="table" id="tableEvolucao"></table></div></div>
-          <div class="card full"><div class="card-title">Tendência mensal dos principais indicadores</div><div class="chart"><canvas id="chartEvolucao"></canvas></div></div>
+          <div class="card full"><div class="card-title">Tendência mensal dos principais indicadores</div><div class="chart"><canvas id="chartEvolucao" role="img" aria-label="Gráfico de linha: tendência mensal dos indicadores"></canvas></div></div>
         </div>
       </section>
 
       <section class="pane" id="pane-relatorio">
         <div class="page-header"><h1 class="page-title">Relatório Gerencial</h1><p class="page-desc">Síntese executiva para liderança</p></div>
         <div class="chart-grid">
-          <div class="card full"><div class="card-title">Texto gerencial automático</div><textarea class="field mono" id="reportText" style="width:100%;min-height:360px;line-height:1.6;resize:vertical"></textarea><div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="copyReportBtn">Copiar texto</button><button class="btn" id="downloadReportBtn">Baixar .txt</button></div></div>
+          <div class="card full"><div class="card-title">Texto gerencial automático</div><textarea class="field mono" id="reportText" style="width:100%;min-height:360px;line-height:1.6;resize:vertical"></textarea><div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn primary" id="copyReportBtn">Copiar texto</button><button type="button" class="btn ghost" id="downloadReportBtn">Baixar .txt</button></div></div>
         </div>
       </section>
 
       <section class="pane" id="pane-triagem">
         <div class="page-header"><h1 class="page-title">Triagem</h1><p class="page-desc">Desempenho da classificação de risco</p></div>
         <div id="triEmpty" class="card" style="padding:40px;text-align:center">
-          <div style="font-size:32px;margin-bottom:12px">🏷️</div>
-          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Nenhuma planilha de triagem carregada</div>
-          <div class="mono muted" style="font-size:12px;margin-bottom:16px;line-height:1.6">O histórico já fornece dados de triagem derivados.<br>Para incluir nome do triador, carregue a planilha específica.</div>
-          <button class="btn primary" onclick="document.getElementById('triFile').click()" style="margin:0 auto">+ Carregar planilha de triagem</button>
+          <div style="margin:0 auto 16px;width:44px;height:44px;border-radius:12px;background:var(--sur2);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--ac)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h6"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/><path d="m9 12 2 2 4-4"/></svg>
+          </div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Planilha de triagem não carregada</div>
+          <div class="mono muted" style="font-size:12px;margin-bottom:6px;line-height:1.6">O histórico já fornece dados derivados de triagem — classificação e tempos funcionam sem este arquivo.</div>
+          <div class="mono muted" style="font-size:11px;margin-bottom:16px;line-height:1.6;color:var(--ac)">Para incluir nome do triador: exporte a planilha de triagem pelo Vivver em <strong>Relatórios → Triagem → exportar XLS</strong></div>
+          <button type="button" class="btn primary" onclick="document.getElementById('triFile').click()" style="margin:0 auto">+ Carregar planilha de triagem</button>
         </div>
         <div id="triContent" class="hidden">
           <div id="triSourceBanner" style="margin-bottom:12px"></div>
           <div class="grid" id="kpisTri"></div>
           <div class="chart-grid">
-            <div class="card full"><div class="card-title">Triagens por hora e espera média</div><div class="chart"><canvas id="chartTriHora"></canvas></div></div>
-            <div class="card"><div class="card-title">Produtividade por triador</div><div class="chart tall"><canvas id="chartTriador"></canvas></div></div>
-            <div class="card"><div class="card-title">Classificação na triagem</div><div class="chart small"><canvas id="chartTriRisco"></canvas></div></div>
+            <div class="card full"><div class="card-title">Triagens por hora e espera média</div><div class="chart"><canvas id="chartTriHora" role="img" aria-label="Gráfico: triagens por hora e espera média"></canvas></div></div>
+            <div class="card"><div class="card-title">Produtividade por triador</div><div class="chart tall"><canvas id="chartTriador" role="img" aria-label="Gráfico de barras: produtividade por triador"></canvas></div></div>
+            
+        
+        <!-- ── DOENÇAS DE NOTIFICAÇÃO COMPULSÓRIA ────────────────────────── -->
+        <div class="card" style="margin-bottom:12px" id="cidNotifCard">
+          <div class="trend-section-header">
+            <div>
+              <div class="trend-section-title">Doenças de Notificação Compulsória</div>
+              <div class="trend-section-sub">Diagnósticos com obrigatoriedade de notificação — prazo padrão 24h para envio à SMS</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <select class="field" id="notifPeriodo" style="font-size:11px;padding:3px 8px;height:auto" onchange="renderCidNotificaveis()">
+                <option value="last">Último mês</option>
+                <option value="all" selected>Todo o período</option>
+              </select>
+              <button type="button" class="btn" id="notifExportBtn" onclick="exportNotifChecklist()" style="font-size:11px;padding:4px 10px">
+                Checklist
+              </button>
+            </div>
+          </div>
+
+          <div class="notif-prazo-note" id="notifPrazoNote">
+            Carregando análise de notificáveis...
+          </div>
+
+          <div class="notif-summary-bar" id="notifSummaryBar" style="display:none">
+            <div class="notif-summary-stat">
+              <div class="notif-summary-num" id="notifTotalCasos">—</div>
+              <div class="notif-summary-lbl">casos encontrados</div>
+            </div>
+            <div class="notif-summary-stat">
+              <div class="notif-summary-num" id="notifTotalDoencas">—</div>
+              <div class="notif-summary-lbl">doenças distintas</div>
+            </div>
+            <div class="notif-summary-stat">
+              <div class="notif-summary-num" id="notifTotalPacientes">—</div>
+              <div class="notif-summary-lbl">pacientes envolvidos</div>
+            </div>
+            <div class="notif-summary-stat">
+              <div class="notif-summary-num" id="notifUltimaSemana">—</div>
+              <div class="notif-summary-lbl">últimos 7 dias</div>
+            </div>
+          </div>
+
+          <div class="notif-grupo-filter" id="notifGrupoFilters"></div>
+
+          <div class="notif-grid" id="notifGrid"></div>
+
+          <!-- Checklist imprimível -->
+          <div class="notif-checklist" id="notifChecklist" style="display:none">
+            <div class="notif-checklist-header">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              Conferência antes do envio — verifique se a ficha de cada caso foi preenchida
+            </div>
+            <div id="notifChecklistBody"></div>
+          </div>
+        </div>
+        <!-- ── /DOENÇAS DE NOTIFICAÇÃO COMPULSÓRIA ───────────────────────── -->
+
+        <!-- ── TENDÊNCIA SAZONAL CID ──────────────────────────────────────── -->
+        <div class="card" style="margin-bottom:12px" id="cidTrendCard">
+          <div class="trend-section-header">
+            <div>
+              <div class="trend-section-title">Tendência Sazonal — Alertas de Mudança</div>
+              <div class="trend-section-sub">CIDs com variação significativa em relação à média histórica dos últimos meses</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <select class="field" id="trendWindow" style="font-size:11px;padding:3px 8px;height:auto" onchange="renderCidTrend()">
+                <option value="3">Janela: 3 meses</option>
+                <option value="4" selected>Janela: 4 meses</option>
+                <option value="6">Janela: 6 meses</option>
+              </select>
+              <select class="field" id="trendThreshold" style="font-size:11px;padding:3px 8px;height:auto" onchange="renderCidTrend()">
+                <option value="1.5">Sensibilidade: alta (+50%)</option>
+                <option value="2" selected>Sensibilidade: média (+100%)</option>
+                <option value="3">Sensibilidade: baixa (+200%)</option>
+              </select>
+            </div>
+          </div>
+          <div class="trend-threshold-note" id="cidTrendNote">
+            Carregando análise de tendência...
+          </div>
+          <div class="trend-filters" id="cidTrendFilters">
+            <button type="button" class="trend-filter-btn active" onclick="filterCidTrend('all',this)">Todos</button>
+            <button type="button" class="trend-filter-btn" onclick="filterCidTrend('rising',this)" style="color:#ef4444;border-color:rgba(239,68,68,.3)">Alta</button>
+            <button type="button" class="trend-filter-btn" onclick="filterCidTrend('falling',this)" style="color:#22c55e;border-color:rgba(34,197,94,.3)">Queda</button>
+          </div>
+          <div class="trend-alert-grid" id="cidTrendAlerts"></div>
+        </div>
+        <!-- ── /TENDÊNCIA SAZONAL CID ─────────────────────────────────────── -->
+
+        <div class="card"><div class="card-title">Classificação na triagem</div><div class="chart small"><canvas id="chartTriRisco" role="img" aria-label="Gráfico de barras: classificação de risco na triagem"></canvas></div></div>
             <div class="card full"><div class="card-title">Triadores</div><div class="table-wrap"><table class="table" id="tableTri"></table></div></div>
           </div>
           <!-- Secao Taxa de Evasao -->
@@ -1828,18 +2365,18 @@
                 <div style="font-size:13px;font-weight:700">Taxa de Evasao</div>
                 <div style="font-size:11px;color:var(--txt2);margin-top:2px">Pacientes que saíram sem atendimento medico (excluindo brancos redirecionados)</div>
               </div>
-              <button class="btn" onclick="$('metasModal').classList.add('open');renderRecepTable()" style="font-size:11px;gap:4px">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              <button type="button" class="btn" onclick="$('metasModal').classList.add('open');renderRecepTable()" style="font-size:11px;gap:4px">
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
                 Inserir recepcionados
               </button>
             </div>
             <div class="card full" style="margin-bottom:12px">
               <div class="card-title">Tendência de evasão — histórico mensal</div>
-              <div class="chart" style="height:190px"><canvas id="chartEvasaoTrend"></canvas></div>
+              <div class="chart" style="height:190px"><canvas id="chartEvasaoTrend" role="img" aria-label="Gráfico de linha: tendência histórica de evasão"></canvas></div>
             </div>
             <div class="grid" id="kpisEvasao"></div>
             <div class="chart-grid" style="margin-top:12px">
-              <div class="card full"><div class="card-title">Evasao mensal (%)</div><div class="chart"><canvas id="chartEvasaoRecep"></canvas></div></div>
+              <div class="card full"><div class="card-title">Evasao mensal (%)</div><div class="chart"><canvas id="chartEvasaoRecep" role="img" aria-label="Gráfico de linha: taxa de evasão mensal"></canvas></div></div>
               <div class="card full"><div class="card-title">Detalhamento mensal</div><div class="table-wrap"><table class="table" id="tableEvasao"></table></div></div>
             </div>
           </div>
@@ -1849,10 +2386,13 @@
       <section class="pane" id="pane-cid">
         <div class="page-header"><h1 class="page-title">CID / Diagnósticos</h1><p class="page-desc">Análise por diagnóstico e CID-10</p></div>
         <div id="cidEmpty" class="card" style="padding:40px;text-align:center">
-          <div style="font-size:32px;margin-bottom:12px">🩺</div>
-          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Nenhuma planilha de CID carregada</div>
-          <div class="mono muted" style="font-size:12px;margin-bottom:16px;line-height:1.6">Carregue a planilha de CID para visualizar diagnósticos,<br>capítulos e ranking de patologias.</div>
-          <button class="btn primary" onclick="document.getElementById('cidFile').click()" style="margin:0 auto">+ Carregar planilha de CID</button>
+          <div style="margin:0 auto 16px;width:44px;height:44px;border-radius:12px;background:var(--sur2);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--ac)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Planilha de CID não carregada</div>
+          <div class="mono muted" style="font-size:12px;margin-bottom:6px;line-height:1.6">Carregue a planilha para visualizar diagnósticos, capítulos CID-10 e ranking de patologias.</div>
+          <div class="mono muted" style="font-size:11px;margin-bottom:16px;line-height:1.6;color:var(--ac)">No Vivver: <strong>Relatórios → Atendimentos por CID → exportar XLS</strong></div>
+          <button type="button" class="btn primary" onclick="document.getElementById('cidFile').click()" style="margin:0 auto">+ Carregar planilha de CID</button>
         </div>
         <div id="cidContent" class="hidden">
           <div class="grid" id="kpisCid"></div>
@@ -1861,13 +2401,13 @@
           <div class="card full" style="margin-bottom:12px">
             <div class="card-title">Diagnósticos sentinela — Dor Torácica · Sepse · AVE/AVC</div>
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px" id="kpisSentinela"></div>
-            <div class="chart small"><canvas id="chartSentinela"></canvas></div>
+            <div class="chart small"><canvas id="chartSentinela" role="img" aria-label="Gráfico de linha: diagnósticos sentinela por mês"></canvas></div>
           </div>
 
           <div class="chart-grid">
-            <div class="card full"><div class="card-title">Capítulos CID por mês</div><div class="chart"><canvas id="chartCidCap"></canvas></div></div>
-            <div class="card"><div class="card-title">Top CIDs</div><div class="chart tall"><canvas id="chartCidTop"></canvas></div></div>
-            <div class="card"><div class="card-title">Cobertura CID × histórico</div><div class="chart small"><canvas id="chartCidCoverage"></canvas></div></div>
+            <div class="card full"><div class="card-title">Capítulos CID por mês</div><div class="chart"><canvas id="chartCidCap" role="img" aria-label="Gráfico de barras empilhadas: capítulos CID por mês"></canvas></div></div>
+            <div class="card"><div class="card-title">Top CIDs</div><div class="chart tall"><canvas id="chartCidTop" role="img" aria-label="Gráfico de barras: top CIDs"></canvas></div></div>
+            <div class="card"><div class="card-title">Cobertura CID × histórico</div><div class="chart small"><canvas id="chartCidCoverage" role="img" aria-label="Gráfico de barras: cobertura CID versus histórico"></canvas></div></div>
             <div class="card full"><div class="card-title">Ranking CID</div><div class="search"><input class="field mono" id="searchCid" placeholder="Buscar CID ou descrição…"></div><div class="table-wrap"><table class="table" id="tableCid"></table></div></div>
           </div>
         </div>
@@ -1894,13 +2434,13 @@
           <!-- Distribuição de erros por tipo -->
           <div class="card">
             <div class="card-title">Distribuição de inconsistências por categoria</div>
-            <div class="chart small"><canvas id="chartAuditTipos"></canvas></div>
+            <div class="chart small"><canvas id="chartAuditTipos" role="img" aria-label="Gráfico de rosca: distribuição de inconsistências por categoria"></canvas></div>
           </div>
 
           <!-- Mapa de calor: erros por médico -->
           <div class="card full">
             <div class="card-title">Concentração de dados problemáticos por médico — top 15</div>
-            <div class="chart small"><canvas id="chartAuditMed"></canvas></div>
+            <div class="chart small"><canvas id="chartAuditMed" role="img" aria-label="Gráfico de barras: problemas por médico"></canvas></div>
           </div>
 
           <!-- Impacto nos indicadores -->
@@ -1922,7 +2462,7 @@
                   <option value="duplicata">Possível duplicata</option>
                   <option value="campo">Campo inválido</option>
                 </select>
-                <button class="btn" id="auditExportBtn" style="font-size:10px">⬇ Exportar log</button>
+                <button type="button" class="btn" id="auditExportBtn" style="font-size:10px">⬇ Exportar log</button>
               </span>
             </div>
             <div style="font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-bottom:10px" id="auditLogCount"></div>
@@ -1950,7 +2490,7 @@
         <div class="compare-bar" id="compareBar"></div>
         <div class="chart-grid" style="margin-top:0">
           <div class="card full"><div class="card-title">Δ Variação entre períodos — principais indicadores</div><div class="table-wrap"><table class="table" id="tableComparativo"></table></div></div>
-          <div class="card full"><div class="card-title">Volume diário — Período A vs Período B</div><div class="chart"><canvas id="chartComparativo"></canvas></div></div>
+          <div class="card full"><div class="card-title">Volume diário — Período A vs Período B</div><div class="chart"><canvas id="chartComparativo" role="img" aria-label="Gráfico de linha: volume diário período A versus B"></canvas></div></div>
         </div>
         <div class="secAnoAano" id="secAnoAano">
           <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px">
@@ -1959,10 +2499,10 @@
           </div>
           <div id="kpisAnoAano" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px"></div>
           <div class="chart-grid" style="margin-top:0">
-            <div class="card full"><div class="card-title">Volume mensal por ano</div><div class="chart"><canvas id="chartAnoVol"></canvas></div></div>
-            <div class="card full"><div class="card-title">Espera médica mensal por ano (min)</div><div class="chart"><canvas id="chartAnoMed"></canvas></div></div>
-            <div class="card full"><div class="card-title">Espera de triagem mensal por ano (min)</div><div class="chart"><canvas id="chartAnoTri"></canvas></div></div>
-            <div class="card full"><div class="card-title">Distribuição de risco por ano (%)</div><div class="chart"><canvas id="chartAnoRisco"></canvas></div></div>
+            <div class="card full"><div class="card-title">Volume mensal por ano</div><div class="chart"><canvas id="chartAnoVol" role="img" aria-label="Gráfico de barras: volume mensal por ano"></canvas></div></div>
+            <div class="card full"><div class="card-title">Espera médica mensal por ano (min)</div><div class="chart"><canvas id="chartAnoMed" role="img" aria-label="Gráfico de linha: espera médica mensal por ano"></canvas></div></div>
+            <div class="card full"><div class="card-title">Espera de triagem mensal por ano (min)</div><div class="chart"><canvas id="chartAnoTri" role="img" aria-label="Gráfico de linha: espera de triagem mensal por ano"></canvas></div></div>
+            <div class="card full"><div class="card-title">Distribuição de risco por ano (%)</div><div class="chart"><canvas id="chartAnoRisco" role="img" aria-label="Gráfico de barras: distribuição de risco por ano"></canvas></div></div>
             <div class="card full"><div class="card-title">Resumo por ano — indicadores gerais</div><div class="table-wrap"><table class="table" id="tableAnoAano"></table></div></div>
             <div class="card full"><div class="card-title">Sazonalidade — volume e espera por mês, todos os anos</div><div class="table-wrap"><table class="table" id="tableAnoMes"></table></div></div>
           </div>
@@ -1973,11 +2513,11 @@
         <div class="page-header"><h1 class="page-title">Correlações</h1><p class="page-desc">Relações entre variáveis assistenciais</p></div>
         <div class="grid" id="kpisCorr"></div>
         <div class="chart-grid">
-          <div class="card full"><div class="card-title">🔬 Espera médico × Classificação de risco — distribuição por cor</div><div class="chart tall"><canvas id="chartCorrRisco"></canvas></div></div>
-          <div class="card full"><div class="card-title">🔬 Volume por hora × Espera média — correlação operacional</div><div class="chart"><canvas id="chartCorrVolEspera"></canvas></div></div>
-          <div class="card"><div class="card-title">🔬 CID × Tempo de permanência — top diagnósticos</div><div class="chart tall"><canvas id="chartCorrCidTempo"></canvas></div></div>
-          <div class="card"><div class="card-title">🔬 Médico × Perfil de complexidade</div><div class="chart tall"><canvas id="chartCorrMedRisco"></canvas></div></div>
-          <div class="card full"><div class="card-title">🔬 Retorno ≤72h × CID — diagnósticos com maior recidiva</div><div class="chart" style="height:300px"><canvas id="chartCorrRetCid"></canvas></div><div class="table-wrap" style="margin-top:12px"><table class="table" id="tableCorrRetCid"></table></div></div>
+          <div class="card full"><div class="card-title">Espera médico × Classificação de risco — distribuição por cor</div><div class="chart tall"><canvas id="chartCorrRisco" role="img" aria-label="Gráfico de barras: espera médico por classificação de risco"></canvas></div></div>
+          <div class="card full"><div class="card-title">Volume por hora × Espera média — correlação operacional</div><div class="chart"><canvas id="chartCorrVolEspera" role="img" aria-label="Gráfico: volume por hora versus espera média"></canvas></div></div>
+          <div class="card"><div class="card-title">CID × Tempo de permanência — top diagnósticos</div><div class="chart tall"><canvas id="chartCorrCidTempo" role="img" aria-label="Gráfico de barras: CID versus tempo de permanência"></canvas></div></div>
+          <div class="card"><div class="card-title">Médico × Perfil de complexidade</div><div class="chart tall"><canvas id="chartCorrMedRisco" role="img" aria-label="Gráfico de barras: médico versus perfil de complexidade"></canvas></div></div>
+          <div class="card full"><div class="card-title">Retorno ≤72h × CID — diagnósticos com maior recidiva</div><div class="chart" style="height:300px"><canvas id="chartCorrRetCid" role="img" aria-label="Gráfico: retorno 72h por CID"></canvas></div><div class="table-wrap" style="margin-top:12px"><table class="table" id="tableCorrRetCid"></table></div></div>
         </div>
       </section>
 
@@ -1985,20 +2525,20 @@
         <div class="page-header"><h1 class="page-title">Funil e Sazonalidade</h1><p class="page-desc">Completude do fluxo e padrões sazonais</p></div>
         <div class="grid" id="kpisFunil"></div>
         <div class="chart-grid">
-          <div class="card full"><div class="card-title">🔻 Funil de atendimento — completude do fluxo</div><div id="funnelChart" style="padding:8px 0"></div></div>
+          <div class="card full"><div class="card-title">Funil de atendimento — completude do fluxo</div><div id="funnelChart" style="padding:8px 0"></div></div>
           <div class="card full">
-            <div class="card-title">🔻 Sazonalidade — volume médio por dia da semana</div>
+            <div class="card-title">Sazonalidade — volume médio por dia da semana</div>
             <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
               <div style="flex:2;min-width:280px">
-                <div class="chart" style="height:220px"><canvas id="chartSazonLine"></canvas></div>
+                <div class="chart" style="height:220px"><canvas id="chartSazonLine" role="img" aria-label="Gráfico de linha: sazonalidade por dia da semana"></canvas></div>
               </div>
               <div style="flex:1;min-width:220px">
                 <div id="heatmapSazon" style="overflow-x:auto;padding:4px 0"></div>
               </div>
             </div>
           </div>
-          <div class="card"><div class="card-title">🔻 Índice de evasão estimada por mês</div><div class="chart"><canvas id="chartEvasao"></canvas></div></div>
-          <div class="card"><div class="card-title">🔻 Volume × Espera por dia da semana</div><div class="chart"><canvas id="chartDowEspera"></canvas></div></div>
+          <div class="card"><div class="card-title">Índice de evasão estimada por mês</div><div class="chart"><canvas id="chartEvasao" role="img" aria-label="Gráfico de barras: índice de evasão estimada por mês"></canvas></div></div>
+          <div class="card"><div class="card-title">Volume × Espera por dia da semana</div><div class="chart"><canvas id="chartDowEspera" role="img" aria-label="Gráfico: volume e espera por dia da semana"></canvas></div></div>
         </div>
       </section>
 
@@ -2019,7 +2559,7 @@
           <!-- Faixa etária — gráfico de barras horizontal -->
           <div class="card full">
             <div class="card-title">Distribuição por faixa etária</div>
-            <div class="chart tall"><canvas id="chartFaixaEtaria"></canvas></div>
+            <div class="chart tall"><canvas id="chartFaixaEtaria" role="img" aria-label="Gráfico de barras: distribuição por faixa etária"></canvas></div>
           </div>
 
           <!-- Sexo — card visual estilo infográfico -->
@@ -2031,19 +2571,19 @@
           <!-- Pirâmide etária por sexo (se disponível) -->
           <div class="card" id="cardPiramide">
             <div class="card-title">Faixa etária × sexo</div>
-            <div class="chart tall"><canvas id="chartPiramide"></canvas></div>
+            <div class="chart tall"><canvas id="chartPiramide" role="img" aria-label="Gráfico de barras: pirâmide etária por sexo"></canvas></div>
           </div>
 
           <!-- Faixa etária × risco Manchester -->
           <div class="card full">
             <div class="card-title">Classificação de risco por faixa etária</div>
-            <div class="chart"><canvas id="chartIdadeRisco"></canvas></div>
+            <div class="chart"><canvas id="chartIdadeRisco" role="img" aria-label="Gráfico de barras: classificação de risco por faixa etária"></canvas></div>
           </div>
 
           <!-- Evolução mensal por faixa -->
           <div class="card full">
             <div class="card-title">Evolução mensal — top faixas etárias</div>
-            <div class="chart"><canvas id="chartIdadeMes"></canvas></div>
+            <div class="chart"><canvas id="chartIdadeMes" role="img" aria-label="Gráfico de linha: evolução mensal das faixas etárias"></canvas></div>
           </div>
 
         </div>
@@ -2055,8 +2595,8 @@
         <div class="card full" style="margin-bottom:12px">
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <input class="field mono" id="searchPront" placeholder="Buscar prontuário ou nome…" style="flex:1;min-width:200px;padding:7px 11px;font-size:13px">
-            <button class="btn primary" id="btnBuscaPront">Buscar</button>
-            <button class="btn" id="btnProntTop">Top retornos</button>
+            <button type="button" class="btn primary" id="btnBuscaPront">Buscar</button>
+            <button type="button" class="btn" id="btnProntTop">Top retornos</button>
           </div>
         </div>
         <div id="pacienteResult"></div>
@@ -2067,7 +2607,7 @@
         <div class="page-header"><h1 class="page-title">Escala / Dimensionamento</h1><p class="page-desc">Déficit e superávit de cobertura médica por hora — base COFEN 543/2017</p></div>
         <div class="grid" id="kpisEscala"></div>
         <div class="chart-grid">
-          <div class="card full"><div class="card-title">Cobertura médica por hora — atendimentos vs. capacidade instalada</div><div class="chart"><canvas id="chartEscalaHora"></canvas></div></div>
+          <div class="card full"><div class="card-title">Cobertura médica por hora — atendimentos vs. capacidade instalada</div><div class="chart"><canvas id="chartEscalaHora" role="img" aria-label="Gráfico de barras: cobertura médica por hora"></canvas></div></div>
           <div class="card full"><div class="card-title">Déficit / Superávit estimado por hora</div><div class="table-wrap"><table class="table" id="tableEscala"></table></div></div>
         </div>
       </section>
@@ -2098,8 +2638,8 @@
                 <textarea class="field mono" id="anotTexto" rows="4" placeholder="Ex: Greve de 3 dias (dias 8-10). Redução de 40% no volume esperado." style="width:100%;resize:vertical;line-height:1.55"></textarea>
               </div>
               <div style="display:flex;gap:8px">
-                <button class="btn primary" id="btnSalvarAnot" style="flex:1">Salvar anotação</button>
-                <button class="btn" id="btnLimparAnot">Limpar</button>
+                <button type="button" class="btn primary" id="btnSalvarAnot" style="flex:1">Salvar anotação</button>
+                <button type="button" class="btn" id="btnLimparAnot">Limpar</button>
               </div>
             </div>
           </div>
@@ -2348,8 +2888,7 @@
     const shortName=n=>String(n||"").split(/\s+/).filter(Boolean).slice(0,2).join(" ");
     const meta=id=>Number($(id).value)||0;
 
-    Chart.defaults.font.family="'IBM Plex Mono',monospace";Chart.defaults.font.size=10.5;Chart.defaults.font.weight=400;
-    Chart.defaults.font.size=11;
+    Chart.defaults.font.family="'IBM Plex Mono',monospace";Chart.defaults.font.size=11;Chart.defaults.font.weight=400;
     Chart.defaults.color="#9ca3af";
     Chart.defaults.borderColor="rgba(255,255,255,.08)";
     const UC_KEY="upa_dash_unit_config";
@@ -2378,7 +2917,31 @@
     function gridColor(){return state.theme==="dark"?"rgba(255,255,255,.06)":"rgba(0,0,0,.07)"}
     function tickColor(){return state.theme==="dark"?"#7a8da3":"#66758a"}
     function axes(){return{x:{grid:{color:gridColor()},ticks:{color:tickColor()}},y:{grid:{color:gridColor()},ticks:{color:tickColor()}}}}
-    function chart(id,cfg){if(state.charts[id])state.charts[id].destroy();const el=$(id);if(!el)return;cfg.plugins=[...(cfg.plugins||[]),targetLinePlugin];state.charts[id]=new Chart(el,cfg)}
+    function chart(id,cfg){
+      if(state.charts[id])state.charts[id].destroy();
+      const el=$(id);if(!el)return;
+      // Verificar se todos os datasets estão vazios
+      const allEmpty=cfg.data&&cfg.data.datasets&&cfg.data.datasets.length>0&&
+        cfg.data.datasets.every(d=>!d.data||!d.data.some(v=>v!=null&&v!==0));
+      if(allEmpty){
+        // Remover canvas e mostrar estado vazio
+        const wrap=el.parentElement;
+        if(wrap&&!wrap.querySelector('.chart-empty-state')){
+          el.style.display='none';
+          const empty=document.createElement('div');
+          empty.className='chart-empty-state';
+          empty.innerHTML='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.3;margin-bottom:6px"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg><div>Sem dados para o período selecionado</div>';
+          wrap.appendChild(empty);
+        }
+        return;
+      }
+      // Restaurar canvas se estava oculto
+      el.style.display='';
+      const existingEmpty=el.parentElement&&el.parentElement.querySelector('.chart-empty-state');
+      if(existingEmpty)existingEmpty.remove();
+      cfg.plugins=[...(cfg.plugins||[]),targetLinePlugin];
+      state.charts[id]=new Chart(el,cfg);
+    }
     function destroyCharts(){Object.values(state.charts).forEach(c=>c.destroy());state.charts={}}
     let _progressStart = null;
     function setProgress(v,msg,detail){
@@ -2714,7 +3277,7 @@
           dh,dhAcol,dhAtend,dateKey:ymd(_dhAjL),ano:_dhAjL.getFullYear(),mes:_dhAjL.getMonth()+1,anoMes:monthKey(_dhAjL),hora:dh.getHours(),diaSem:_dhAjL.getDay(),turno:_turnoL,
           tEspTri:safeMinutes(parseDuration(p[16]),300),
           tDurTri:safeMinutes(parseDuration(p[17]),90),
-          tTotal:safeMinutes(parseDuration(p[20]),720),  // p[20]=recepcao_alta (era p[18])
+          tTotal:safeMinutes(parseDuration(p[20]),CONFIG.MAX_MINUTES),  // p[20]=recepcao_alta (era p[18])
           tConsulta:safeMinutes(parseDuration(p[19]),300),
           tEspMed
         });
@@ -2789,7 +3352,7 @@
           prof:String(val(row,idx.prof)||"").trim(),tipo:tipoRaw,evadido,
           idade:Number.parseFloat(String(val(row,idx.idade)).replace(",","."))||null,
           dh,dhAcol,dhAtend,dateKey:ymd(_da),ano:_da.getFullYear(),mes:_da.getMonth()+1,anoMes:monthKey(_da),hora:dh.getHours(),diaSem:_da.getDay(),turno:_t,
-          tEspTri,tDurTri:safeMinutes(parseDuration(val(row,idx.tDurTri)),90),tTotal:safeMinutes(parseDuration(val(row,idx.tTotal)),720),tConsulta:safeMinutes(parseDuration(val(row,idx.tConsulta)),300),tEspMed
+          tEspTri,tDurTri:safeMinutes(parseDuration(val(row,idx.tDurTri)),90),tTotal:safeMinutes(parseDuration(val(row,idx.tTotal)),CONFIG.MAX_MINUTES),tConsulta:safeMinutes(parseDuration(val(row,idx.tConsulta)),300),tEspMed
         });
       });
       if(addQuality)state.quality.push({type:"Histórico",total:rows.length-1,valid:data.length,invalid:issues.invalidDate,msg:`${issues.invalidDate} linhas sem data válida foram ignoradas.`});
@@ -2921,22 +3484,23 @@
       }catch(err){hideLoading();showToast("Erro ao ler triagem: "+err.message,"err");$("status").textContent="Erro: "+err.message;console.error(err)}
     }
     function updateTriBtn(){
-      const btn=$("triBtn");
-      if(state.triSource==="file"){
-        btn.textContent=`✓ Triagem: ${state.triRaw.length.toLocaleString("pt-BR")}`;
-        btn.className="btn ok";
-        btn.title="Dados da planilha específica de triagem (inclui nome do triador)";
-      } else if(state.triSource==="hist"){
-        btn.textContent=`~ Triagem: ${state.triRaw.length.toLocaleString("pt-BR")}`;
-        btn.className="btn";
-        btn.style.color="var(--wn)";btn.style.borderColor="rgba(245,200,66,.35)";btn.style.background="rgba(245,200,66,.07)";
-        btn.title="Dados derivados do histórico (sem nome do triador). Carregue a planilha de triagem para dados completos.";
-      } else {
-        btn.textContent="+ Triagem";
-        btn.className="btn";
-        btn.style.cssText="";
-        btn.title="";
+      // Atualizar status no menu dropdown
+      const statusEl=document.getElementById('triStatus');
+      if(statusEl){
+        if(state.triSource==="file"){
+          statusEl.textContent=state.triRaw.length.toLocaleString("pt-BR")+" reg.";
+          statusEl.className="upload-menu-status loaded";
+        } else if(state.triSource==="hist"){
+          statusEl.textContent="derivado";
+          statusEl.className="upload-menu-status loaded";
+          statusEl.style.background="rgba(245,158,11,.12)";
+          statusEl.style.color="var(--wn)";
+        } else {
+          statusEl.textContent="";statusEl.className="upload-menu-status";
+        }
       }
+      // Atualizar badge geral
+      try{updateUploadStatuses();}catch(e){}
     }
     async function loadCid(files){
       if(!files||!files.length)return;
@@ -3041,8 +3605,7 @@
         if(!rows.length)throw new Error('Nenhum procedimento válido encontrado.');
         state.procRaw=rows;
         state.files.proc=file.name;
-        const btn=$('procBtn');
-        if(btn){btn.textContent='Proced.: '+fmt(sum(rows,r=>r.qde));btn.classList.add('ok');}
+        const _pS=document.getElementById('procStatus');if(_pS){_pS.textContent=fmt(sum(rows,r=>r.qde))+' proc.';_pS.className='upload-menu-status loaded';}try{updateUploadStatuses();}catch(e){}
         showToast('Procedimentos carregados: '+fmt(sum(rows,r=>r.qde))+' registros de produção.','ok');
         hideLoading();
         markDirty();
@@ -3158,7 +3721,8 @@
     }
     function kpi(label,value,sub,color,trend="",cls="",formula=null){
       const fAttr=formula?` data-formula="${JSON.stringify(formula).replace(/"/g,'&quot;')}"`:'' ;
-      const infoBtn=formula?`<button class="kpi-info-btn" aria-label="Ver cálculo" onclick="toggleKpiInfo(this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></button>`:'';
+      const infoBtn=formula?`<button type="button" class="kpi-info-btn" aria-label="Ver cálculo" onclick="toggleKpiInfo(this)">
+<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></button>`:'';
       return`<div class="card kpi ${cls}"${fAttr} style="--k:${color}"><div class="kpi-stripe"></div>${infoBtn}<div class="k-label">${esc(label)}</div><div class="k-value">${esc(value)}</div><div class="k-sub">${sub}</div>${trend}<div class="kpi-formula-panel" hidden></div></div>`;
     }
     function toggleKpiInfo(btn){
@@ -3456,7 +4020,7 @@
       if(permEl){
         const comTotal=d.filter(r=>r.tTotal!=null);
         const obs4h =comTotal.filter(r=>r.tTotal>240);   // > 4h = observação provável
-        const obs12h=comTotal.filter(r=>r.tTotal>720);   // > 12h = longa permanência
+        const obs12h=comTotal.filter(r=>r.tTotal>CONFIG.MAX_MINUTES);   // > 12h = longa permanência
         const obs24h=comTotal.filter(r=>r.tTotal>1440);  // > 24h = alerta de regulação
         const pct4 =comTotal.length?(obs4h.length/comTotal.length*100).toFixed(1):0;
         const pct12=comTotal.length?(obs12h.length/comTotal.length*100).toFixed(1):0;
@@ -4246,7 +4810,7 @@
             value="${atVal}" placeholder="${atAuto}" title="Auto: ${atAuto}. Edite para sobrescrever."
             data-mes="${m}" data-field="atendidos" onchange="${onchg}">
           </td>
-          <td style="text-align:center">${hasOv?`<button onclick="delete state.recepOverride['${m}'];saveRecepcionados();renderRecepTable();if(state.triRaw.length)renderEvasao(state.triFilt);else if(state.raw.length)renderEvasao(state.filt);" style="background:none;border:none;cursor:pointer;color:var(--mut);font-size:13px;padding:2px 5px;border-radius:4px" title="Restaurar valores automáticos">↺</button>`:'<span style="color:var(--bdr2)">—</span>'}</td>
+          <td style="text-align:center">${hasOv?`<button type="button" onclick="delete state.recepOverride['${m}'];saveRecepcionados();renderRecepTable();if(state.triRaw.length)renderEvasao(state.triFilt);else if(state.raw.length)renderEvasao(state.filt);" style="background:none;border:none;cursor:pointer;color:var(--mut);font-size:13px;padding:2px 5px;border-radius:4px" title="Restaurar valores automáticos">↺</button>`:'<span style="color:var(--bdr2)">—</span>'}</td>
         </tr>`;
       }).join('');
     }
@@ -4290,6 +4854,8 @@
       const cidCount=group(d,r=>r.cid), top=Object.entries(cidCount).sort((a,b)=>b[1]-a[1]).slice(0,15).reverse();chart("chartCidTop",{type:"bar",data:{labels:top.map(([c])=>c),datasets:[{data:top.map(([,n])=>n),backgroundColor:"#06b6d4",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
       const semCid=Math.max(state.filt.length-att,0);chart("chartCidCoverage",{type:"bar",data:{labels:["Cobertura"],datasets:[{label:"Com CID",data:[att],backgroundColor:"#22c55e",borderRadius:3},{label:"Sem CID ou sem ID",data:[semCid],backgroundColor:"#334155",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.parsed.x)} (${pct(c.parsed.x,att+semCid)})`}}},scales:{x:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}},y:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}}}}});
       renderCidTable();
+      renderCidTrend();
+      renderCidNotificaveis();
     }
     function renderCidTable(){
       const q=norm($("searchCid").value), rows=state.cidFilt, count={};rows.forEach(r=>{const k=r.cid+"|"+r.desc;count[k]=(count[k]||0)+1});const top=Object.entries(count).sort((a,b)=>b[1]-a[1]).slice(0,150).map(([k,n],i)=>{const [cid,desc]=k.split("|");return{i:i+1,cid,desc,n,cap:cid[0]} }).filter(r=>!q||norm(r.cid+" "+r.desc).includes(q));
@@ -4588,8 +5154,6 @@
     }
 
     async function loadExamesPdf(file){
-      const btn=$("examesBtn");
-      if(btn)btn.textContent="Processando...";
       try{
         const lib=await loadPdfJs();
         const buf=await file.arrayBuffer();
@@ -4598,8 +5162,7 @@
         state.examesRaw=records;
         // Extrair meta do PDF (período e prestador capturados no parse)
         if(btn){
-          btn.textContent="Exames: "+fmt(records.length)+" guias";
-          btn.classList.add("ok");
+          const _eS=document.getElementById("examesStatus");if(_eS){_eS.textContent=fmt(records.length)+" guias";_eS.className="upload-menu-status loaded";}try{updateUploadStatuses();}catch(e){}
         }
         showToast("Exames carregados: "+fmt(records.length)+" guias","ok",3000);
         if(document.querySelector('.nav-item.active')?.dataset?.pane==="exames")renderExames();
@@ -4807,7 +5370,7 @@
       const el=$('fileName'); if(!el)return;
       // Mostra nome do arquivo + botão compacto de troca
       el.innerHTML=`<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1" title="${esc(name)}">${esc(name)}</span>`+
-        `<button onclick="$('histFileSwitch').click()" title="Trocar arquivo de histórico" aria-label="Trocar arquivo" `+
+        `<button type="button" onclick="$('histFileSwitch').click()" title="Trocar arquivo de histórico" aria-label="Trocar arquivo" `+
         `style="flex:none;background:none;border:none;cursor:pointer;padding:0 2px;opacity:.55;line-height:1;color:inherit" `+
         `onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity='.55'">`+
         `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">`+
@@ -5001,7 +5564,7 @@
       const toast = document.createElement('div');
       toast.className = `toast ${type}`;
       toast.setAttribute('role', 'alert');
-      toast.innerHTML = `<span class="toast-dot"></span><span style="flex:1">${esc(msg)}</span><button class="toast-dismiss" aria-label="Fechar notificação">✕</button>`;
+      toast.innerHTML = `<span class="toast-dot"></span><span style="flex:1">${esc(msg)}</span><button type="button" class="toast-dismiss" aria-label="Fechar notificação">✕</button>`;
       toast.querySelector('.toast-dismiss').onclick = () => dismissToast(toast);
       container.appendChild(toast);
       if (duration > 0) setTimeout(() => dismissToast(toast), duration);
@@ -5068,6 +5631,8 @@
     // ── Export filtered data as XLSX ─────────────────────────────
     function exportXLSX() {
       if (!state.filt.length) { showToast('Nenhum dado filtrado para exportar.', 'warn'); return; }
+      const _expBtn=$('exportBtn');
+      if(_expBtn){_expBtn.disabled=true;_expBtn.style.opacity='.5';_expBtn.style.cursor='wait';}
       try {
         showLoading('Gerando planilha...');
         setTimeout(() => {
@@ -5116,10 +5681,12 @@
           const fileName = `UPA_dados_${s ? s.toLocaleDateString('pt-BR').replace(/\//g,'-') : 'inicio'}_a_${e ? e.toLocaleDateString('pt-BR').replace(/\//g,'-') : 'fim'}.xlsx`;
           XLSX.writeFile(wb, fileName);
           hideLoading();
+          if(_expBtn){_expBtn.disabled=false;_expBtn.style.opacity='';_expBtn.style.cursor='';}
           showToast(`Planilha exportada com ${state.filt.length.toLocaleString('pt-BR')} atendimentos.`, 'ok');
         }, 50);
       } catch(err) {
         hideLoading();
+        if(_expBtn){_expBtn.disabled=false;_expBtn.style.opacity='';_expBtn.style.cursor='';}
         showToast('Erro ao exportar: ' + err.message, 'err');
       }
     }
@@ -6363,7 +6930,7 @@
             <td class="mono">${r.visitas}</td>
             <td class="mono erc">${r.rets}</td>
             <td class="mono">${r.ultima.toLocaleDateString('pt-BR')}</td>
-            <td><button class="btn" style="font-size:10px;padding:3px 8px" onclick="document.getElementById('searchPront').value='${esc(r.pront)}';buscaProntuario('${esc(r.pront)}')">Ver histórico</button></td>
+            <td><button type="button" class="btn" style="font-size:10px;padding:3px 8px" onclick="document.getElementById('searchPront').value='${esc(r.pront)}';buscaProntuario('${esc(r.pront)}')">Ver histórico</button></td>
           </tr>`).join('')}
           </tbody>
         </table></div></div>`;
@@ -6493,7 +7060,7 @@
             <span class="anot-cat ${a.cat}">${CAT_LABELS[a.cat]||a.cat}</span>
           </div>
           <div class="anot-texto">${esc(a.texto)}</div>
-          <button class="anot-del" onclick="deletarAnotacao(${i})" title="Remover">✕</button>
+          <button type="button" class="anot-del" onclick="deletarAnotacao(${i})" title="Remover">✕</button>
         </div>`).join('');
     }
 
@@ -6585,7 +7152,7 @@
       {
         id:'o02', tipo:'outlier', sev:'alta',
         label:'Tempo total > 12h (provável internação não registrada)',
-        fn: r => r.tTotal != null && r.tTotal > 720,
+        fn: r => r.tTotal != null && r.tTotal > CONFIG.MAX_MINUTES,
         motivo: r => `tTotal = ${Math.round(r.tTotal)} min (${(r.tTotal/60).toFixed(1)}h)`,
         campo:'tTotal'
       },
@@ -6732,8 +7299,8 @@
         { campo:'pront',        label:'Prontuário',           fn: r=>r.pront && String(r.pront).length>=2 && !/^0+$|^9+$/.test(String(r.pront)) },
         { campo:'cor',          label:'Classificação risco',  fn: r=>r.cor && r.cor!=='SEM CLASSIFICACAO' },
         { campo:'tEspTri',      label:'Espera triagem',       fn: r=>r.tEspTri!=null && r.tEspTri>=0 && r.tEspTri<360 },
-        { campo:'tEspMed',      label:'Espera médico',        fn: r=>r.tEspMed!=null && r.tEspMed>=0 && r.tEspMed<720 },
-        { campo:'tTotal',       label:'Tempo total',          fn: r=>r.tTotal!=null && r.tTotal>0 && r.tTotal<720 },
+        { campo:'tEspMed',      label:'Espera médico',        fn: r=>r.tEspMed!=null && r.tEspMed>=0 && r.tEspMed<CONFIG.MAX_MINUTES },
+        { campo:'tTotal',       label:'Tempo total',          fn: r=>r.tTotal!=null && r.tTotal>0 && r.tTotal<CONFIG.MAX_MINUTES },
         { campo:'dh_acolhimento',label:'Acolhimento',         fn: r=>r.dhAcol && !isNaN(r.dhAcol) },
         { campo:'dh_atendimento',label:'Atend. médico',       fn: r=>r.dhAtend && !isNaN(r.dhAtend) },
         { campo:'idade',        label:'Idade',                fn: r=>r.idade!=null && r.idade>=0 && r.idade<=120 },
@@ -7086,9 +7653,9 @@
       const sexoEl = $('sexoViz');
       if(!temSexo){
         sexoEl.innerHTML = `<div class="sexo-na">
-          <div style="font-size:28px;margin-bottom:8px;opacity:.4">◐</div>
-          Campo <strong>sexo</strong> não disponível na planilha.<br>
-          <span style="font-size:10px;opacity:.6">O sistema exporta apenas: prontuário, médico, classificação, tempos e idade.</span>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.35;margin:0 auto 8px;display:block"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Campo <strong>sexo</strong> não disponível no formato de exportação do Vivver.<br>
+          <span style="font-size:10px;opacity:.7;display:block;margin-top:6px;line-height:1.5">A inferência por nome tem precisão limitada e <strong>não deve ser usada para fins epidemiológicos ou clínicos</strong>. Use apenas como referência aproximada.</span>
         </div>`;
         // Ocultar pirâmide
         const cp=$('cardPiramide');
@@ -7230,9 +7797,28 @@
     // ════════════════════════════════════════════════════════════
     async function exportarPDF(){
       if(!state.filt.length){showToast('Carregue dados antes de exportar.','warn');return;}
+      const _pdfBtn=$('printBtn');
+      if(_pdfBtn){_pdfBtn.disabled=true;_pdfBtn.style.opacity='.5';_pdfBtn.style.cursor='wait';_pdfBtn.textContent='Gerando...';}
+      // Carregar bibliotecas sob demanda se ainda não estiverem disponíveis
       if(typeof html2canvas === 'undefined' || !window.jspdf){
-        showToast('Bibliotecas de PDF não carregadas. Aguarde alguns segundos.','warn');
-        return;
+        showToast('Carregando bibliotecas de PDF...','ok',2000);
+        await new Promise((resolve, reject) => {
+          let loaded = 0;
+          const check = () => { if(++loaded === 2) resolve(); };
+          const err = () => reject(new Error('Falha ao carregar bibliotecas de PDF'));
+          if(typeof html2canvas === 'undefined'){
+            const s1 = document.createElement('script');
+            s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            s1.onload = check; s1.onerror = err;
+            document.head.appendChild(s1);
+          } else { check(); }
+          if(!window.jspdf){
+            const s2 = document.createElement('script');
+            s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+            s2.onload = check; s2.onerror = err;
+            document.head.appendChild(s2);
+          } else { check(); }
+        });
       }
       showLoading('Gerando PDF — aguarde...');
       try{
@@ -7336,9 +7922,11 @@
         pdf.save(`VIDA_relatorio_${periodo}.pdf`);
         setProgress(100, 'PDF gerado');
         hideLoading();
+        if(_pdfBtn){_pdfBtn.disabled=false;_pdfBtn.style.opacity='';_pdfBtn.style.cursor='';_pdfBtn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF';}
         showToast('PDF exportado com sucesso.','ok');
       }catch(err){
         hideLoading();
+        if(_pdfBtn){_pdfBtn.disabled=false;_pdfBtn.style.opacity='';_pdfBtn.style.cursor='';_pdfBtn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF';}
         showToast('Erro ao gerar PDF: '+err.message,'err');
         console.error(err);
       }
@@ -7559,8 +8147,7 @@
         // CID
         if(cidRows.length){
           state.cidRaw = cidRows;
-          const cidBtn = $('cidBtn');
-          if(cidBtn){ cidBtn.textContent = 'CID: ' + cidRows.length.toLocaleString('pt-BR'); cidBtn.classList.add('ok'); }
+          const _cAS=document.getElementById('cidStatus');if(_cAS){_cAS.textContent=cidRows.length.toLocaleString('pt-BR')+' reg.';_cAS.className='upload-menu-status loaded';}try{updateUploadStatuses();}catch(e){}
         }
 
         setupDates();
@@ -7607,23 +8194,63 @@
     }
 
     // ── Limpar banco — confirmação dupla ────────────────────
-    async function limparBanco(){
-      const s = await VidaDB.stats();
-      const total = s.atendimentos + s.cid + s.triagem;
-      if(total === 0){
-        showToast('Banco já está vazio.','warn');
-        return;
-      }
-      if(!confirm(`Tem certeza? Isso vai apagar ${total.toLocaleString('pt-BR')} registros do banco local.\n\nEssa ação não pode ser desfeita.`))return;
-      showLoading('Limpando banco...');
-      try {
-        await VidaDB.clearAll();
-        location.reload();
-      } catch(e){
-        hideLoading();
-        showToast('Erro ao limpar banco: '+e.message,'err');
-      }
+    function toggleDangerZone(){
+      const zone=document.getElementById('dangerZone');
+      const header=zone.querySelector('.danger-zone-header');
+      const isOpen=zone.classList.toggle('open');
+      header.setAttribute('aria-expanded',isOpen);
+      if(isOpen) atualizarDangerStats();
     }
+    async function atualizarDangerStats(){
+      const el=document.getElementById('dangerZoneStats');
+      if(!el)return;
+      try{
+        const s=await VidaDB.stats();
+        const total=s.atendimentos+s.cid+s.triagem;
+        if(total===0){el.innerHTML='<span>Banco vazio — nenhum dado para apagar.</span>';return;}
+        el.innerHTML=`<div><span>Atendimentos </span><strong>${s.atendimentos.toLocaleString('pt-BR')}</strong></div><div><span>Triagem </span><strong>${s.triagem.toLocaleString('pt-BR')}</strong></div><div><span>CID </span><strong>${s.cid.toLocaleString('pt-BR')}</strong></div><div><span>Total </span><strong style="color:var(--er)">${total.toLocaleString('pt-BR')} registros</strong></div>`;
+      }catch(e){el.innerHTML='<span style="color:var(--mut)">Erro ao ler banco.</span>';}
+    }
+    function abrirConfirmacaoLimpeza(){
+      const overlay=document.getElementById('dangerConfirmOverlay');
+      if(!overlay)return;
+      overlay.classList.add('open');
+      overlay.onclick=e=>{if(e.target===overlay)fecharConfirmacaoLimpeza()};
+      setTimeout(()=>overlay.querySelector('.btn')?.focus(),50);
+    }
+    function fecharConfirmacaoLimpeza(){
+      const overlay=document.getElementById('dangerConfirmOverlay');
+      if(overlay)overlay.classList.remove('open');
+    }
+    let _undoTimer=null,_undoCancelled=false;
+    function executarLimpeza(){
+      fecharConfirmacaoLimpeza();
+      _undoCancelled=false;
+      const toast=document.getElementById('undoToast');
+      const countdown=document.getElementById('undoCountdown');
+      const bar=document.getElementById('undoBar');
+      if(!toast)return;
+      toast.classList.add('visible');
+      bar.style.transition='none';bar.style.width='100%';
+      requestAnimationFrame(()=>{bar.style.transition='width 5s linear';bar.style.width='0%'});
+      let n=5;if(countdown)countdown.textContent=n;
+      _undoTimer=setInterval(()=>{
+        n--;if(countdown)countdown.textContent=n;
+        if(n<=0){clearInterval(_undoTimer);toast.classList.remove('visible');if(!_undoCancelled)_confirmarLimpezaFinal();}
+      },1000);
+    }
+    function desfazerLimpeza(){
+      _undoCancelled=true;clearInterval(_undoTimer);
+      const toast=document.getElementById('undoToast');
+      if(toast)toast.classList.remove('visible');
+      showToast('Limpeza cancelada.','ok',2500);
+    }
+    async function _confirmarLimpezaFinal(){
+      showLoading('Limpando banco...');
+      try{await VidaDB.clearAll();location.reload();}
+      catch(e){hideLoading();showToast('Erro ao limpar banco: '+e.message,'err');}
+    }
+    async function limparBanco(){executarLimpeza();}
 
     // ── Sidebar: indicador ativo refinado ────────────────────
     function updateNavIndicators(){
@@ -7738,13 +8365,625 @@
       try{refreshDbStats();}catch(e){console.warn("DB stats:",e)}
       autoLoadFromDB().catch(e=>console.warn('[VIDA] autoLoad erro:', e));
     });
+  
+    // ── SIDEBAR COLAPSÁVEL ──────────────────────────────────────────
+    (function initSidebarCollapse(){
+      const COLLAPSE_KEY='vida_sidebar_collapse_v1';
+      function loadState(){try{return JSON.parse(localStorage.getItem(COLLAPSE_KEY)||'{}')}catch{return{}}}
+      function saveState(s){try{localStorage.setItem(COLLAPSE_KEY,JSON.stringify(s))}catch{}}
+      function getGroups(){
+        const sidebar=document.querySelector('.sidebar');if(!sidebar)return[];
+        const children=[...sidebar.children],groups=[];let cur=null;
+        children.forEach(el=>{
+          if(el.classList.contains('nav-group')){cur={label:el,items:[],divider:null};groups.push(cur);}
+          else if(cur){
+            if(el.classList.contains('nav-divider')){cur.divider=el;cur=null;}
+            else if(el.classList.contains('nav-item'))cur.items.push(el);
+          }
+        });
+        return groups;
+      }
+      function applyCollapse(group,collapsed,animate){
+        const {label,items,divider}=group;
+        label.classList.toggle('collapsed',collapsed);
+        items.forEach((item,i)=>{
+          if(collapsed){item.classList.add('group-collapsed');item.classList.remove('group-expanding');}
+          else{
+            item.classList.remove('group-collapsed');
+            if(animate){
+              item.classList.add('group-expanding');
+              item.style.animationDelay=(i*25)+'ms';
+              item.addEventListener('animationend',()=>item.classList.remove('group-expanding'),{once:true});
+            }
+          }
+        });
+        if(divider)divider.classList.toggle('group-collapsed',collapsed);
+        const count=label.querySelector('.nav-group-count');
+        if(count)count.textContent=items.length;
+      }
+      function toggleGroup(group){
+        const newCollapsed=!group.label.classList.contains('collapsed');
+        applyCollapse(group,newCollapsed,!newCollapsed);
+        const state=loadState();
+        const key=group.label.textContent.trim().replace(/[^a-z]/gi,'').toLowerCase();
+        state[key]=newCollapsed;saveState(state);
+        group.label.setAttribute('aria-expanded',newCollapsed?'false':'true');
+      }
+      function ensureActiveOpen(groups){
+        const active=document.querySelector('.nav-item.active');if(!active)return;
+        const group=groups.find(g=>g.items.includes(active));
+        if(group&&group.label.classList.contains('collapsed')){
+          applyCollapse(group,false,false);
+          const state=loadState();
+          const key=group.label.textContent.trim().replace(/[^a-z]/gi,'').toLowerCase();
+          state[key]=false;saveState(state);
+        }
+      }
+      function init(){
+        const groups=getGroups(),savedState=loadState();
+        groups.forEach(group=>{
+          const label=group.label;
+          const key=label.textContent.trim().replace(/[^a-z]/gi,'').toLowerCase();
+          if(!label.querySelector('.nav-group-chev')){
+            const chev=document.createElement('span');chev.className='nav-group-chev';
+            chev.textContent='▾';chev.setAttribute('aria-hidden','true');label.appendChild(chev);
+          }
+          if(!label.querySelector('.nav-group-count')){
+            const count=document.createElement('span');count.className='nav-group-count';
+            count.setAttribute('aria-hidden','true');
+            label.insertBefore(count,label.querySelector('.nav-group-chev'));
+          }
+          label.setAttribute('role','button');label.setAttribute('tabindex','0');
+          const collapsed=savedState[key]===true;
+          applyCollapse(group,collapsed,false);
+          label.setAttribute('aria-expanded',collapsed?'false':'true');
+          label.addEventListener('click',()=>toggleGroup(group));
+          label.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();label.click();}});
+        });
+        ensureActiveOpen(groups);
+        document.querySelectorAll('.nav-item[data-pane]').forEach(item=>{
+          item.addEventListener('click',()=>setTimeout(()=>ensureActiveOpen(groups),0));
+        });
+      }
+      if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+      else init();
+    })();
+
+    // ── SKELETON HELPERS ────────────────────────────────────────────
+    function showKpiSkeletons(containerId,count=4){
+      const el=document.getElementById(containerId);if(!el)return;
+      const grid=document.createElement('div');grid.className='skeleton-kpi-grid';
+      for(let i=0;i<count;i++)grid.innerHTML+=`<div class="skeleton-kpi"><div class="skeleton s-label"></div><div class="skeleton s-value"></div><div class="skeleton s-sub"></div></div>`;
+      el.innerHTML='';el.appendChild(grid);
+    }
+
+  
+    // ── UPLOAD DROPDOWN ─────────────────────────────────────────────
+    function toggleUploadMenu(){
+      const dd=document.getElementById('uploadDropdown');
+      if(!dd)return;
+      const isOpen=dd.classList.toggle('open');
+      const btn=document.getElementById('uploadMenuBtn');
+      if(btn)btn.setAttribute('aria-expanded',isOpen);
+      if(isOpen){
+        // Fechar ao clicar fora
+        setTimeout(()=>{
+          document.addEventListener('click',function closeMenu(e){
+            if(!dd.contains(e.target)){dd.classList.remove('open');if(btn)btn.setAttribute('aria-expanded','false');}
+            document.removeEventListener('click',closeMenu);
+          });
+        },0);
+        // Atualizar status dos itens
+        updateUploadStatuses();
+      }
+    }
+    function updateUploadStatuses(){
+      const statuses={
+        triStatus: state.triSource==='file'?`${state.triRaw.length.toLocaleString('pt-BR')} reg.`:(state.triSource==='hist'?'derivado':''),
+        cidStatus: state.cidRaw.length?`${state.cidRaw.length.toLocaleString('pt-BR')} reg.`:'',
+        procStatus: state.procRaw.length?`${state.procRaw.length.toLocaleString('pt-BR')} proc.`:'',
+        examesStatus: state.examesRaw.length?`${state.examesRaw.length.toLocaleString('pt-BR')} guias`:'',
+      };
+      Object.entries(statuses).forEach(([id,text])=>{
+        const el=document.getElementById(id);
+        if(!el)return;
+        el.textContent=text;
+        el.className='upload-menu-status'+(text?' loaded':'');
+      });
+      // Badge geral
+      const loaded=[state.triSource==='file',state.cidRaw.length>0,state.procRaw.length>0,state.examesRaw.length>0].filter(Boolean).length;
+      const badge=document.getElementById('uploadBadge');
+      if(badge){badge.textContent=loaded+'/4';badge.style.display=loaded>0?'inline':'none';}
+    }
+    // Chamar updateUploadStatuses sempre que dados forem carregados
+    // (hook nos eventos existentes — chamada no final de loadTri, loadCid, etc.)
+    const _origUpdateTriBtn=updateTriBtn;
+    updateTriBtn=function(){_origUpdateTriBtn();try{updateUploadStatuses();}catch(e){}};
+
+    // ── SKELETON NO AUTOLOAD ─────────────────────────────────────────
+    // Patch do autoLoadFromDB para mostrar skeleton
+    const _origAutoLoad=autoLoadFromDB;
+    autoLoadFromDB=async function(){
+      // Mostrar skeletons antes de carregar
+      try{
+        const s=await VidaDB.stats();
+        if(s.atendimentos>0){
+          showKpiSkeletons('kpisGeral',4);
+        }
+      }catch(e){}
+      return _origAutoLoad.apply(this,arguments);
+    };
+
+  
+    // ── TENDÊNCIA SAZONAL CID ────────────────────────────────────────────
+
+    // Estado do filtro de tendência
+    let _trendFilter = 'all';
+
+    function filterCidTrend(type, btn){
+      _trendFilter = type;
+      document.querySelectorAll('#cidTrendFilters .trend-filter-btn').forEach(b => b.classList.remove('active'));
+      if(btn) btn.classList.add('active');
+      renderCidTrendAlerts(window._lastTrendAlerts || []);
+    }
+
+    function renderCidTrend(){
+      const d = state.cidFilt;
+      if(!d || !d.length){
+        const el = document.getElementById('cidTrendAlerts');
+        if(el) el.innerHTML = '<div class="trend-empty-alert">Carregue dados de CID para analisar tendências.</div>';
+        return;
+      }
+
+      // Parâmetros configuráveis
+      const windowSize = parseInt(document.getElementById('trendWindow')?.value || '4');
+      const threshold  = parseFloat(document.getElementById('trendThreshold')?.value || '2');
+
+      // ── 1. Agrupar contagens por CID por mês ──────────────────────────
+      const byMonth = {};  // { 'YYYY-MM': { 'CID': { count, desc } } }
+      d.forEach(r => {
+        const m = r.anoMes || r.dateKey?.substring(0,7);
+        if(!m) return;
+        if(!byMonth[m]) byMonth[m] = {};
+        if(!byMonth[m][r.cid]) byMonth[m][r.cid] = { count: 0, desc: r.desc || r.cid };
+        byMonth[m][r.cid].count++;
+      });
+
+      const months = Object.keys(byMonth).sort();
+      if(months.length < 3){
+        const el = document.getElementById('cidTrendAlerts');
+        if(el) el.innerHTML = '<div class="trend-empty-alert">São necessários ao menos 3 meses de dados para análise de tendência.</div>';
+        const note = document.getElementById('cidTrendNote');
+        if(note) note.textContent = 'Dados insuficientes para análise. Importe pelo menos 3 meses de CID.';
+        return;
+      }
+
+      // ── 2. Para cada CID, calcular baseline (média dos meses anteriores)
+      //       e comparar com o mês mais recente ──────────────────────────
+      const lastMonth  = months[months.length - 1];
+      const baseMonths = months.slice(
+        Math.max(0, months.length - 1 - windowSize),
+        months.length - 1
+      );
+
+      // Coletar todos os CIDs que aparecem no mês mais recente
+      const cidLastMonth = byMonth[lastMonth] || {};
+      const alerts = [];
+
+      // Total de registros por mês (para normalização)
+      const totalByMonth = {};
+      months.forEach(m => {
+        totalByMonth[m] = Object.values(byMonth[m]).reduce((s, v) => s + v.count, 0);
+      });
+
+      Object.entries(cidLastMonth).forEach(([cid, {count, desc}]) => {
+        // Taxa no mês atual (por 1000 registros, para normalizar volume)
+        const totalLast = totalByMonth[lastMonth] || 1;
+        const rateLast = count / totalLast;
+
+        // Calcular baseline: média das taxas nos meses da janela
+        const baseRates = baseMonths
+          .map(m => ((byMonth[m]?.[cid]?.count || 0) / (totalByMonth[m] || 1)))
+          .filter(r => r > 0);
+
+        // CID precisa ter aparecido em pelo menos metade da janela para ter baseline confiável
+        if(baseRates.length < Math.max(1, Math.floor(baseMonths.length / 2))) return;
+
+        const baseline = baseRates.reduce((s, r) => s + r, 0) / baseRates.length;
+        if(baseline === 0) return;
+
+        const ratio = rateLast / baseline;  // >1 = aumento, <1 = queda
+        const pctChange = Math.round((ratio - 1) * 100);
+        const absChange = count - Math.round(baseline * totalLast);
+
+        // Histórico mensal para sparkline (últimos windowSize+1 meses)
+        const sparkMonths = months.slice(Math.max(0, months.length - windowSize - 1));
+        const sparkData = sparkMonths.map(m => byMonth[m]?.[cid]?.count || 0);
+
+        // Classificar
+        let direction, label, confidence;
+        if(ratio >= threshold){
+          direction = 'rising';
+          label = `+${pctChange}%`;
+          confidence = baseRates.length >= windowSize ? 'alta' : 'moderada';
+        } else if(ratio <= 1 / threshold){
+          direction = 'falling';
+          label = `${pctChange}%`;
+          confidence = baseRates.length >= windowSize ? 'alta' : 'moderada';
+        } else {
+          return; // Dentro do limiar — não alertar
+        }
+
+        // Confiança: penalizar se baseline veio de poucos meses
+        alerts.push({
+          cid, desc, direction, label, pctChange, absChange,
+          countLast: count, baseline: Math.round(baseline * totalLast),
+          confidence, sparkData, sparkMonths,
+          lastMonth, ratio
+        });
+      });
+
+      // Verificar também CIDs que CAÍRAM para zero (sumiram)
+      const allCidsInBase = new Set(baseMonths.flatMap(m => Object.keys(byMonth[m] || {})));
+      allCidsInBase.forEach(cid => {
+        if(cidLastMonth[cid]) return; // já foi processado acima
+        const baseRates = baseMonths
+          .map(m => ((byMonth[m]?.[cid]?.count || 0) / (totalByMonth[m] || 1)))
+          .filter(r => r > 0);
+        if(baseRates.length < Math.ceil(baseMonths.length / 2)) return;
+        const baseline = baseRates.reduce((s,r)=>s+r,0)/baseRates.length;
+        if(baseline === 0) return;
+        const avgCount = Math.round(baseline * (totalByMonth[lastMonth]||1));
+        if(avgCount < 3) return; // muito raro — ignorar
+        const desc = baseMonths.map(m => byMonth[m]?.[cid]?.desc).find(Boolean) || cid;
+        const sparkMonths = months.slice(Math.max(0, months.length - windowSize - 1));
+        const sparkData = sparkMonths.map(m => byMonth[m]?.[cid]?.count || 0);
+        alerts.push({
+          cid, desc, direction:'falling', label:'-100%', pctChange:-100,
+          absChange: -avgCount, countLast:0, baseline:avgCount,
+          confidence:'moderada', sparkData, sparkMonths,
+          lastMonth, ratio:0
+        });
+      });
+
+      // Ordenar: maiores variações absolutas primeiro, depois por ratio
+      alerts.sort((a,b) => Math.abs(b.pctChange) - Math.abs(a.pctChange));
+
+      // Guardar para re-render pelo filtro sem recalcular
+      window._lastTrendAlerts = alerts;
+
+      // Atualizar nota explicativa
+      const note = document.getElementById('cidTrendNote');
+      if(note){
+        const rising  = alerts.filter(a => a.direction==='rising').length;
+        const falling = alerts.filter(a => a.direction==='falling').length;
+        const refLabel = monthLabel(lastMonth);
+        note.innerHTML = `Comparando <strong>${refLabel}</strong> com a média dos <strong>${baseMonths.length} meses</strong> anteriores. 
+          Limiar: variação acima de <strong>${Math.round((threshold-1)*100)}%</strong> da média.
+          ${rising ? `<span style="color:#ef4444;font-weight:600">${rising} CID${rising>1?'s':''} em alta</span>` : ''}
+          ${rising && falling ? ' · ' : ''}
+          ${falling ? `<span style="color:#22c55e;font-weight:600">${falling} CID${falling>1?'s':''} em queda</span>` : ''}
+          ${!rising && !falling ? '<span style="color:var(--mut)">Nenhuma variação significativa encontrada.</span>' : ''}`;
+      }
+
+      renderCidTrendAlerts(alerts);
+    }
+
+    function renderCidTrendAlerts(alerts){
+      const el = document.getElementById('cidTrendAlerts');
+      if(!el) return;
+
+      const filtered = _trendFilter === 'all'
+        ? alerts
+        : alerts.filter(a => a.direction === _trendFilter);
+
+      if(!filtered.length){
+        el.innerHTML = '<div class="trend-empty-alert">Nenhum alerta para o filtro selecionado no período.</div>';
+        return;
+      }
+
+      el.innerHTML = filtered.map(a => {
+        // Sparkline
+        const max = Math.max(...a.sparkData, 1);
+        const bars = a.sparkData.map((v, i) => {
+          const isLast = i === a.sparkData.length - 1;
+          const h = Math.round((v / max) * 28) + 4;
+          const color = isLast
+            ? (a.direction==='rising' ? '#ef4444' : '#22c55e')
+            : 'var(--bdr2)';
+          return `<div class="trend-bar" style="height:${h}px;background:${color};opacity:${isLast?1:0.6}"></div>`;
+        }).join('');
+
+        const badgeClass = a.direction === 'rising' ? 'badge-rising' : 'badge-falling';
+        const dirLabel   = a.direction === 'rising' ? 'Alta' : 'Queda';
+        const absLabel   = a.absChange > 0 ? `+${a.absChange} casos` : `${a.absChange} casos`;
+
+        return `<div class="trend-alert ${a.direction}" role="article" aria-label="Alerta CID ${a.cid}: ${dirLabel}">
+          <div class="trend-alert-header">
+            <span class="trend-alert-badge ${badgeClass}">${dirLabel} ${a.label}</span>
+            <span class="trend-alert-cid">${esc(a.cid)}</span>
+          </div>
+          <div class="trend-alert-desc">${esc(a.desc)}</div>
+          <div class="trend-sparkline" role="img" aria-label="Sparkline de tendência do CID ${a.cid}">${bars}</div>
+          <div class="trend-alert-meta">
+            <span>${monthLabel(a.lastMonth)}: <strong style="color:var(--txt)">${a.countLast} casos</strong></span>
+            <span>Média anterior: <strong style="color:var(--txt)">${a.baseline} casos</strong></span>
+            <span style="opacity:.7">${absLabel} · conf. ${a.confidence}</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+  
+    // ── DOENÇAS DE NOTIFICAÇÃO COMPULSÓRIA ─────────────────────────────
+
+    const DOENCAS_NOTIFICAVEIS = {
+      "Sarampo":                  {cids:["B05","B050","B051","B052","B053","B054","B058","B059"],grupo:"Imunoprevenível"},
+      "Rubéola":                  {cids:["B06","B060","B068","B069","P350"],grupo:"Imunoprevenível"},
+      "Coqueluche":               {cids:["A37","A370","A371","A378","A379"],grupo:"Imunoprevenível"},
+      "Difteria":                 {cids:["A36","A360","A361","A362","A363","A368","A369"],grupo:"Imunoprevenível"},
+      "Tétano neonatal":          {cids:["A33"],grupo:"Imunoprevenível"},
+      "Tétano acidental":         {cids:["A35"],grupo:"Imunoprevenível"},
+      "Poliomielite":             {cids:["A80","A800","A801","A802","A803","A809"],grupo:"Imunoprevenível"},
+      "Varíola":                  {cids:["B03"],grupo:"Imunoprevenível"},
+      "Febre Amarela":            {cids:["A95","A950","A951","A959"],grupo:"Imunoprevenível"},
+      "Meningite Meningocócica":  {cids:["A39","A390","A391","A392","A393","A394","A395","A398","A399"],grupo:"Neurológica"},
+      "Meningite (outras)":       {cids:["G00","G001","G002","G003","G008","G009","G01","G02","G03","G030","G031","G032","G038","G039"],grupo:"Neurológica"},
+      "Dengue":                   {cids:["A90","A91","A97","A970","A971","A972"],grupo:"Arbovirose"},
+      "Zika":                     {cids:["A928"],grupo:"Arbovirose"},
+      "Chikungunya":              {cids:["A929"],grupo:"Arbovirose"},
+      "Febre do Nilo Ocidental":  {cids:["A923"],grupo:"Arbovirose"},
+      "Malária":                  {cids:["B50","B51","B52","B53","B54"],grupo:"Parasitária"},
+      "Influenza (grave)":        {cids:["J09","J10","J100","J101","J108","J11","J110","J111","J118"],grupo:"Respiratória"},
+      "COVID-19":                 {cids:["U07","U071","U072","U099","U109"],grupo:"Respiratória"},
+      "SRAG":                     {cids:["J22","J80","J96","J960","J961","J969"],grupo:"Respiratória"},
+      "Tuberculose":              {cids:["A15","A16","A17","A18","A19"],grupo:"Respiratória"},
+      "Hanseníase":               {cids:["A30","A300","A301","A302","A303","A304","A305","A308","A309"],grupo:"Respiratória"},
+      "Cólera":                   {cids:["A00","A000","A001","A009"],grupo:"Entérica"},
+      "Febre Tifoide":            {cids:["A01","A010","A011","A012","A013","A014"],grupo:"Entérica"},
+      "Hepatite A":               {cids:["B15","B150","B159"],grupo:"Hepatite"},
+      "Hepatite B":               {cids:["B16","B160","B161","B162","B169","B180","B181"],grupo:"Hepatite"},
+      "Hepatite C":               {cids:["B17","B171","B182"],grupo:"Hepatite"},
+      "Hepatite D":               {cids:["B172","B183"],grupo:"Hepatite"},
+      "Hepatite E":               {cids:["B172"],grupo:"Hepatite"},
+      "Botulismo":                {cids:["A05","A050"],grupo:"Entérica"},
+      "Intoxicação Exógena":      {cids:["T36","T37","T38","T39","T40","T41","T42","T43","T44","T45","T46","T47","T48","T49","T50","T51","T52","T53","T54","T55","T56","T57","T58","T59","T60","T61","T62","T63","T64","T65"],grupo:"Intoxicação"},
+      "Leishmaniose Visceral":    {cids:["B55","B550"],grupo:"Zoonose"},
+      "Leishmaniose Tegumentar":  {cids:["B55","B551","B552"],grupo:"Zoonose"},
+      "Esquistossomose":          {cids:["B65","B650","B651","B652","B653","B658","B659"],grupo:"Parasitária"},
+      "Doença de Chagas (aguda)":{cids:["B57","B570","B571"],grupo:"Parasitária"},
+      "Raiva Humana":             {cids:["A82","A820","A821","A829"],grupo:"Zoonose"},
+      "Leptospirose":             {cids:["A27","A270","A278","A279"],grupo:"Zoonose"},
+      "Hantavirose":              {cids:["A98","A984"],grupo:"Zoonose"},
+      "HIV/AIDS":                 {cids:["B20","B21","B22","B23","B24","Z21"],grupo:"IST"},
+      "Sífilis adquirida":        {cids:["A51","A52","A53"],grupo:"IST"},
+      "Sífilis em gestante":      {cids:["A50","A51","A52","A53"],grupo:"IST"},
+      "Sífilis congênita":        {cids:["A50","A500","A501","A502","A503","A504","A505","A506","A507"],grupo:"IST"},
+      "Gonorreia":                {cids:["A54","A540","A541","A542","A543","A544","A545","A546","A548","A549"],grupo:"IST"},
+      "Acidente por animal peçonhento":{cids:["T63","T630","T631","T632","T633","T634","T638","T639","X20","X21","X22","X23","X24","X25","X26","X27","X28","X29"],grupo:"Acidente"},
+      "Violência doméstica/sexual":{cids:["T74","T740","T741","T742","T743","T748","T749","Y05","Y06","Y07"],grupo:"Violência"},
+      "Tentativa de suicídio":    {cids:["X60","X61","X62","X63","X64","X65","X66","X67","X68","X69","X70","X71","X72","X73","X74","X75","X76","X77","X78","X79","X80","X81","X82","X83","X84"],grupo:"Violência"},
+    };
+
+    let _notifGrupoAtivo = 'Todos';
+
+    function renderCidNotificaveis(){
+      const d = state.cidFilt;
+      if(!d || !d.length){
+        const note = document.getElementById('notifPrazoNote');
+        if(note) note.innerHTML = 'Carregue dados de CID para verificar doenças notificáveis.';
+        return;
+      }
+
+      const periodo = document.getElementById('notifPeriodo')?.value || 'all';
+
+      // Filtrar por período se necessário
+      let dados = d;
+      if(periodo === 'last'){
+        const meses = [...new Set(d.map(r=>r.anoMes).filter(Boolean))].sort();
+        const ultimo = meses[meses.length-1];
+        dados = d.filter(r=>r.anoMes===ultimo);
+      }
+
+      // Data de hoje para calcular "últimos 7 dias"
+      const hoje = new Date();
+      const seteDias = new Date(hoje); seteDias.setDate(seteDias.getDate()-7);
+
+      // Construir índice de CID → casos
+      // Para cada doença notificável, varrer os dados e encontrar matches
+      const resultados = [];
+      let totalCasos = 0, totalPacientes = new Set(), totalUltSemana = 0;
+
+      Object.entries(DOENCAS_NOTIFICAVEIS).forEach(([nome, {cids, grupo}]) => {
+        // Match: CID do registro começa com qualquer um dos prefixos da lista
+        const matches = dados.filter(r => {
+          const c = (r.cid||'').toUpperCase();
+          return cids.some(prefix => c === prefix || c.startsWith(prefix));
+        });
+
+        if(!matches.length){
+          resultados.push({nome, grupo, cids, count:0, pacientes:[], ultSemana:0, meses:{}});
+          return;
+        }
+
+        // Agrupar por mês para sparkline e tendência
+        const meses = {};
+        matches.forEach(r => {
+          const m = r.anoMes || r.dateKey?.substring(0,7) || '?';
+          meses[m] = (meses[m]||0)+1;
+          if(r.idAtend) totalPacientes.add(r.idAtend);
+        });
+
+        // Casos últimos 7 dias (usa dateKey se disponível)
+        const ultSemana = matches.filter(r => {
+          if(!r.dh && !r.dateKey) return false;
+          const dt = r.dh || (r.dateKey ? new Date(r.dateKey) : null);
+          return dt && dt >= seteDias;
+        }).length;
+
+        // CIDs encontrados nos dados (não todos os prefixos, só os reais)
+        const cidsEncontrados = [...new Set(matches.map(r=>r.cid))];
+
+        // Médicos envolvidos
+        const medicos = [...new Set(matches.map(r=>r.medico).filter(Boolean))];
+
+        resultados.push({
+          nome, grupo, cids, cidsEncontrados,
+          count:matches.length, pacientes: [...new Set(matches.map(r=>r.idAtend||r.desc))],
+          ultSemana, meses, medicos,
+          detalhes: matches.slice(0,5).map(r=>({
+            cid:r.cid, desc:r.desc, data:r.dateKey||r.anoMes||'?', medico:r.medico||'?'
+          }))
+        });
+        totalCasos += matches.length;
+        totalUltSemana += ultSemana;
+      });
+
+      const comCasos = resultados.filter(r=>r.count>0);
+
+      // Atualizar summary bar
+      document.getElementById('notifSummaryBar').style.display = 'flex';
+      document.getElementById('notifTotalCasos').textContent    = fmt(totalCasos);
+      document.getElementById('notifTotalDoencas').textContent  = fmt(comCasos.length);
+      document.getElementById('notifTotalPacientes').textContent= fmt(totalPacientes.size);
+      document.getElementById('notifUltimaSemana').textContent  = fmt(totalUltSemana);
+
+      // Nota de prazo
+      const note = document.getElementById('notifPrazoNote');
+      if(note){
+        if(totalCasos === 0){
+          note.innerHTML = 'Nenhum diagnóstico compatível com doenças notificáveis encontrado no período. Verifique se os dados de CID estão carregados.';
+        } else {
+          note.innerHTML = `<strong>Prazo padrão da UPA: 24h</strong> para envio à Secretaria Municipal de Saúde. 
+            Os diagnósticos abaixo são <strong>suspeitos</strong> — confirme com o médico se a ficha foi preenchida. 
+            O sistema não acessa fichas SINAN nem confirma notificação realizada.`;
+        }
+      }
+
+      // Construir filtros de grupo
+      const grupos = ['Todos', ...new Set(Object.values(DOENCAS_NOTIFICAVEIS).map(d=>d.grupo))];
+      const filtersEl = document.getElementById('notifGrupoFilters');
+      if(filtersEl){
+        filtersEl.innerHTML = grupos.map(g => {
+          const countG = g==='Todos' ? comCasos.length : comCasos.filter(r=>r.grupo===g).length;
+          const badge = countG>0 ? ` <span style="font-size:10px;font-weight:700;background:var(--wn);color:#fff;border-radius:99px;padding:1px 5px;margin-left:3px">${countG}</span>` : '';
+          return `<button type="button" class="notif-filter-btn${g===_notifGrupoAtivo?' active':''}" 
+            onclick="filterNotifGrupo('${g}',this)">${esc(g)}${badge}</button>`;
+        }).join('');
+      }
+
+      // Guardar para re-render
+      window._lastNotifResultados = resultados;
+      renderNotifGrid(resultados);
+    }
+
+    function filterNotifGrupo(grupo, btn){
+      _notifGrupoAtivo = grupo;
+      document.querySelectorAll('#notifGrupoFilters .notif-filter-btn').forEach(b=>b.classList.remove('active'));
+      if(btn) btn.classList.add('active');
+      renderNotifGrid(window._lastNotifResultados||[]);
+    }
+
+    function renderNotifGrid(resultados){
+      const el = document.getElementById('notifGrid');
+      if(!el) return;
+
+      const filtered = _notifGrupoAtivo==='Todos'
+        ? resultados
+        : resultados.filter(r=>r.grupo===_notifGrupoAtivo);
+
+      // Ordenar: com casos primeiro (por count desc), depois sem casos
+      const comCasos = filtered.filter(r=>r.count>0).sort((a,b)=>b.count-a.count);
+      const semCasos = filtered.filter(r=>r.count===0);
+
+      if(!comCasos.length && !semCasos.length){
+        el.innerHTML = '<div class="trend-empty-alert">Nenhum resultado para o grupo selecionado.</div>';
+        return;
+      }
+
+      // Renderizar apenas os com casos + opção de ver sem casos
+      const cards = comCasos.map(r => {
+        // Sparkline mensal
+        const mKeys = Object.keys(r.meses).sort().slice(-6);
+        const mVals = mKeys.map(k=>r.meses[k]||0);
+        const mMax  = Math.max(...mVals, 1);
+        const sparkBars = mVals.map((v,i) => {
+          const h = Math.round((v/mMax)*24)+3;
+          const isLast = i===mVals.length-1;
+          return `<div style="flex:1;height:${h}px;background:${isLast?'var(--wn)':'var(--bdr2)'};border-radius:2px 2px 0 0;min-height:3px"></div>`;
+        }).join('');
+
+        // Tendência simples: último mês vs penúltimo
+        let trendHtml = '';
+        if(mVals.length>=2){
+          const prev=mVals[mVals.length-2], last=mVals[mVals.length-1];
+          if(last>prev) trendHtml=`<span class="notif-trend up">↑ ${last-prev} em relação ao mês anterior</span>`;
+          else if(last<prev) trendHtml=`<span class="notif-trend down">↓ ${prev-last} em relação ao mês anterior</span>`;
+          else trendHtml=`<span class="notif-trend stable">estável no mês anterior</span>`;
+        }
+
+        // CIDs encontrados (limitado a 5 para não poluir)
+        const cidsShow = (r.cidsEncontrados||[]).slice(0,5);
+        const cidsHtml = cidsShow.map(c=>`<span title="${esc(c)}">${esc(c)}</span>`).join('') + 
+          (r.cidsEncontrados?.length>5 ? `<span style="color:var(--mut)">+${r.cidsEncontrados.length-5}</span>` : '');
+
+        return `<div class="notif-card" role="article" aria-label="${esc(r.nome)}: ${r.count} casos">
+          <div class="notif-card-header">
+            <div class="notif-count">${r.count}</div>
+            <div class="notif-name">${esc(r.nome)}</div>
+            <div class="notif-grupo">${esc(r.grupo)}</div>
+          </div>
+          ${cidsHtml ? `<div class="notif-cids">${cidsHtml}</div>` : ''}
+          <div style="display:flex;align-items:flex-end;gap:2px;height:28px">${sparkBars}</div>
+          ${trendHtml}
+          ${r.ultSemana>0 ? `<div class="notif-patients" style="color:var(--wn)">⚠ ${r.ultSemana} caso${r.ultSemana>1?'s':''} nos últimos 7 dias</div>` : ''}
+          ${r.medicos?.length ? `<div class="notif-patients">Médico${r.medicos.length>1?'s':''}: ${r.medicos.slice(0,2).map(m=>esc(m.split(' ')[0])).join(', ')}${r.medicos.length>2?` +${r.medicos.length-2}`:''}</div>` : ''}
+        </div>`;
+      }).join('');
+
+      el.innerHTML = cards || '<div class="trend-empty-alert">Nenhum diagnóstico notificável encontrado no período selecionado.</div>';
+    }
+
+    function exportNotifChecklist(){
+      const resultados = (window._lastNotifResultados||[]).filter(r=>r.count>0)
+        .sort((a,b)=>b.count-a.count);
+      if(!resultados.length){
+        showToast('Nenhum caso notificável encontrado para gerar checklist.','warn');
+        return;
+      }
+
+      const cl = document.getElementById('notifChecklist');
+      const body = document.getElementById('notifChecklistBody');
+      if(!cl||!body) return;
+
+      const hoje = new Date().toLocaleDateString('pt-BR');
+      body.innerHTML = resultados.map((r,i) =>
+        `<div class="notif-checklist-item">
+          <div class="notif-check-num">${i+1}</div>
+          <div class="notif-check-body">
+            <div class="notif-check-doenca">${esc(r.nome)} — ${r.count} caso${r.count>1?'s':''}</div>
+            <div class="notif-check-detail">CIDs: ${(r.cidsEncontrados||[]).join(', ')} · 
+              ${r.ultSemana>0?`${r.ultSemana} caso${r.ultSemana>1?'s':''} nos últimos 7 dias · `:''}
+              Prazo: 24h · Enviar para SMS Mateus Leme</div>
+          </div>
+          <div style="font-size:18px;color:var(--bdr2);flex-shrink:0" title="Marcar como enviado">☐</div>
+        </div>`
+      ).join('');
+
+      cl.style.display = cl.style.display==='none' ? 'block' : 'none';
+      if(cl.style.display!=='none'){
+        cl.scrollIntoView({behavior:'smooth',block:'nearest'});
+        showToast(`Checklist gerado — ${resultados.length} doença${resultados.length>1?'s':''} para conferir.`,'ok');
+      }
+    }
+
   </script>
   <!-- Modal configuração da unidade -->
   <div class="modal-overlay" id="unitConfigModal">
     <div class="modal" style="width:min(600px,100%)">
       <div class="modal-header">
-        <span class="modal-title">⚙ Configurar unidade de saúde</span>
-        <button class="modal-close" onclick="closeUnitConfig()">✕</button>
+        <span class="modal-title">Configurar unidade de saúde</span>
+        <button type="button" class="modal-close" onclick="closeUnitConfig()">✕</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="modal-field" style="grid-column:1/-1">
@@ -7788,14 +9027,46 @@
           <div class="modal-input-row"><input id="ucCoren" type="text" placeholder="COREN-UF 000000"></div>
         </div>
       </div>
-      <div style="margin-top:16px;padding:12px 14px;background:var(--sur2);border:1px solid var(--bdr);border-radius:8px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--mut);font-weight:700;font-family:'IBM Plex Mono',monospace;margin-bottom:6px">⛁ Banco de dados local</div>
-        <div style="font-size:11px;color:var(--txt2);line-height:1.55;margin-bottom:10px">Os dados ficam salvos no navegador entre sessões. Use o botão abaixo para limpar tudo.</div>
-        <button class="btn" onclick="limparBanco()" style="color:var(--er);border-color:rgba(239,68,68,.3)">🗑 Limpar banco de dados</button>
-      </div>
+      <div class="danger-zone" id="dangerZone">
+  <div class="danger-zone-header" onclick="toggleDangerZone()" aria-expanded="false" aria-controls="dangerZoneBody">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--er);flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <span class="danger-zone-title">Zona de perigo</span>
+    <span class="danger-zone-chev">▾</span>
+  </div>
+  <div class="danger-zone-body" id="dangerZoneBody">
+    <div class="danger-zone-desc"><strong>Ação irreversível.</strong> Apaga permanentemente todos os atendimentos, triagens e CIDs salvos no navegador. Você terá 5 segundos para desfazer.</div>
+    <div class="danger-zone-stats" id="dangerZoneStats"><span>Clique para ver os dados salvos...</span></div>
+    <button type="button" class="btn-danger" onclick="abrirConfirmacaoLimpeza()" aria-label="Limpar banco de dados">
+<svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      Limpar banco de dados
+    </button>
+  </div>
+</div>
+<!-- Modal de confirmação -->
+<div class="danger-confirm-overlay" id="dangerConfirmOverlay" role="dialog" aria-modal="true" aria-labelledby="dangerConfirmTitle">
+  <div class="danger-confirm-modal">
+    <div class="danger-confirm-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <div class="danger-confirm-title" id="dangerConfirmTitle">Limpar banco de dados?</div>
+    <div class="danger-confirm-msg" id="dangerConfirmMsg">Esta ação apagará todos os dados salvos.<br>Você terá 5 segundos para desfazer.</div>
+    <div class="danger-confirm-actions">
+      <button type="button" class="btn" onclick="fecharConfirmacaoLimpeza()">Cancelar</button>
+      <button type="button" class="btn-danger" onclick="executarLimpeza()">Sim, limpar tudo</button>
+    </div>
+  </div>
+</div>
+<!-- Toast de desfazer -->
+<div class="undo-toast" id="undoToast" role="status" aria-live="polite">
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <span style="font-size:12px;color:var(--txt)">Banco será limpo em <strong id="undoCountdown">5</strong>s</span>
+    <div class="undo-bar" id="undoBar" style="width:100%"></div>
+  </div>
+  <button type="button" class="undo-btn" onclick="desfazerLimpeza()">Desfazer</button>
+</div>
       <div class="modal-footer">
-        <button class="btn" onclick="closeUnitConfig()">Cancelar</button>
-        <button class="btn primary" onclick="saveUnitConfig()">Salvar unidade</button>
+        <button type="button" class="btn" onclick="closeUnitConfig()">Cancelar</button>
+        <button type="button" class="btn primary" onclick="saveUnitConfig()">Salvar unidade</button>
       </div>
     </div>
   </div>
