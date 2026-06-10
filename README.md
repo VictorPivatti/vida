@@ -1,10 +1,10 @@
 # V.I.D.A. — Visualização Integrada de Dados Assistenciais
 
-**v2.5** · UPA 24h Tiago Cardoso dos Santos · CNES 7061838 · Mateus Leme – MG
+**v3.2** · UPA 24h Tiago Cardoso dos Santos · CNES 7061838 · Mateus Leme – MG
 
 > Dashboard assistencial de arquivo único para análise de produção, qualidade e gestão de UPA 24h. Desenvolvido e mantido pelo Coordenador Assistencial / ENF RT Victor Matheus Sanches Pivatti (COREN-MG 708057).
 
-🔗 **[Acessar o dashboard](https://victorpivatti.github.io/vidadashboard/Pivatti_Dashboard.html)**
+🔗 **[Acessar o dashboard](https://victorpivatti.github.io/vida/)**
 
 ---
 
@@ -46,14 +46,14 @@ O V.I.D.A. é uma ferramenta de análise assistencial de **arquivo único** (HTM
 Acesse diretamente pelo navegador:
 
 ```
-https://victorpivatti.github.io/vidadashboard/Pivatti_Dashboard.html
+https://victorpivatti.github.io/vida/
 ```
 
 Funciona em qualquer dispositivo com Chrome, Edge, Firefox ou Safari atualizado.
 
 ### Opção B — Arquivo local
 
-1. Baixe o arquivo `Pivatti_Dashboard.html` deste repositório
+1. Baixe o arquivo `index.html` deste repositório
 2. Abra diretamente no navegador (duplo clique ou arrastar para o Chrome)
 3. Nenhuma instalação necessária
 
@@ -103,7 +103,7 @@ Sem este arquivo, os dados de triagem são derivados do histórico (menos precis
 Exemplo de nome: ATENDIMENTOPORCID_23_05_2026.xls
 ```
 
-Habilita o painel **CID / Diagnósticos** e o cruzamento de retornos com diagnósticos nas **Correlações**.
+Habilita o painel **CID / Diagnósticos**, os diagnósticos sentinela e o cruzamento de retornos ≤72h com mesmo CID.
 
 ---
 
@@ -147,19 +147,14 @@ Habilita o painel **Produtividade Assistencial** com breakdown por médicos, enf
 
 | Painel | O que mostra | Dados necessários |
 |--------|-------------|-------------------|
-| **Capacidade** | Pressão por hora vs. capacidade instalada, pico por data | Histórico |
-| **Evolução** | Tendência mensal de indicadores, projeção | Histórico |
-| **CID / Diagnósticos** | Ranking de diagnósticos, capítulos CID | CID |
+| **Evolução** | Tendência mensal, projeção e comparativo ano a ano | Histórico |
+| **CID / Diagnósticos** | Diagnósticos sentinela, ranking de CIDs, capítulos por mês | CID |
 | **Relatório** | Texto gerencial exportável | Histórico |
-| **Comparativo** | Período A vs. Período B | Histórico |
-| **Correlações** | Espera × risco, volume × espera, CID × retorno | Histórico + CID |
-| **Funil** | Completude do fluxo, sazonalidade, evasão estimada | Histórico |
 
 ### Pacientes & Escala
 
 | Painel | O que mostra | Dados necessários |
 |--------|-------------|-------------------|
-| **Perfil do Paciente** | Faixa etária, sexo, tipo de entrada | Histórico |
 | **Pacientes** | Busca por prontuário, histórico individual | Histórico |
 | **Escala / Dimensionamento** | Déficit/superávit por hora, base COFEN 543/2017 | Histórico |
 | **Anotações** | Registro de observações por período | — |
@@ -169,7 +164,7 @@ Habilita o painel **Produtividade Assistencial** com breakdown por médicos, enf
 | Painel | O que mostra |
 |--------|-------------|
 | **Auditoria** | Inconsistências nos dados, campos faltantes, regras de negócio |
-| **Qualidade** | Score de qualidade dos dados, cobertura de campos |
+| **Qualidade** | Alertas assistenciais, completude dos campos e cruzamento entre fontes (histórico × triagem × CID) |
 
 ---
 
@@ -181,7 +176,7 @@ No sistema Vivver, exporte os relatórios desejados para a pasta de downloads. O
 
 ### Passo 2 — Abrir o dashboard
 
-Acesse `https://victorpivatti.github.io/vidadashboard/Pivatti_Dashboard.html` no Chrome ou Edge.
+Acesse `https://victorpivatti.github.io/vida/` no Chrome ou Edge.
 
 ### Passo 3 — Carregar o histórico principal
 
@@ -235,9 +230,9 @@ Botão 🌙 na topbar. A preferência é salva e aplicada automaticamente nas pr
 
 ### Banco de dados local
 
-O dashboard mantém os últimos dados carregados em memória durante a sessão. Ao fechar e reabrir, é necessário carregar os arquivos novamente.
+O dashboard salva os dados carregados no IndexedDB do navegador e os restaura automaticamente na próxima abertura. Por proteção aos dados de pacientes (LGPD), os dados **expiram automaticamente após 12 horas** e são removidos na abertura seguinte, exigindo novo carregamento dos arquivos.
 
-Para trocar a base de dados: botão **↺** (seta circular) no canto superior direito.
+Para trocar a base de dados: botão **↺** (seta circular) no canto superior direito. Para apagar tudo imediatamente: Configurações → Limpar banco de dados.
 
 ### Score executivo
 
@@ -260,6 +255,9 @@ Não. Todo processamento é local no navegador. Nenhum dado é transmitido.
 **Posso usar em computadores diferentes?**  
 Sim, mas cada dispositivo precisa carregar os arquivos separadamente (os dados não sincronizam entre dispositivos).
 
+**Por que meus dados sumiram ao abrir o dashboard?**  
+Dados de pacientes expiram automaticamente 12 horas após o carregamento e são removidos por segurança (LGPD). Basta recarregar os arquivos. Use a ferramenta apenas em computadores de acesso restrito.
+
 **O layout que configurei vai ser perdido?**  
 O layout de cards é salvo no `localStorage` do navegador. Ele persiste entre sessões no mesmo navegador/dispositivo. Limpar os dados do navegador apaga o layout.
 
@@ -267,7 +265,7 @@ O layout de cards é salvo no `localStorage` do navegador. Ele persiste entre se
 O dashboard é otimizado para até ~25.000 registros. Acima disso, o carregamento pode ser mais lento, mas a análise permanece funcional.
 
 **Como atualizo para uma versão nova?**  
-Se estiver usando a versão online (GitHub Pages), basta recarregar a página — ela sempre serve a versão mais recente. Se usar o arquivo local, baixe novamente o `Pivatti_Dashboard.html`.
+Se estiver usando a versão online (GitHub Pages), basta recarregar a página — ela sempre serve a versão mais recente. Se usar o arquivo local, baixe novamente o `index.html`.
 
 **O filtro de médico não está encontrando o nome corretamente.**  
 Digite apenas parte do nome (ex: `NINOMIYA`). O filtro usa busca parcial normalizada (ignora acentos e maiúsculas/minúsculas).
@@ -278,9 +276,25 @@ Digite apenas parte do nome (ex: `NINOMIYA`). O filtro usa busca parcial normali
 
 | Versão | Data | Principais mudanças |
 |--------|------|---------------------|
+| **v3.2** | Jun 2026 | Expiração automática de dados (TTL 12h, LGPD), correção do cruzamento Histórico↔Triagem, cruzamento entre fontes no painel Qualidade, remoção de 5 painéis redundantes, reordenação por severidade, smoke test (harness.js) |
+| **v3.1** | Jun 2026 | Módulo de doenças notificáveis (Portaria GM/MS 217/2023), tendência sazonal de CID, patches de UI/UX e acessibilidade |
+| **v3.0** | Jun 2026 | Tela inicial reformulada, auditoria completa de código, correções nos indicadores de retorno ≤72h |
 | **v2.5** | Mai 2026 | Aba Produtividade redesenhada (breakdown por categoria), modo edição de layout, sazonalidade reescrita, escala/dimensionamento corrigida, 30+ bugs corrigidos em múltiplas rodadas de auditoria |
 | **v2.0** | Mai 2026 | Redesign visual completo (Inter + IBM Plex Mono), novos painéis (Funil, Comparativo, Correlações, Escala, Perfil), score executivo com metodologia, conformidade Manchester D/N |
 | **v1.0** | Mai 2026 | Versão inicial — histórico de atendimentos, KPIs, gargalos, médicos, retornos, capacidade |
+
+---
+
+## Desenvolvimento
+
+Após qualquer alteração no `index.html`, rode o smoke test para verificar se algum painel quebrou:
+
+```
+npm install jsdom   # uma vez
+node harness.js index.html
+```
+
+O teste executa as 22 funções de render com dados sintéticos num DOM headless e reporta exceções por painel em ~2 segundos. Ele detecta erros de carregamento e crashes, mas não valida números calculados. O histórico de mudanças está no [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
