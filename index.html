@@ -1704,7 +1704,7 @@
   </div>
 
   <!-- Versão: canto inferior direito -->
-  <div class="up-version">v3.2</div>
+  <div class="up-version">v3.2.1</div>
 
   <!-- Drag overlay fullscreen -->
   <div id="upDragOverlay" role="status" aria-live="polite">
@@ -1818,7 +1818,7 @@
           <div class="brand-info">
             <div class="brand-title">
               V.I.D.A.
-              <span class="vida-version-badge">v3.2</span>
+              <span class="vida-version-badge">v3.2.1</span>
             </div>
             <div class="brand-sub" id="topbarUnitSub">Visualização Integrada de Dados Assistenciais</div>
           </div>
@@ -2608,7 +2608,7 @@
         dhTri:["dh_atendimento","data triagem","inicio triagem","início triagem"],
         tDur:["recepcao_alta","triagem_duracao","duracao triagem","duração triagem","tempo triagem"]
       },
-      cid:{cid:["cid","codigo cid","código cid","codcid","array_dados"],desc:["descid","descricao","descrição","diagnostico","diagnóstico"],medico:["medico","médico","profissional","nomprofissional"],data:["data","data atendimento","dt atendimento","dh_atendimento"],idAtend:["numprontuario","prontuario","prontuário","atendimento","id atendimento","total_linha"]}
+      cid:{cid:["cid","codigo cid","código cid","codcid","array_dados"],desc:["descid","descricao","descrição","diagnostico","diagnóstico"],medico:["medico","médico","profissional","nomprofissional"],data:["data","data atendimento","dt atendimento","dh_atendimento"],idAtend:["numprontuario","prontuario","prontuário","atendimento","id atendimento","total_linha"],paciente:["nompaciente","nome_paciente","paciente","nome paciente"]}
     };
     const FALLBACK={
       // Posições baseadas no formato real das planilhas do sistema (29 campos semicolon-separated):
@@ -3203,7 +3203,8 @@
         const idAtend=String(isFullFormat?p[4]:p[0]||"").trim();
         const medico=legacyText(isFullFormat?p[8]:p[3]||"").trim();
         const desc=legacyText(isFullFormat?p[9]:p[4]||"").trim();
-        rows.push({sourceLine:i+1,cid,desc,medico,idAtend,
+        const paciente=legacyText(isFullFormat?(p[11]||""):"").trim();
+        rows.push({sourceLine:i+1,cid,desc,medico,idAtend,paciente,
           dh,dateKey:ymd(dh),anoMes:monthKey(dh),mes:dh.getMonth()+1,cap:cid[0]||"?"});
       }
       return {data:rows.sort((a,b)=>a.dh-b.dh),total:Math.max(lines.length-1,0),invalid,
@@ -3268,7 +3269,7 @@
         if(!row.some(x=>String(x).trim()))return;
         const cid=String(val(row,idx.cid)||"").trim().toUpperCase();const dh=parseDate(val(row,idx.data));
         if(!cid||!dh){issues.invalid++;return}
-        data.push({sourceLine:line+2,cid,desc:String(val(row,idx.desc)||"").trim(),medico:String(val(row,idx.medico)||"").trim(),idAtend:String(val(row,idx.idAtend)||"").trim(),dh,dateKey:ymd(dh),anoMes:monthKey(dh),mes:dh.getMonth()+1,cap:cid[0]||"?"});
+        data.push({sourceLine:line+2,cid,desc:String(val(row,idx.desc)||"").trim(),medico:String(val(row,idx.medico)||"").trim(),idAtend:String(val(row,idx.idAtend)||"").trim(),paciente:String(val(row,idx.paciente)||"").trim(),dh,dateKey:ymd(dh),anoMes:monthKey(dh),mes:dh.getMonth()+1,cap:cid[0]||"?"});
       });
       if(addQuality)state.quality.push({type:"CID",total:rows.length-1,valid:data.length,invalid:issues.invalid,msg:`${issues.invalid} linhas sem CID ou data válida foram ignoradas.`});
       return data.sort((a,b)=>a.dh-b.dh);
@@ -8012,6 +8013,15 @@
       const hoje = new Date();
       const seteDias = new Date(hoje); seteDias.setDate(seteDias.getDate()-7);
 
+      // Índice prontuário+data → horário do atendimento (enriquecido do histórico,
+      // pois o arquivo de CID do Vivver traz apenas a data, sem hora)
+      const horaIdx={};
+      (state.raw||[]).forEach(r=>{
+        if(!r.pront||!r.dateKey)return;
+        const k=r.pront+'|'+r.dateKey;
+        const dt=r.dhAtend||r.dh;
+        if(dt&&!(k in horaIdx))horaIdx[k]=('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2);
+      });
       // Construir índice de CID → casos
       // Para cada doença notificável, varrer os dados e encontrar matches
       const resultados = [];
@@ -8054,9 +8064,17 @@
           nome, grupo, cids, cidsEncontrados,
           count:matches.length, pacientes: [...new Set(matches.map(r=>r.idAtend||r.desc))],
           ultSemana, meses, medicos,
-          detalhes: matches.slice(0,5).map(r=>({
-            cid:r.cid, desc:r.desc, data:r.dateKey||r.anoMes||'?', medico:r.medico||'?'
-          }))
+          detalhes: matches
+            .slice().sort((a,b)=>(b.dh||0)-(a.dh||0))
+            .map(r=>{
+              let hora='';
+              if(r.dh&&(r.dh.getHours()||r.dh.getMinutes()))hora=('0'+r.dh.getHours()).slice(-2)+':'+('0'+r.dh.getMinutes()).slice(-2);
+              else if(r.idAtend&&r.dateKey)hora=horaIdx[r.idAtend+'|'+r.dateKey]||'';
+              return {
+                cid:r.cid, desc:r.desc, data:r.dateKey||r.anoMes||'?', hora, medico:r.medico||'?',
+                pront:r.idAtend||'', paciente:r.paciente||''
+              };
+            })
         });
         totalCasos += matches.length;
         totalUltSemana += ultSemana;
@@ -8161,6 +8179,10 @@
           ${trendHtml}
           ${r.ultSemana>0 ? `<div class="notif-patients" style="color:var(--wn)">⚠ ${r.ultSemana} caso${r.ultSemana>1?'s':''} nos últimos 7 dias</div>` : ''}
           ${r.medicos?.length ? `<div class="notif-patients">Médico${r.medicos.length>1?'s':''}: ${r.medicos.slice(0,2).map(m=>esc(m.split(' ')[0])).join(', ')}${r.medicos.length>2?` +${r.medicos.length-2}`:''}</div>` : ''}
+          ${r.detalhes?.length ? `<div class="notif-casos" style="margin-top:8px;border-top:1px solid var(--bdr);padding-top:6px">
+            ${r.detalhes.slice(0,4).map(c=>`<div class="mono" style="font-size:10px;line-height:1.7;color:var(--txt2)">${esc(c.data)}${c.hora?` ${esc(c.hora)}`:''} · <strong style="color:var(--txt)">${esc(c.paciente||'(sem nome no arquivo)')}</strong>${c.pront?` · pront. ${esc(c.pront)}`:''} · ${esc(c.cid)}</div>`).join('')}
+            ${r.detalhes.length>4 ? `<details style="margin-top:2px"><summary class="mono" style="font-size:10px;color:var(--ac);cursor:pointer">ver todos os ${r.detalhes.length} casos</summary>${r.detalhes.slice(4).map(c=>`<div class="mono" style="font-size:10px;line-height:1.7;color:var(--txt2)">${esc(c.data)}${c.hora?` ${esc(c.hora)}`:''} · <strong style="color:var(--txt)">${esc(c.paciente||'(sem nome no arquivo)')}</strong>${c.pront?` · pront. ${esc(c.pront)}`:''} · ${esc(c.cid)}</div>`).join('')}</details>` : ''}
+          </div>` : ''}
         </div>`;
       }).join('');
 
@@ -8185,6 +8207,7 @@
           <div class="notif-check-num">${i+1}</div>
           <div class="notif-check-body">
             <div class="notif-check-doenca">${esc(r.nome)} — ${r.count} caso${r.count>1?'s':''}</div>
+            <div class="notif-check-detail">${(r.detalhes||[]).map(c=>`${esc(c.data)}${c.hora?' '+esc(c.hora):''} · ${esc(c.paciente||'(sem nome)')}${c.pront?' · pront. '+esc(c.pront):''} · ${esc(c.cid)}`).join('<br>')}</div>
             <div class="notif-check-detail">CIDs: ${(r.cidsEncontrados||[]).join(', ')} · 
               ${r.ultSemana>0?`${r.ultSemana} caso${r.ultSemana>1?'s':''} nos últimos 7 dias · `:''}
               Prazo: 24h · Enviar para SMS Mateus Leme</div>
