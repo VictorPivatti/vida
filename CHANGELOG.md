@@ -5,6 +5,29 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [v3.2] — 2026-06-10
+
+### Segurança e LGPD
+- **Expiração automática de dados (TTL 12h)**: dados de pacientes no IndexedDB expiram 12 horas após a gravação e são removidos na abertura seguinte, com aviso ao usuário. Dados legados sem timestamp são tratados como expirados
+- **Aviso de privacidade** exibido no primeiro uso, informando armazenamento local, expiração e recomendação de máquina de acesso restrito
+- **Correção XSS** no painel de fórmula dos KPIs (`formula.expr` e linhas de cálculo agora passam por `esc()`)
+- **Checagem de dependências CDN**: banner claro quando XLSX.js/Chart.js não carregam (sem internet), em vez de falha silenciosa
+
+### Corrigido
+- **Consistência cruzada Histórico ↔ Triagem sempre exibia 0,0%**: os parsers de triagem (posicional e por cabeçalho) não extraíam o prontuário, tornando o cruzamento vazio por construção. Ambos os parsers e `deriveTriFromHist` agora propagam `pront`; validado com bases reais de jan-mai/2026 (resultado: 100,0% de correspondência). Mensagem defensiva quando a planilha não tem coluna de prontuário
+- **Crash no painel Auditoria** quando um indicador tinha diferença exata de zero entre "com todos" e "sem suspeitos" (`diffPct` nulo com `diff=0`)
+- **Constantes Manchester** (`MANCHESTER_META_IDS`/`MANCHESTER_METAS`) restauradas após remoção acidental durante o enxugamento de painéis
+
+### Adicionado
+- **Cruzamento entre fontes** (painel Qualidade): comparação mensal histórico × planilha de triagem × CID, distribuição por cor entre fontes, com limiares de severidade (±2% / ±8%) e detecção de comparação tautológica
+- **harness.js**: smoke test headless (jsdom) que executa as 22 funções de render com dados sintéticos — `node harness.js index.html`
+
+### Removido / Reorganizado
+- Painéis removidos por redundância ou baixa decisão associada: Capacidade, Comparativo de Períodos (Ano a Ano preservado e movido para Evolução), Correlações, Funil/Sazonalidade, Perfil do Paciente; tabelas de dia da semana em Gargalos (redundantes com o heatmap)
+- Retornos: cards de retornos críticos e mesmo-CID movidos para o topo (severidade primeiro); Qualidade: cruzamento em 2ª posição; Procedimentos: rankings BPA com títulos desambiguados por categoria
+
+---
+
 ## [v3.0] — 2026-06-01
 
 ### Corrigido
