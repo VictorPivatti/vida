@@ -5,6 +5,17 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [v3.2.1] — 2026-06-10
+
+### Adicionado
+- **Identificação nominal nas Doenças de Notificação Compulsória**: os parsers de CID (posicional e por cabeçalho) agora extraem o nome do paciente (`nome_paciente`, campo 11 do layout Vivver). Cada card de doença lista os casos com data, horário, nome do paciente, prontuário e CID, do mais recente para o mais antigo (até 4 visíveis; "ver todos" expansível). O checklist de notificação também lista os pacientes nominalmente, viabilizando busca ativa
+- **Horário do atendimento enriquecido por cruzamento**: o arquivo de CID do Vivver traz apenas a data; o horário é obtido cruzando prontuário+data com o `dh_atendimento` do histórico carregado. Casos sem correspondência exibem somente a data
+
+### Observação de privacidade
+- Os cards e o checklist de notificáveis passam a exibir nomes de pacientes em massa, inclusive nas exportações em PDF. Tratar exportações deste painel com a mesma cautela de fichas SINAN físicas
+
+---
+
 ## [v3.2] — 2026-06-10
 
 ### Segurança e LGPD
