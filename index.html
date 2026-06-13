@@ -3187,7 +3187,9 @@
         const p=lines[i];if(p.length<17)continue;
         const dh=parseDate(p[10]);if(!dh){invalid++;continue}
         const dhTri=parseDate(p[12]);let tEsp=null;if(dhTri&&dhTri>=dh)tEsp=safeMinutes((dhTri-dh)/60000,360);
-        rows.push({sourceLine:i+1,pront:String(p[5]||"").trim(),cor:cleanRisk(legacyText(p[3])),triador:legacyText(p[16]).trim(),dh,dhTri,dateKey:ymd(dh),anoMes:monthKey(dh),hora:dh.getHours(),diaSem:dh.getDay(),turno:dh.getHours()>=7&&dh.getHours()<19?"D":"N",tEsp,tDur:safeMinutes(parseDuration(p[19]),90)});
+        const _tTurno=dh.getHours()>=7&&dh.getHours()<19?"D":"N";
+        const _tDhAdj=(_tTurno==="N"&&dh.getHours()<7)?new Date(dh.getTime()-864e5):dh;
+        rows.push({sourceLine:i+1,pront:String(p[5]||"").trim(),cor:cleanRisk(legacyText(p[3])),triador:legacyText(p[16]).trim(),dh,dhTri,dateKey:ymd(_tDhAdj),anoMes:monthKey(_tDhAdj),hora:dh.getHours(),diaSem:_tDhAdj.getDay(),turno:_tTurno,tEsp,tDur:safeMinutes(parseDuration(p[19]),90)});
       }
       return {data:rows.sort((a,b)=>a.dh-b.dh),total:Math.max(lines.length-1,0),invalid,msg:`Modo compatibilidade: ${invalid} linhas sem data válida foram ignoradas.`};
     }
@@ -3263,7 +3265,9 @@
         const dh=parseDate(val(row,idx.dh));if(!dh){issues.invalidDate++;return}
         const dhTri=parseDate(val(row,idx.dhTri));let tEsp=null;
         if(dhTri&&dhTri>=dh)tEsp=safeMinutes((dhTri-dh)/60000,360);
-        data.push({sourceLine:line+2,pront:String(val(row,idx.pront)||"").trim(),cor:cleanRisk(val(row,idx.cor)),triador:String(val(row,idx.triador)||"").trim(),dh,dhTri,dateKey:ymd(dh),anoMes:monthKey(dh),hora:dh.getHours(),diaSem:dh.getDay(),turno:dh.getHours()>=7&&dh.getHours()<19?"D":"N",tEsp,tDur:safeMinutes(parseDuration(val(row,idx.tDur)),90)});
+        const _tTurnoM=dh.getHours()>=7&&dh.getHours()<19?"D":"N";
+        const _tDhAdjM=(_tTurnoM==="N"&&dh.getHours()<7)?new Date(dh.getTime()-864e5):dh;
+        data.push({sourceLine:line+2,pront:String(val(row,idx.pront)||"").trim(),cor:cleanRisk(val(row,idx.cor)),triador:String(val(row,idx.triador)||"").trim(),dh,dhTri,dateKey:ymd(_tDhAdjM),anoMes:monthKey(_tDhAdjM),hora:dh.getHours(),diaSem:_tDhAdjM.getDay(),turno:_tTurnoM,tEsp,tDur:safeMinutes(parseDuration(val(row,idx.tDur)),90)});
       });
       if(addQuality)state.quality.push({type:"Triagem",total:rows.length-1,valid:data.length,invalid:issues.invalidDate,msg:`${issues.invalidDate} linhas sem data válida foram ignoradas.`});
       return data.sort((a,b)=>a.dh-b.dh);
@@ -3533,8 +3537,8 @@
       const eKey = e ? ymd(e) : null;
       const inRange=r=>(!sKey||r.dateKey>=sKey)&&(!eKey||r.dateKey<=eKey)&&(turno==="all"||r.turno===turno)&&(!medFilt||norm(shortName(r.prof||"")).includes(medFilt))&&(riscoFilt==="all"||(r.cor||"").toUpperCase()===riscoFilt);
       state.filt=state.raw.filter(inRange);
-      // Triagem e CID: usar dh real porque não têm dateKey ajustada (estruturas diferentes)
-      state.triFilt=state.triRaw.filter(r=>(!s||r.dh>=s)&&(!e||r.dh<=e)&&(turno==="all"||r.turno===turno));
+      // Triagem: dateKey agora ajustada igual ao histórico (madrugada → dia anterior)
+      state.triFilt=state.triRaw.filter(r=>(!sKey||r.dateKey>=sKey)&&(!eKey||r.dateKey<=eKey)&&(turno==="all"||r.turno===turno));
       state.cidFilt=state.cidRaw.filter(r=>(!s||r.dh>=s)&&(!e||r.dh<=e));
       $("recordBadge").textContent=`${state.filt.length.toLocaleString("pt-BR")} registros`;
       renderAll();
