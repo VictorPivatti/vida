@@ -2621,8 +2621,8 @@
       // Triagem: [9]=id_recepcao(num) [10]=dh_recepcao [11]=vazio [12]=dh_atendimento_triagem
       // [15]=codprofissional [16]=nomprofissional [17]=vazio [18]=vazio [19]=tDur
       tri:{cor:3,dh:10,dhTri:12,triador:16,tDur:19},
-      // CID arquivo real: [0]codmun [1..3]extras [4]numprontuario [5]codcid [6]data [7]idpaciente [8]medico [9]desccid
-      cid:{idAtend:4,cid:5,data:6,medico:8,desc:9}
+      // CID arquivo real: [0]codmun [1..3]extras [4]numprontuario [5]codcid [6]data [7]idpaciente [8]nome_paciente [9]desccid [14]nome_medico
+      cid:{idAtend:4,cid:5,data:6,paciente:8,desc:9,medico:14}
     };
 
     const state={raw:[],filt:[],triRaw:[],triFilt:[],cidRaw:[],cidFilt:[],procRaw:[],procFilt:[],examesRaw:[],examesMeta:{},charts:{},recepOverride:{},quality:[],files:{hist:"",tri:"",cid:"",proc:""},pending:{tri:null,cid:null,proc:null},theme:"dark",triSource:"none",_retCache:null,_retCacheKey:"",recepcionados:{}}; // triSource: "none"|"hist"|"file"
@@ -3189,7 +3189,7 @@
     function parseCidLegacy(csv){
       // Estrutura real do arquivo ATENDIMENTOPORCID:
       // [0]codcid [1-3] extras [4]numprontuario [5]codigo_cid [6]data_atend(AAAA-MM-DD)
-      // [7]id_paciente [8]nome_medico [9]descricao_cid [10]dt_nasc [11]nome_paciente
+      // [7]id_paciente [8]nome_paciente [9]descricao_cid [10]dt_nasc [11..13]extras [14]nome_medico
       const rows=[], lines=csvRows(csv);let invalid=0;
       for(let i=1;i<lines.length;i++){
         const p=lines[i];
@@ -3201,9 +3201,9 @@
         const dh=parseDate(isFullFormat?p[6]:p[2]);
         if(!cid||!dh||cid==="CODCID"){invalid++;continue}
         const idAtend=String(isFullFormat?p[4]:p[0]||"").trim();
-        const medico=legacyText(isFullFormat?p[8]:p[3]||"").trim();
+        const medico=legacyText(isFullFormat?p[14]:p[3]||"").trim();
         const desc=legacyText(isFullFormat?p[9]:p[4]||"").trim();
-        const paciente=legacyText(isFullFormat?(p[11]||""):"").trim();
+        const paciente=legacyText(isFullFormat?(p[8]||""):"").trim();
         rows.push({sourceLine:i+1,cid,desc,medico,idAtend,paciente,
           dh,dateKey:ymd(dh),anoMes:monthKey(dh),mes:dh.getMonth()+1,cap:cid[0]||"?"});
       }
@@ -3426,10 +3426,11 @@
         const dh=parseDate(isFullFormat?p[6]:p[2]);
         if(!cid||!dh||cid==='CODCID'){invalid++;continue}
         const idAtend=(isFullFormat?p[4]:p[0]||'').trim();
-        const medico=(isFullFormat?p[8]:p[3]||'').trim();
+        const medico=(isFullFormat?p[14]:p[3]||'').trim();
         const desc=(isFullFormat?p[9]:p[4]||'').trim();
+        const paciente=(isFullFormat?(p[8]||''):'').trim();
         rows.push({
-          sourceLine:i+1,cid,desc,medico,idAtend,
+          sourceLine:i+1,cid,desc,medico,idAtend,paciente,
           dh,dateKey:ymd(dh),anoMes:monthKey(dh),
           mes:dh.getMonth()+1,cap:cid[0]||'?'
         });
