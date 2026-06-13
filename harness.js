@@ -66,6 +66,46 @@ for(const [name,call] of fns){
     window.__results.push([name,'ok']);
   }catch(e){window.__results.push([name,'ERRO: '+e.message]);}
 }
+
+// Validações de valores calculados (além de "não jogou exceção")
+try{
+  // returns72: estrutura e taxa no intervalo válido
+  const {ret,byP}=returns72();
+  if(!Array.isArray(ret)||typeof byP!=='object') throw new Error('estrutura inválida');
+  const retRate=state.filt.length?ret.length/state.filt.length*100:0;
+  if(retRate<0||retRate>100) throw new Error('taxa fora de 0-100: '+retRate.toFixed(1)+'%');
+  window.__results.push(['returns72 — valores','ok']);
+}catch(e){window.__results.push(['returns72 — valores','ERRO: '+e.message]);}
+
+try{
+  // monthlyStats: retorna array com campos esperados
+  const ms=monthlyStats(state.filt);
+  if(!Array.isArray(ms)||!ms.length) throw new Error('array vazio ou inválido');
+  const f=ms[0];
+  if(!('k' in f&&'vol' in f&&'medOk' in f&&'medN' in f)) throw new Error('campos ausentes: '+JSON.stringify(Object.keys(f)));
+  window.__results.push(['monthlyStats — valores','ok']);
+}catch(e){window.__results.push(['monthlyStats — valores','ERRO: '+e.message]);}
+
+try{
+  // Regras de auditoria Manchester: thresholds c01/c02
+  const c01=AUDIT_RULES.find(r=>r.id==='c01'), c02=AUDIT_RULES.find(r=>r.id==='c02');
+  if(!c01||!c02) throw new Error('c01 ou c02 não encontrado');
+  if(!c01.fn({cor:'VERMELHO',tEspMed:11})) throw new Error('c01 deveria disparar em 11 min');
+  if(c01.fn({cor:'VERMELHO',tEspMed:9}))  throw new Error('c01 não deveria disparar em 9 min');
+  if(!c02.fn({cor:'LARANJA',tEspMed:16})) throw new Error('c02 deveria disparar em 16 min');
+  if(c02.fn({cor:'LARANJA',tEspMed:15}))  throw new Error('c02 não deveria disparar em 15 min');
+  window.__results.push(['auditoria Manchester — thresholds','ok']);
+}catch(e){window.__results.push(['auditoria Manchester — thresholds','ERRO: '+e.message]);}
+
+try{
+  // metaManchester: valores padrão corretos
+  const esperado={VERMELHO:0,LARANJA:15,AMARELO:60,VERDE:120,AZUL:240};
+  for(const [cor,v] of Object.entries(esperado)){
+    const got=metaManchester(cor);
+    if(got!==v) throw new Error(cor+': esperado '+v+', obtido '+got);
+  }
+  window.__results.push(['metaManchester — valores padrão','ok']);
+}catch(e){window.__results.push(['metaManchester — valores padrão','ERRO: '+e.message]);}
 </script>`;
 html = html.replace('</body>', test + '</body>');
 

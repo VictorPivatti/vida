@@ -2625,7 +2625,7 @@
       cid:{idAtend:4,cid:5,data:6,paciente:8,desc:9,medico:14}
     };
 
-    const state={raw:[],filt:[],triRaw:[],triFilt:[],cidRaw:[],cidFilt:[],procRaw:[],procFilt:[],examesRaw:[],examesMeta:{},charts:{},recepOverride:{},quality:[],files:{hist:"",tri:"",cid:"",proc:""},pending:{tri:null,cid:null,proc:null},theme:"dark",triSource:"none",_retCache:null,_retCacheKey:"",recepcionados:{}}; // triSource: "none"|"hist"|"file"
+    const state={raw:[],filt:[],triRaw:[],triFilt:[],cidRaw:[],cidFilt:[],procRaw:[],procFilt:[],examesRaw:[],examesMeta:{},charts:{},recepOverride:{},quality:[],files:{hist:"",tri:"",cid:"",proc:""},pending:{tri:null,cid:null,proc:null},theme:"dark",triSource:"none",_retCache:null,_retCacheKey:-1,_filtVersion:0,recepcionados:{}}; // triSource: "none"|"hist"|"file"
     const RECEP_KEY="upa_dash_recepcionados";
     const RECEP_OVERRIDE_KEY="upa_dash_recep_override";
 
@@ -3524,7 +3524,7 @@
       const min=state.raw[0].dh,max=state.raw[state.raw.length-1].dh;
       $("dateStart").value=ymd(min);$("dateEnd").value=ymd(max);
     }
-    function applyFilters(){state._retCache=null;state._retCacheKey="";
+    function applyFilters(){state._filtVersion++;
       if(!state.raw.length)return;
       const s=parseDate($("dateStart").value), e=parseDate($("dateEnd").value);if(e)e.setHours(23,59,59,999);
       const turno=$("turno").value;
@@ -4223,11 +4223,9 @@
       }).join("")}</tbody>`;
     }
     function returns72(){
-      // Cache: recalcula só quando state.filt muda (verificado por hash leve)
-      const key=state.filt.length+"_"+(state.filt[0]?.dateKey||"")+"_"+(state.filt[state.filt.length-1]?.dateKey||"");
-      if(state._retCache&&state._retCacheKey===key)return state._retCache;
+      if(state._retCache&&state._retCacheKey===state._filtVersion)return state._retCache;
       const result=returnsFor(state.filt);
-      state._retCache=result;state._retCacheKey=key;
+      state._retCache=result;state._retCacheKey=state._filtVersion;
       return result;
     }
     function renderRetornos(){
