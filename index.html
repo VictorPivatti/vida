@@ -6572,15 +6572,15 @@
       // ── CATEGORIA: Classificação suspeita ───────────────────
       {
         id:'c01', tipo:'classificacao', sev:'alta',
-        label:'Vermelho com espera médico > 30 min',
-        fn: r => r.cor==='VERMELHO' && r.tEspMed != null && r.tEspMed > 30,
-        motivo: r => `VERMELHO com tEspMed = ${Math.round(r.tEspMed)} min — protocolo prevê atendimento imediato`,
+        label:'Vermelho com espera médico > 10 min',
+        fn: r => r.cor==='VERMELHO' && r.tEspMed != null && r.tEspMed > 10,
+        motivo: r => `VERMELHO com tEspMed = ${Math.round(r.tEspMed)} min — meta Manchester: ≤ 0 min (imediato)`,
         campo:'tEspMed'
       },
       {
         id:'c02', tipo:'classificacao', sev:'media',
-        label:'Laranja com espera médico > 60 min',
-        fn: r => r.cor==='LARANJA' && r.tEspMed != null && r.tEspMed > 60,
+        label:'Laranja com espera médico > 15 min',
+        fn: r => r.cor==='LARANJA' && r.tEspMed != null && r.tEspMed > 15,
         motivo: r => `LARANJA com tEspMed = ${Math.round(r.tEspMed)} min — meta Manchester: ≤ 15 min`,
         campo:'tEspMed'
       },
