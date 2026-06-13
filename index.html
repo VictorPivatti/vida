@@ -3826,16 +3826,16 @@
     }
     function renderIndicadores(){
       const d=state.filt, m=monthlyStats(d), triN=d.filter(r=>r.tEspTri!=null).length, triOk=d.filter(r=>r.tEspTri!=null&&r.tEspTri<=meta("metaTri")).length;
-      const medN=d.filter(r=>r.tEspMed!=null).length, medOk=d.filter(r=>r.tEspMed!=null&&r.tEspMed<=meta("metaMed")).length;
+      const medN=d.filter(r=>r.tEspMed!=null).length, medOk=d.filter(r=>r.tEspMed!=null&&r.tEspMed<=metaManchester(r.cor)).length;
       const totalN=d.filter(r=>r.tTotal!=null).length, totalOk=d.filter(r=>r.tTotal!=null&&r.tTotal<=meta("metaTotal")).length;
       const monthAvg=m.length?Math.round(d.length/m.length):0, prev=previousRows(), pm=monthlyStats(prev);
       const pTriN=prev.filter(r=>r.tEspTri!=null).length, pTriOk=prev.filter(r=>r.tEspTri!=null&&r.tEspTri<=meta("metaTri")).length;
-      const pMedN=prev.filter(r=>r.tEspMed!=null).length, pMedOk=prev.filter(r=>r.tEspMed!=null&&r.tEspMed<=meta("metaMed")).length;
+      const pMedN=prev.filter(r=>r.tEspMed!=null).length, pMedOk=prev.filter(r=>r.tEspMed!=null&&r.tEspMed<=metaManchester(r.cor)).length;
       const pTotalN=prev.filter(r=>r.tTotal!=null).length, pTotalOk=prev.filter(r=>r.tTotal!=null&&r.tTotal<=meta("metaTotal")).length;
       const triRate=triN?triOk/triN*100:null, medRate=medN?medOk/medN*100:null, totalRate=totalN?totalOk/totalN*100:null;
       $("kpisInd").innerHTML=[
         kpi("Triagem na meta",pct(triOk,triN),`meta <= ${meta("metaTri")} min`,"#22c55e",metricDelta(triRate,prevVal(pTriN?pTriOk/pTriN*100:null,prev,m.length,pm.length),"pp"),"",triN>0?{expr:`${pct(triOk,triN)} = ${fmt(triOk)} ÷ ${fmt(triN)}`,linhas:[["na meta (≤"+meta("metaTri")+"min)",fmt(triOk)],["com dado de espera",fmt(triN)],["sem dado de espera",fmt(d.length-triN)],["conformidade",pct(triOk,triN)]]}:null),
-        kpi("Médico na meta",pct(medOk,medN),`meta <= ${meta("metaMed")} min`,"#f97316",metricDelta(medRate,prevVal(pMedN?pMedOk/pMedN*100:null,prev,m.length,pm.length),"pp"),"",medN>0?{expr:`${pct(medOk,medN)} = ${fmt(medOk)} ÷ ${fmt(medN)}`,linhas:[["atendidos na meta (≤"+meta("metaMed")+"min)",fmt(medOk)],["com dado de espera médica",fmt(medN)],["sem dado de espera médica",fmt(d.length-medN)],["conformidade",pct(medOk,medN)]]}:null),
+        kpi("Médico na meta",pct(medOk,medN),"meta Manchester por cor","#f97316",metricDelta(medRate,prevVal(pMedN?pMedOk/pMedN*100:null,prev,m.length,pm.length),"pp"),"",medN>0?{expr:`${pct(medOk,medN)} = ${fmt(medOk)} ÷ ${fmt(medN)}`,linhas:[["atendidos na meta Manchester por cor",fmt(medOk)],["com dado de espera médica",fmt(medN)],["sem dado de espera médica",fmt(d.length-medN)],["conformidade",pct(medOk,medN)]]}:null),
         kpi("Total na meta",pct(totalOk,totalN),`meta <= ${meta("metaTotal")} min`,"#a78bfa",metricDelta(totalRate,prevVal(pTotalN?pTotalOk/pTotalN*100:null,prev,m.length,pm.length),"pp"),"",totalN>0?{expr:`${pct(totalOk,totalN)} = ${fmt(totalOk)} ÷ ${fmt(totalN)}`,linhas:[["tempo total na meta (≤"+meta("metaTotal")+"min)",fmt(totalOk)],["com tempo total registrado",fmt(totalN)],["sem registro de tempo total",fmt(d.length-totalN)],["conformidade",pct(totalOk,totalN)]]}:null),
         kpi("Volume medio mensal",fmt(monthAvg),`meta >= ${fmt(meta("metaVol"))}`,"#3b82f6",metricDelta(monthAvg,prevVal(pm.length?Math.round(prev.length/pm.length):null,prev,m.length,pm.length),""),"",m.length>0?{expr:`${fmt(monthAvg)} = ${fmt(d.length)} ÷ ${m.length} ${m.length===1?"mês":"meses"}`,linhas:[["atendimentos no período",fmt(d.length)],["meses com atendimentos",m.length],["média mensal",fmt(monthAvg)+"/mês"],["meta configurada","≥ "+fmt(meta("metaVol"))+"/mês"]]}:null)
       ].join("");
