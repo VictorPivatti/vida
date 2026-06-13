@@ -4335,8 +4335,12 @@
       return ret;
     }
     function monthReturnRate(rows,k){
-      const mRows=rows.filter(r=>r.anoMes===k), ret=returnsWithin(mRows,72);
-      return mRows.length?ret.length/mRows.length*100:null;
+      const mRows=rows.filter(r=>r.anoMes===k);
+      if(!mRows.length)return null;
+      // returns72() usa state.filt completo — captura retornos que cruzam virada de mês
+      // (ex: visita 31/mai retorna 02/jun: conta na taxa de junho, não de maio)
+      const {ret}=returns72();
+      return ret.filter(r=>r.anoMes===k).length/mRows.length*100;
     }
     function calcProjecao(d){
       // Retorna projeção linear do mês mais recente, ou null se mês já completo / sem dados
