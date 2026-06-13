@@ -3604,7 +3604,7 @@
       const tMed=avg(rows,r=>r.tEspMed), tTri=avg(rows,r=>r.tEspTri), tTot=avg(rows,r=>r.tTotal);
       const n=rows.length||1;
       // Alertas com regra explícita visível
-      if(retRate>meta("metaRet"))alerts.push(["err","⚠ Retorno ≤72h acima da meta",`${retRate.toFixed(1)}% dos atendimentos retornaram em até 72h (meta: < ${meta("metaRet")}%). Regra: ret72h_rate > meta_retorno. Total: ${ret.length} casos de ${fmt(rows.length)}.`]);
+      if(retRate>meta("metaRet"))alerts.push(["err","⚠ Retorno ≤72h acima da meta",`Taxa de ${retRate.toFixed(1)}% (${ret.length} eventos de retorno ÷ ${fmt(rows.length)} atendimentos). Um paciente com múltiplos retornos conta múltiplas vezes. Meta: < ${meta("metaRet")}%.`]);
       if(tMed!=null&&tMed>meta("metaMed"))alerts.push(["warn","⏱ Espera médica acima da meta",`Média de ${Math.round(tMed)} min para atendimento médico (meta: ≤ ${meta("metaMed")} min). Regra: média(tEspMed) > meta_medico. Afeta ${pct(rows.filter(r=>r.tEspMed!=null&&r.tEspMed>meta("metaMed")).length,n)} dos atendimentos com dado.`]);
       if(tTri!=null&&tTri>meta("metaTri"))alerts.push(["warn","⏱ Espera de triagem acima da meta",`Média de ${Math.round(tTri)} min para triagem (meta: ≤ ${meta("metaTri")} min). Regra: média(tEspTri) > meta_triagem. Afeta ${pct(rows.filter(r=>r.tEspTri!=null&&r.tEspTri>meta("metaTri")).length,n)} dos atendimentos.`]);
       if(tTot!=null&&tTot>meta("metaTotal"))alerts.push(["warn","⏱ Tempo total acima da meta",`Média de ${Math.round(tTot)} min recepção→alta (meta: ≤ ${meta("metaTotal")} min). Regra: média(tTotal) > meta_total. ${pct(rows.filter(r=>r.tTotal!=null&&r.tTotal>meta("metaTotal")).length,n)} dos atendimentos ultrapassaram a meta individual.`]);
@@ -4229,7 +4229,7 @@
     function renderRetornos(){
       const {byP,ret}=returns72(), d=state.filt, patients=Object.keys(byP).length, multi=Object.values(byP).filter(v=>v.length>1).length;
       const prev=previousRows(), prevRet=returnsFor(prev).ret, retRate=d.length?ret.length/d.length*100:null, prevRate=prev.length?prevRet.length/prev.length*100:null;
-      $("kpisRet").innerHTML=[kpi("Retornos ≤72h",fmt(ret.length),`taxa ${pct(ret.length,d.length)} — meta < ${meta("metaRet")}%`,"#ef4444",metricDelta(retRate,prevRate,"pp",true)),kpi("Pacientes unicos",fmt(patients),"prontuários distintos","#3b82f6"),kpi("Multiplas visitas",fmt(multi),pct(multi,patients)+" dos pacientes","#a78bfa")].join("");
+      $("kpisRet").innerHTML=[kpi("Retornos ≤72h",fmt(ret.length),`${pct(ret.length,d.length)} eventos/atend. — meta < ${meta("metaRet")}%`,"#ef4444",metricDelta(retRate,prevRate,"pp",true)),kpi("Pacientes unicos",fmt(patients),"prontuários distintos","#3b82f6"),kpi("Multiplas visitas",fmt(multi),pct(multi,patients)+" dos pacientes","#a78bfa")].join("");
       const r24=ret.filter(r=>r.diffH<=24), r48=ret.filter(r=>r.diffH<=48);
       const ret7=returnsWithin(d,168), retCrit=ret.filter(r=>["AMARELO","LARANJA","VERMELHO"].includes(r.cor)), retPiora=ret.filter(r=>riskWeight(r.cor)>riskWeight(r.prev?.cor));
       $("kpisRetAdv").innerHTML=[
