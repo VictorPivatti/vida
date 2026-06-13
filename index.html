@@ -3157,7 +3157,12 @@
         const p=lines[i];if(p.length<20)continue;
         const dh=parseDate(p[9]);if(!dh){invalid++;continue}
         const dhAcol=parseDate(p[10]), dhAtend=parseDate(p[11]);
-        let tEspMed=null;if(dhAcol&&dhAtend){const d=(dhAtend-dhAcol)/60000;tEspMed=safeMinutes(d,200)}
+        // p[18]=triagem_atendimento (espera fim triagem → médico); fallback: (dhAtend-dhAcol) - tDurTri
+        const _tDurTri=safeMinutes(parseDuration(p[17]),90);
+        const _p18=parseDuration(p[18]);
+        let tEspMed=null;
+        if(_p18!=null){tEspMed=safeMinutes(_p18,CONFIG.MAX_MINUTES)}
+        else if(dhAcol&&dhAtend){tEspMed=safeMinutes((dhAtend-dhAcol)/60000-(_tDurTri??0),CONFIG.MAX_MINUTES)}
         const _turnoL=dh.getHours()>=7&&dh.getHours()<19?"D":"N";
         const _dhAjL=(_turnoL==="N"&&dh.getHours()<7)?new Date(dh.getTime()-864e5):dh;
         rows.push({
@@ -3168,8 +3173,8 @@
           idade:Number.parseFloat(String(p[7]).replace(",","."))||null,
           dh,dhAcol,dhAtend,dateKey:ymd(_dhAjL),ano:_dhAjL.getFullYear(),mes:_dhAjL.getMonth()+1,anoMes:monthKey(_dhAjL),hora:dh.getHours(),diaSem:_dhAjL.getDay(),turno:_turnoL,
           tEspTri:safeMinutes(parseDuration(p[16]),300),
-          tDurTri:safeMinutes(parseDuration(p[17]),90),
-          tTotal:safeMinutes(parseDuration(p[20]),CONFIG.MAX_MINUTES),  // p[20]=recepcao_alta (era p[18])
+          tDurTri:_tDurTri,
+          tTotal:safeMinutes(parseDuration(p[20]),CONFIG.MAX_MINUTES),  // p[20]=recepcao_alta
           tConsulta:safeMinutes(parseDuration(p[19]),300),
           tEspMed
         });
