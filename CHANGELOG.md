@@ -5,6 +5,33 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [v3.3.0] — 2026-06-13
+
+### Corrigido — Crítico (afetavam números exibidos)
+
+- **Parser CID: médico e paciente trocados** — o export atual do Vivver traz `nome_paciente` em `p[8]` e `nome_medico` em `p[14]`. O código assumia o inverso (`p[8]`=médico, `p[11]`=paciente), causando nomes de pacientes no ranking de médicos e painel de Notificáveis. Corrigido em `parseCidFromText`, `parseCidLegacy` e `FIELDS.cid`; `parseCidFromText` agora também extrai o campo `paciente`
+- **`tEspMed` calculado sobre o campo errado** — o Vivver exporta `triagem_atendimento` (`p[18]`), que mede a espera do fim da triagem até o médico. O código ignorava esse campo e calculava `dhAtend − dhAcol` (acolhimento → médico), incluindo a duração da triagem e inflando a espera em todos os painéis (Indicadores, Fluxo, Gargalos, Manchester, Score executivo, Relatório gerencial, Ano a Ano). Corrigido para usar `p[18]` como fonte primária, com fallback `(dhAtend − dhAcol) − tDurTri`
+- **Teto de 200 min em `tEspMed` descartava casos reais** — esperas ≥ 200 min viravam `null` e saíam das médias, subestimando gargalos graves. Teto aumentado para `CONFIG.MAX_MINUTES` (720 min), alinhado com `tTotal`
+
+### Corrigido — Médio (interpretação e consistência)
+
+- **Regras de auditoria Manchester inconsistentes** — c01 (VERMELHO) disparava em `> 30 min` enquanto todo o restante do app usa `> 10 min`; c02 (LARANJA) disparava em `> 60 min` mas a mensagem dizia `≤ 15 min`. Corrigido: c01 → `> 10 min`, c02 → `> 15 min` (alinhados com `MANCHESTER_METAS` e indicadores)
+- **"Médico na meta" com duas metas diferentes** — o KPI usava a meta global (`metaMed` = 60 min) enquanto a tabela Manchester e `monthlyStats` usavam `metaManchester(r.cor)` por cor de risco. Um usuário podia ver 78% no KPI e 45% no Manchester para o mesmo período. KPI e período anterior agora usam `metaManchester(r.cor)` em todos os contextos; label atualizado para "meta Manchester por cor"
+- **Taxa de retorno ≤72h: metodologia não estava explícita** — a taxa conta eventos de retorno ÷ total de atendimentos (um paciente com 3 retornos conta 3×), mas o texto dizia "dos atendimentos retornaram", sugerindo contagem de pacientes únicos. Alerta e KPI agora explicitam "eventos de retorno ÷ atendimentos"
+- **Taxa mensal de retorno ignorava cruzamentos de virada de mês** — `monthReturnRate` filtrava as rows pelo mês antes de buscar retornos, tornando invisível casos como visita 31/mai → retorno 02/jun. Corrigido para usar o cache global `returns72()` (que vê todos os meses) e filtrar apenas os eventos de retorno pelo mês da visita de volta
+- **Filtro de data inconsistente entre histórico e triagem** — o histórico filtra por `dateKey` ajustada para plantão noturno (madrugada 00h–06h → dia anterior), mas a triagem filtrava por `dh` real. Na virada do plantão, o mesmo atendimento podia aparecer na triagem mas não no histórico (ou vice-versa), quebrando cruzamentos. Ambos os parsers de triagem (posicional e por cabeçalho) agora calculam `dateKey`/`anoMes`/`diaSem` com a mesma lógica de ajuste; `applyFilters` usa `dateKey` para `triFilt`
+
+### Corrigido — Menor
+
+- **Typo no alias `ipo_entrada`** — listado antes do correto `tipo_entrada` no array de sinônimos; ordem invertida para que o campo correto seja tentado primeiro (fallback posicional preservado)
+- **Cache de `returns72()` com chave fraca** — a chave anterior (`length + primeiro_dateKey + último_dateKey`) colide quando dois filtros diferentes produzem o mesmo comprimento e intervalo de datas. Substituída por `_filtVersion`, um contador inteiro incrementado a cada `applyFilters()`
+
+### Melhorado
+
+- **`harness.js` — validações de valores calculados** — o smoke test verificava apenas se os painéis renderizavam sem exceção. Adicionadas 4 asserções de valor: `returns72()` (estrutura e taxa no intervalo 0–100%), `monthlyStats()` (presença dos campos `k`/`vol`/`medOk`/`medN`), thresholds c01/c02 da auditoria Manchester, e valores padrão de `metaManchester` por cor
+
+---
+
 ## [v3.2.1] — 2026-06-10
 
 ### Adicionado
