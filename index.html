@@ -205,7 +205,7 @@
     }
     .danger-zone-chev{font-size:11px;color:var(--er);opacity:.7;transition:transform var(--t-base)}
     .danger-zone.open .danger-zone-chev{transform:rotate(180deg)}
-    .danger-zone-body{display:none;padding:14px;background:rgba(239,68,68,.03)}
+    .danger-zone-body{display:none;padding:14px;background:rgba(200,73,62,.03)}
     .danger-zone.open .danger-zone-body{display:block}
     .danger-zone-desc{font-size:11px;color:var(--txt2);line-height:1.6;font-family:'IBM Plex Mono',monospace;margin-bottom:12px}
     .danger-zone-desc strong{color:var(--er);font-weight:600}
@@ -223,7 +223,7 @@
       display:inline-flex;align-items:center;gap:6px;
       transition:background var(--t-fast),border-color var(--t-fast)
     }
-    .btn-danger:hover{background:rgba(200,73,62,.15);border-color:rgba(239,68,68,.6)}
+    .btn-danger:hover{background:rgba(200,73,62,.15);border-color:rgba(200,73,62,.6)}
     .btn-danger:focus-visible{outline:2px solid var(--er);outline-offset:2px}
     .danger-confirm-overlay{
       display:none;position:fixed;inset:0;z-index:200;
@@ -1322,7 +1322,7 @@
        TRI SOURCE BANNER
     ───────────────────────────────────────────────────────────── */
     .tri-source-banner{border:1px solid;border-radius:10px;padding:12px 16px;font-size:13px;line-height:1.6;margin-bottom:12px}
-    .tri-source-banner.warn{border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.06);color:var(--txt2)}
+    .tri-source-banner.warn{border-color:rgba(232,169,59,.25);background:rgba(232,169,59,.06);color:var(--txt2)}
     .tri-source-banner.warn strong{color:var(--wn)}
     .tri-source-banner.ok{border-color:rgba(47,158,126,.28);background:rgba(47,158,126,.07);color:var(--txt2)}
     .tri-source-banner.ok strong{color:var(--ok)}
@@ -1413,10 +1413,10 @@
     .anot-header{display:flex;gap:8px;align-items:center;margin-bottom:6px}
     .anot-mes{font-size:11px;font-weight:700;color:var(--txt);font-family:"IBM Plex Mono",monospace}
     .anot-cat{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
-    .anot-cat.operacional{background:rgba(59,130,246,.12);color:#1357a6}
+    .anot-cat.operacional{background:rgba(68,128,194,.12);color:#1357a6}
     .anot-cat.clinico{background:rgba(47,158,126,.14);color:#2f9e7e}
-    .anot-cat.rh{background:rgba(168,85,247,.12);color:#a855f7}
-    .anot-cat.estrutura{background:rgba(245,158,11,.12);color:#f59e0b}
+    .anot-cat.rh{background:rgba(168,85,247,.12);color:#7b61c4}
+    .anot-cat.estrutura{background:rgba(232,169,59,.12);color:var(--wn)}
     .anot-cat.externo{background:rgba(200,73,62,.12);color:#c8493e}
     .anot-texto{font-size:12px;color:var(--txt2);line-height:1.6}
     .anot-del{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--mut);cursor:pointer;font-size:13px;padding:2px 5px;border-radius:4px}
@@ -1425,16 +1425,10 @@
     .escala-ok{color:var(--ok)}.escala-warn{color:var(--wn)}.escala-err{color:var(--er)}
 
 
-    /* ══ Paleta refinada para gráficos ══════════════════════════ */
+    /* Paleta viz DS — alinhada ao design system VIDA */
     :root{
-      --chart-1:#1357a6;  /* violet primary */
-      --chart-2:#22d3ee;  /* cyan */
-      --chart-3:#f59e0b;  /* amber */
-      --chart-4:#fb7185;  /* rose */
-      --chart-5:#a78bfa;  /* violet light */
-      --chart-6:#34d399;  /* emerald */
-      --chart-7:#60a5fa;  /* blue */
-      --chart-8:#fbbf24;  /* yellow */
+      --viz-1:#1357a6;--viz-2:#2f9e7e;--viz-3:#e8a93b;
+      --viz-4:#c8493e;--viz-5:#7b61c4;--viz-6:#4aa3c9;--viz-7:#8a9bb0
     }
 
     /* ─────────────────────────────────────────────────────────────
@@ -2130,7 +2124,7 @@
 
           <!-- SEÇÃO: Técnicos -->
           <div id="secaoTecnicos">
-            <div style="margin:20px 0 10px;padding:10px 0 6px;border-bottom:2px solid #f97316;display:flex;align-items:center;gap:10px">
+            <div style="margin:20px 0 10px;padding:10px 0 6px;border-bottom:1px solid var(--bdr2);display:flex;align-items:center;gap:10px">
               <span style="font-size:13px;font-weight:700;color:var(--txt)">Equipe de Enfermagem — Técnicos</span>
               <span id="kpiTecTotal" class="mono muted" style="font-size:11px"></span>
             </div>
@@ -2825,7 +2819,7 @@
           if(line.value==null||Number.isNaN(line.value))return;
           const py=y.getPixelForValue(line.value);
           if(py<chart.chartArea.top||py>chart.chartArea.bottom)return;
-          ctx.save();ctx.strokeStyle=line.color||"#eab308";ctx.lineWidth=1.5;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(left,py);ctx.lineTo(right,py);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=line.color||"#eab308";ctx.font="10px 'JetBrains Mono'";ctx.textAlign="right";ctx.fillText(line.label||"meta",right-4,py-5);ctx.restore();
+          ctx.save();ctx.strokeStyle=line.color||"#e8a93b";ctx.lineWidth=1.5;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(left,py);ctx.lineTo(right,py);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=line.color||"#e8a93b";ctx.font="10px 'JetBrains Mono'";ctx.textAlign="right";ctx.fillText(line.label||"meta",right-4,py-5);ctx.restore();
         });
       }
     };
@@ -3420,7 +3414,7 @@
         } else if(state.triSource==="hist"){
           statusEl.textContent="derivado";
           statusEl.className="upload-menu-status loaded";
-          statusEl.style.background="rgba(245,158,11,.12)";
+          statusEl.style.background="rgba(232,169,59,.12)";
           statusEl.style.color="var(--wn)";
         } else {
           statusEl.textContent="";statusEl.className="upload-menu-status";
@@ -3726,7 +3720,7 @@
         evasaoKpi=kpi("Taxa de evasão",
           totTx!=null?(totTx<0?"<0%":totTx.toFixed(1)+"%"):"—",
           totEv>=0?`${fmt(Math.max(0,totEv))} evasões · ${fmt(totRec)} recepcionados`:"Revisar dados",
-          totTx!=null&&totTx>5?"#c8493e":totTx!=null&&totTx>2?"#f97316":"var(--ok)");
+          totTx!=null&&totTx>5?"#c8493e":totTx!=null&&totTx>2?"#e8a93b":"var(--ok)");
       } else {
         evasaoKpi=kpi("Evasão","N/D","insira recepcionados em ⚙ Metas para calcular","var(--mut)");
       }
@@ -3734,11 +3728,11 @@
         kpi("Atendimentos",fmt(total),`${days} dias no período`,"#1357a6",metricDelta(total,prevVal(prev.length,prev,m_g,pm_g.length),""),"",{expr:`${fmt(total)} registros no período filtrado`,linhas:[["registros totais",fmt(total)],["dias distintos",days],["resultado",fmt(total)+" atendimentos"]]}),
         kpi("Média diária",fmt(curDaily),"atendimentos/dia","#38ac8b",metricDelta(curDaily,prevVal(prevDaily,prev,m_g,pm_g.length),""),"",{expr:`${fmt(total)} ÷ ${days} dias = ${fmt(curDaily)}/dia`,linhas:[["atendimentos no período",fmt(total)],["dias com atendimento",days],["média diária",fmt(curDaily)+"/dia"]]}),
         evasaoKpi,
-        kpi("Tempo total médio",curTotalTime!=null?Math.round(curTotalTime)+" min":"-","recepção até alta","#f97316",metricDelta(curTotalTime,prevVal(prevTotalTime,prev,m_g,pm_g.length),"min",true),"",curTotalTime!=null?(()=>{const _n=d.filter(r=>r.tTotal!=null).length;return{expr:`média(recepção → alta) — ${fmt(_n)} de ${fmt(total)} registros`,linhas:[["com tempo total registrado",fmt(_n)],["sem dado de tempo",fmt(total-_n)],["tempo médio calculado",Math.round(curTotalTime)+" min"]]};})():null)
+        kpi("Tempo total médio",curTotalTime!=null?Math.round(curTotalTime)+" min":"-","recepção até alta","#e8a93b",metricDelta(curTotalTime,prevVal(prevTotalTime,prev,m_g,pm_g.length),"min",true),"",curTotalTime!=null?(()=>{const _n=d.filter(r=>r.tTotal!=null).length;return{expr:`média(recepção → alta) — ${fmt(_n)} de ${fmt(total)} registros`,linhas:[["com tempo total registrado",fmt(_n)],["sem dado de tempo",fmt(total-_n)],["tempo médio calculado",Math.round(curTotalTime)+" min"]]};})():null)
       ].join("");
       const byM=group(d,r=>r.anoMes), keys=Object.keys(byM).map(Number).sort();
       const volVals=keys.map(k=>byM[k]);
-      chart("chartMensal",{type:"bar",data:{labels:keys.map(monthLabel),datasets:[{data:volVals,backgroundColor:"#1357a6",borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},targetLine:{lines:[{value:meta("metaVol"),label:"meta volume",color:"#eab308"}]}},scales:{...axes(),y:{...axes().y,suggestedMax:Math.max(meta("metaVol"),...volVals,1)*1.15}}}});
+      chart("chartMensal",{type:"bar",data:{labels:keys.map(monthLabel),datasets:[{data:volVals,backgroundColor:"#1357a6",borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},targetLine:{lines:[{value:meta("metaVol"),label:"meta volume",color:"#e8a93b"}]}},scales:{...axes(),y:{...axes().y,suggestedMax:Math.max(meta("metaVol"),...volVals,1)*1.15}}}});
       const byDow=group(d,r=>r.diaSem);chart("chartDow",{type:"bar",data:{labels:DOWO.map(i=>DOW[i]),datasets:[{data:DOWO.map(i=>byDow[i]||0),backgroundColor:"#2f9e7e",borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
       const byH=group(d,r=>r.hora);chart("chartHora",{type:"line",data:{labels:Array.from({length:24},(_,i)=>i+"h"),datasets:[{data:Array.from({length:24},(_,i)=>byH[i]||0),borderColor:"#7b61c4",backgroundColor:"rgba(123,97,196,.12)",fill:true,tension:.35,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
       renderHeatmap(d);
@@ -3836,7 +3830,7 @@
       DOWO.forEach(dow=>{
         html+=`<div class="hm-row">${DOW[dow]}</div>`;
         for(let h=0;h<24;h++){
-          const n=map[dow+"-"+h]||0, a=n/max, bg=n?`rgba(59,130,246,${.12+a*.78})`:"var(--sur2)";
+          const n=map[dow+"-"+h]||0, a=n/max, bg=n?`rgba(68,128,194,${.12+a*.78})`:"var(--sur2)";
           html+=`<div class="hm-cell" data-tip="${DOW[dow]} ${h}h: ${fmt(n)} atend." style="background:${bg}"></div>`;
         }
       });
@@ -3863,13 +3857,13 @@
       const triRate=triN?triOk/triN*100:null, medRate=medN?medOk/medN*100:null, totalRate=totalN?totalOk/totalN*100:null;
       $("kpisInd").innerHTML=[
         kpi("Triagem na meta",pct(triOk,triN),`meta <= ${meta("metaTri")} min`,"#38ac8b",metricDelta(triRate,prevVal(pTriN?pTriOk/pTriN*100:null,prev,m.length,pm.length),"pp"),"",triN>0?{expr:`${pct(triOk,triN)} = ${fmt(triOk)} ÷ ${fmt(triN)}`,linhas:[["na meta (≤"+meta("metaTri")+"min)",fmt(triOk)],["com dado de espera",fmt(triN)],["sem dado de espera",fmt(d.length-triN)],["conformidade",pct(triOk,triN)]]}:null),
-        kpi("Médico na meta",pct(medOk,medN),"meta Manchester por cor","#f97316",metricDelta(medRate,prevVal(pMedN?pMedOk/pMedN*100:null,prev,m.length,pm.length),"pp"),"",medN>0?{expr:`${pct(medOk,medN)} = ${fmt(medOk)} ÷ ${fmt(medN)}`,linhas:[["atendidos na meta Manchester por cor",fmt(medOk)],["com dado de espera médica",fmt(medN)],["sem dado de espera médica",fmt(d.length-medN)],["conformidade",pct(medOk,medN)]]}:null),
-        kpi("Total na meta",pct(totalOk,totalN),`meta <= ${meta("metaTotal")} min`,"#a78bfa",metricDelta(totalRate,prevVal(pTotalN?pTotalOk/pTotalN*100:null,prev,m.length,pm.length),"pp"),"",totalN>0?{expr:`${pct(totalOk,totalN)} = ${fmt(totalOk)} ÷ ${fmt(totalN)}`,linhas:[["tempo total na meta (≤"+meta("metaTotal")+"min)",fmt(totalOk)],["com tempo total registrado",fmt(totalN)],["sem registro de tempo total",fmt(d.length-totalN)],["conformidade",pct(totalOk,totalN)]]}:null),
+        kpi("Médico na meta",pct(medOk,medN),"meta Manchester por cor","#e8a93b",metricDelta(medRate,prevVal(pMedN?pMedOk/pMedN*100:null,prev,m.length,pm.length),"pp"),"",medN>0?{expr:`${pct(medOk,medN)} = ${fmt(medOk)} ÷ ${fmt(medN)}`,linhas:[["atendidos na meta Manchester por cor",fmt(medOk)],["com dado de espera médica",fmt(medN)],["sem dado de espera médica",fmt(d.length-medN)],["conformidade",pct(medOk,medN)]]}:null),
+        kpi("Total na meta",pct(totalOk,totalN),`meta <= ${meta("metaTotal")} min`,"#7b61c4",metricDelta(totalRate,prevVal(pTotalN?pTotalOk/pTotalN*100:null,prev,m.length,pm.length),"pp"),"",totalN>0?{expr:`${pct(totalOk,totalN)} = ${fmt(totalOk)} ÷ ${fmt(totalN)}`,linhas:[["tempo total na meta (≤"+meta("metaTotal")+"min)",fmt(totalOk)],["com tempo total registrado",fmt(totalN)],["sem registro de tempo total",fmt(d.length-totalN)],["conformidade",pct(totalOk,totalN)]]}:null),
         kpi("Volume medio mensal",fmt(monthAvg),`meta >= ${fmt(meta("metaVol"))}`,"#1357a6",metricDelta(monthAvg,prevVal(pm.length?Math.round(prev.length/pm.length):null,prev,m.length,pm.length),""),"",m.length>0?{expr:`${fmt(monthAvg)} = ${fmt(d.length)} ÷ ${m.length} ${m.length===1?"mês":"meses"}`,linhas:[["atendimentos no período",fmt(d.length)],["meses com atendimentos",m.length],["média mensal",fmt(monthAvg)+"/mês"],["meta configurada","≥ "+fmt(meta("metaVol"))+"/mês"]]}:null)
       ].join("");
-      chart("chartIndTri",{type:"bar",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{data:m.map(x=>x.triN?+(x.triOk/x.triN*100).toFixed(1):null),backgroundColor:m.map(x=>x.triN&&x.triOk/x.triN>=.9?"#38ac8b":"#c8493e"),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},targetLine:{lines:[{value:90,label:"meta 90%",color:"#eab308"}]}},scales:{...axes(),y:{grid:{color:gridColor()},ticks:{color:tickColor(),callback:v=>v+"%"},max:100}}}});
+      chart("chartIndTri",{type:"bar",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{data:m.map(x=>x.triN?+(x.triOk/x.triN*100).toFixed(1):null),backgroundColor:m.map(x=>x.triN&&x.triOk/x.triN>=.9?"#38ac8b":"#c8493e"),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},targetLine:{lines:[{value:90,label:"meta 90%",color:"#e8a93b"}]}},scales:{...axes(),y:{grid:{color:gridColor()},ticks:{color:tickColor(),callback:v=>v+"%"},max:100}}}});
       const tempoVals=m.flatMap(x=>[x.triAvg,x.medAvg,x.totAvg]).filter(Number.isFinite);
-      chart("chartIndTempo",{type:"line",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{label:"Triagem",data:m.map(x=>x.triAvg),borderColor:"#1357a6",tension:.3,spanGaps:true},{label:"Médico",data:m.map(x=>x.medAvg),borderColor:"#f97316",tension:.3,spanGaps:true},{label:"Total",data:m.map(x=>x.totAvg),borderColor:"#c8493e",tension:.3,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaTri"),label:"meta triagem",color:"#1357a6"},{value:meta("metaMed"),label:"meta médico",color:"#f97316"},{value:meta("metaTotal"),label:"meta total",color:"#c8493e"}]}},scales:{...axes(),y:{...axes().y,suggestedMax:Math.max(meta("metaTri"),meta("metaMed"),meta("metaTotal"),...tempoVals,1)*1.15}}}});
+      chart("chartIndTempo",{type:"line",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{label:"Triagem",data:m.map(x=>x.triAvg),borderColor:"#1357a6",tension:.3,spanGaps:true},{label:"Médico",data:m.map(x=>x.medAvg),borderColor:"#e8a93b",tension:.3,spanGaps:true},{label:"Total",data:m.map(x=>x.totAvg),borderColor:"#c8493e",tension:.3,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaTri"),label:"meta triagem",color:"#1357a6"},{value:meta("metaMed"),label:"meta médico",color:"#e8a93b"},{value:meta("metaTotal"),label:"meta total",color:"#c8493e"}]}},scales:{...axes(),y:{...axes().y,suggestedMax:Math.max(meta("metaTri"),meta("metaMed"),meta("metaTotal"),...tempoVals,1)*1.15}}}});
       // Conformidade Manchester por classificação de risco
       const manch=manchesterConformidade(d);
       const manchOrder=["VERMELHO","LARANJA","AMARELO","VERDE","AZUL","BRANCO"];
@@ -3936,11 +3930,11 @@
       const triAvg=avg(d,r=>r.tEspTri), medAvg=avg(d,r=>r.tEspMed), consAvg=avg(d,r=>r.tConsulta), totAvg=avg(d,r=>r.tTotal);
       $("kpisFluxo").innerHTML=[
         kpi("Espera triagem",triAvg!=null?Math.round(triAvg)+" min":"-",`meta <= ${meta("metaTri")} min`,"#1357a6",metricDelta(triAvg,avg(prev,r=>r.tEspTri),"min",true)),
-        kpi("Espera médico",medAvg!=null?Math.round(medAvg)+" min":"-",`meta <= ${meta("metaMed")} min`,"#f97316",metricDelta(medAvg,avg(prev,r=>r.tEspMed),"min",true)),
-        kpi("Consulta",consAvg!=null?Math.round(consAvg)+" min":"-","duracao media","#a78bfa",metricDelta(consAvg,avg(prev,r=>r.tConsulta),"min",true)),
+        kpi("Espera médico",medAvg!=null?Math.round(medAvg)+" min":"-",`meta <= ${meta("metaMed")} min`,"#e8a93b",metricDelta(medAvg,avg(prev,r=>r.tEspMed),"min",true)),
+        kpi("Consulta",consAvg!=null?Math.round(consAvg)+" min":"-","duracao media","#7b61c4",metricDelta(consAvg,avg(prev,r=>r.tConsulta),"min",true)),
         kpi("Total",totAvg!=null?Math.round(totAvg)+" min":"-",`meta <= ${meta("metaTotal")} min`,"#c8493e",metricDelta(totAvg,avg(prev,r=>r.tTotal),"min",true))
       ].join("");
-      const m=monthlyStats(d), fluxoVals=m.flatMap(x=>[x.triAvg,x.medAvg,x.totAvg]).filter(Number.isFinite);chart("chartTempos",{type:"line",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{label:"Espera triagem",data:m.map(x=>x.triAvg),borderColor:"#1357a6",tension:.3,spanGaps:true},{label:"Espera médico",data:m.map(x=>x.medAvg),borderColor:"#f97316",tension:.3,spanGaps:true},{label:"Total",data:m.map(x=>x.totAvg),borderColor:"#c8493e",tension:.3,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaTri"),label:"meta triagem",color:"#1357a6"},{value:meta("metaMed"),label:"meta médico",color:"#f97316"},{value:meta("metaTotal"),label:"meta total",color:"#c8493e"}]}},scales:{...axes(),y:{...axes().y,suggestedMax:Math.max(meta("metaTri"),meta("metaMed"),meta("metaTotal"),...fluxoVals,1)*1.15}}}});
+      const m=monthlyStats(d), fluxoVals=m.flatMap(x=>[x.triAvg,x.medAvg,x.totAvg]).filter(Number.isFinite);chart("chartTempos",{type:"line",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{label:"Espera triagem",data:m.map(x=>x.triAvg),borderColor:"#1357a6",tension:.3,spanGaps:true},{label:"Espera médico",data:m.map(x=>x.medAvg),borderColor:"#e8a93b",tension:.3,spanGaps:true},{label:"Total",data:m.map(x=>x.totAvg),borderColor:"#c8493e",tension:.3,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaTri"),label:"meta triagem",color:"#1357a6"},{value:meta("metaMed"),label:"meta médico",color:"#e8a93b"},{value:meta("metaTotal"),label:"meta total",color:"#c8493e"}]}},scales:{...axes(),y:{...axes().y,suggestedMax:Math.max(meta("metaTri"),meta("metaMed"),meta("metaTotal"),...fluxoVals,1)*1.15}}}});
       const risks=group(d,r=>r.cor), keys=RISK_ORDER.filter(k=>risks[k]).reverse();chart("chartRisco",{type:"bar",data:{labels:keys,datasets:[{data:keys.map(k=>risks[k]),backgroundColor:keys.map(k=>RISK_COLOR[k]||"#64748b"),borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.parsed.x)} atend. (${pct(c.parsed.x,d.length)})`}}},scales:{x:{grid:{color:gridColor()},ticks:{color:tickColor()}},y:{grid:{color:gridColor()},ticks:{color:tickColor(),font:{size:10}}}}}});
       const turns=group(d,r=>r.turno);chart("chartTurno",{type:"bar",data:{labels:["Diurno","Noturno"],datasets:[{data:[turns.D||0,turns.N||0],backgroundColor:["#1357a6","#7b61c4"],borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
 
@@ -3957,10 +3951,10 @@
         const medObs=avg(obs4h,r=>r.tTotal);
         permEl.innerHTML=`
           <div class="grid" style="margin:0 0 8px">
-            ${kpi("Em observação (>4h)",fmt(obs4h.length),`${pct4}% dos atendimentos com registro de saída`,"#f97316")}
+            ${kpi("Em observação (>4h)",fmt(obs4h.length),`${pct4}% dos atendimentos com registro de saída`,"#e8a93b")}
             ${kpi("Permanência longa (>12h)",fmt(obs12h.length),`${pct12}% — risco de superlotação`,"#c8493e")}
             ${kpi("Alerta regulação (>24h)",obs24h.length>0?"⚠ "+fmt(obs24h.length):"0 casos",obs24h.length>0?"critério de regulação — encaminhar":"dentro do padrão esperado",obs24h.length>0?"#a83a31":"#38ac8b")}
-            ${kpi("Média permanência obs.",medObs!=null?Math.round(medObs)+" min":"-","entre pacientes em observação (>4h)","#a78bfa")}
+            ${kpi("Média permanência obs.",medObs!=null?Math.round(medObs)+" min":"-","entre pacientes em observação (>4h)","#7b61c4")}
           </div>
           <div style="font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace">
             Portaria GM/MS 10/2017: pacientes em observação > 24h devem ser notificados à Central de Regulação para internação. Total ${fmt(comTotal.length)} registros com tempo de saída.
@@ -3971,7 +3965,7 @@
           return{k:mx.k,obs4h:mRows.filter(r=>r.tTotal>240).length,obs24h:mRows.filter(r=>r.tTotal>1440).length,total:mRows.length};
         });
         chart("chartPermanenciaMes",{type:"bar",data:{labels:mObs.map(x=>monthLabel(x.k)),datasets:[
-          {label:"Obs. >4h",data:mObs.map(x=>x.total?+(x.obs4h/x.total*100).toFixed(1):0),backgroundColor:"rgba(249,115,22,.7)",borderRadius:3},
+          {label:"Obs. >4h",data:mObs.map(x=>x.total?+(x.obs4h/x.total*100).toFixed(1):0),backgroundColor:"rgba(232,169,59,.7)",borderRadius:3},
           {label:"Obs. >24h (regulação)",data:mObs.map(x=>x.total?+(x.obs24h/x.total*100).toFixed(1):0),backgroundColor:"rgba(220,38,38,.85)",borderRadius:3}
         ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true,font:{size:10}}}},scales:{...axes(),y:{...axes().y,ticks:{callback:v=>v+"%"}}}}});
       }
@@ -3997,7 +3991,7 @@
       const triPicoMax=triPicos.length?triPicos.reduce((m,r)=>r.tEspTri>m.tEspTri?r:m):null;
       const picoLabel=r=>r&&r.dh?r.dh.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"})+" "+String(r.dh.getHours()).padStart(2,"0")+"h":"-";
       $("kpisGargalos").innerHTML=[
-        kpi("Maior espera médica",medPicoMax?Math.round(medPicoMax.tEspMed)+" min":"-",picoLabel(medPicoMax),"#f97316"),
+        kpi("Maior espera médica",medPicoMax?Math.round(medPicoMax.tEspMed)+" min":"-",picoLabel(medPicoMax),"#e8a93b"),
         kpi("Maior espera triagem",triPicoMax?Math.round(triPicoMax.tEspTri)+" min":"-",picoLabel(triPicoMax),"#1357a6"),
         kpi("Maior volume horario",topVol?fmt(topVol.n):"-",label(topVol),"#38ac8b"),
         kpi("Maior carga estimada",topCarga?topCarga.carga.toFixed(1):"-",`${label(topCarga)} - atend × permanência`,"#c8493e")
@@ -4020,8 +4014,8 @@
       } else {
         const isCrit=vPct!=null&&vPct>=20;
         const isWarn=vPct!=null&&vPct>0&&vPct<20;
-        const bgColor=isCrit?"rgba(239,68,68,0.12)":isWarn?"rgba(249,115,22,0.10)":"rgba(47,158,126,0.12)";
-        const borderColor=isCrit?"#c8493e":isWarn?"#f97316":"#38ac8b";
+        const bgColor=isCrit?"rgba(200,73,62,0.12)":isWarn?"rgba(232,169,59,0.10)":"rgba(47,158,126,0.12)";
+        const borderColor=isCrit?"#c8493e":isWarn?"#e8a93b":"#38ac8b";
         const icon=isCrit?"🚨":isWarn?"⚠️":"✅";
         const title=isCrit
           ?"Alerta crítico: VERMELHO aguardando além do protocolo"
@@ -4057,7 +4051,7 @@
       const rank=[...buckets].sort((a,b)=>(b.medAvg||0)+(b.triAvg||0)+b.carga/2-((a.medAvg||0)+(a.triAvg||0)+a.carga/2)).slice(0,30);
       $("tableGargalos").innerHTML=`<thead><tr><th>Dia/hora</th><th>Volume</th><th>Espera triagem</th><th>Espera médico</th><th>Total médio</th><th>Amarelo+</th><th>Carga</th></tr></thead><tbody>${rank.map(x=>`<tr><td class="mono">${DOW[x.diaSem]} ${x.hora}h</td><td class="mono">${fmt(x.n)}</td><td class="mono">${x.triAvg==null?"-":Math.round(x.triAvg)+" min"}</td><td class="mono ${x.medAvg>meta("metaMed")?"erc":""}">${x.medAvg==null?"-":Math.round(x.medAvg)+" min"}</td><td class="mono">${x.totAvg==null?"-":Math.round(x.totAvg)+" min"}</td><td class="mono">${x.gravePct.toFixed(1)}%</td><td class="mono">${x.carga.toFixed(1)}</td></tr>`).join("")}</tbody>`;
       const medTop=[...buckets].filter(x=>x.medAvg!=null).sort((a,b)=>b.medAvg-a.medAvg).slice(0,10).reverse();
-      chart("chartGargMed",{type:"bar",data:{labels:medTop.map(label),datasets:[{data:medTop.map(x=>Math.round(x.medAvg)),backgroundColor:medTop.map(x=>x.medAvg>meta("metaMed")?"#c8493e":"#38ac8b"),borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},targetLine:{lines:[{value:meta("metaMed"),label:"meta",color:"#eab308"}]}},scales:axes()}});
+      chart("chartGargMed",{type:"bar",data:{labels:medTop.map(label),datasets:[{data:medTop.map(x=>Math.round(x.medAvg)),backgroundColor:medTop.map(x=>x.medAvg>meta("metaMed")?"#c8493e":"#38ac8b"),borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},targetLine:{lines:[{value:meta("metaMed"),label:"meta",color:"#e8a93b"}]}},scales:axes()}});
       const cargaTop=[...buckets].sort((a,b)=>b.carga-a.carga).slice(0,10).reverse();
       chart("chartCarga",{type:"bar",data:{labels:cargaTop.map(label),datasets:[{data:cargaTop.map(x=>+x.carga.toFixed(1)),backgroundColor:"#7b61c4",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
       // Comparativo por dia da semana
@@ -4110,8 +4104,8 @@
       $("kpisMed").innerHTML=[
         kpi("Médicos ativos",fmt(rows.length),"no período","#1357a6"),
         kpi("Maior pontuação",topPts?esc(shortName(topPts.prof)):"-",topPts?`${fmt(topPts.pontos)} pts · ${fmt(topPts.total)} atend.`:"sem dados","#38ac8b"),
-        kpi("Maior volume",topVol?esc(shortName(topVol.prof)):"-",topVol?`${fmt(topVol.total)} atendimentos`:"sem dados","#f59e0b"),
-        kpi("Atend. por médico",rows.length?fmt(Math.round(total/rows.length)):"-","média no período","#a78bfa")
+        kpi("Maior volume",topVol?esc(shortName(topVol.prof)):"-",topVol?`${fmt(topVol.total)} atendimentos`:"sem dados","#e8a93b"),
+        kpi("Atend. por médico",rows.length?fmt(Math.round(total/rows.length)):"-","média no período","#7b61c4")
       ].join("");
       const top=rows.slice(0,12).reverse();chart("chartMed",{type:"bar",data:{labels:top.map(r=>shortName(r.prof)),datasets:[{data:top.map(r=>r.total),backgroundColor:"#1357a6",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
       const riskKeys=RISK_ORDER.filter(k=>rows.some(r=>r.risks[k]));chart("chartMedRisco",{type:"bar",data:{labels:rows.slice(0,12).map(r=>shortName(r.prof)),datasets:riskKeys.map(k=>({label:k,data:rows.slice(0,12).map(r=>r.risks[k]||0),backgroundColor:RISK_COLOR[k]||"#64748b"}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}}},scales:{x:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor(),maxRotation:35}},y:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}}}}});
@@ -4148,7 +4142,7 @@
       chart("chartPlantaoBox",{type:"bar",data:{
         labels:allDates.map(dk=>{const d=new Date(dk+"T12:00:00");return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});}),
         datasets:[
-          {label:"Diurno",data:allDates.map(dk=>dByDate[dk]||0),backgroundColor:"rgba(59,130,246,.7)",borderRadius:2},
+          {label:"Diurno",data:allDates.map(dk=>dByDate[dk]||0),backgroundColor:"rgba(68,128,194,.7)",borderRadius:2},
           {label:"Noturno",data:allDates.map(dk=>nByDate[dk]||0),backgroundColor:"rgba(68,128,194,.75)",borderRadius:2}
         ]
       },options:{responsive:true,maintainAspectRatio:false,
@@ -4256,18 +4250,18 @@
     function renderRetornos(){
       const {byP,ret}=returns72(), d=state.filt, patients=Object.keys(byP).length, multi=Object.values(byP).filter(v=>v.length>1).length;
       const prev=previousRows(), prevRet=returnsFor(prev).ret, retRate=d.length?ret.length/d.length*100:null, prevRate=prev.length?prevRet.length/prev.length*100:null;
-      $("kpisRet").innerHTML=[kpi("Retornos ≤72h",fmt(ret.length),`${pct(ret.length,d.length)} eventos/atend. — meta < ${meta("metaRet")}%`,"#c8493e",metricDelta(retRate,prevRate,"pp",true)),kpi("Pacientes unicos",fmt(patients),"prontuários distintos","#1357a6"),kpi("Multiplas visitas",fmt(multi),pct(multi,patients)+" dos pacientes","#a78bfa")].join("");
+      $("kpisRet").innerHTML=[kpi("Retornos ≤72h",fmt(ret.length),`${pct(ret.length,d.length)} eventos/atend. — meta < ${meta("metaRet")}%`,"#c8493e",metricDelta(retRate,prevRate,"pp",true)),kpi("Pacientes unicos",fmt(patients),"prontuários distintos","#1357a6"),kpi("Multiplas visitas",fmt(multi),pct(multi,patients)+" dos pacientes","#7b61c4")].join("");
       const r24=ret.filter(r=>r.diffH<=24), r48=ret.filter(r=>r.diffH<=48);
       const ret7=returnsWithin(d,168), retCrit=ret.filter(r=>["AMARELO","LARANJA","VERMELHO"].includes(r.cor)), retPiora=ret.filter(r=>riskWeight(r.cor)>riskWeight(r.prev?.cor));
       $("kpisRetAdv").innerHTML=[
         kpi("Retorno <=24h",fmt(r24.length),pct(r24.length,d.length),"#c8493e"),
-        kpi("Retorno <=48h",fmt(r48.length),pct(r48.length,d.length),"#f97316"),
-        kpi("Retorno <=7 dias",fmt(ret7.length),pct(ret7.length,d.length),"#a78bfa"),
-        kpi("Retorno critico",fmt(retCrit.length),"retornou amarelo/laranja/vermelho","#eab308")
+        kpi("Retorno <=48h",fmt(r48.length),pct(r48.length,d.length),"#e8a93b"),
+        kpi("Retorno <=7 dias",fmt(ret7.length),pct(ret7.length,d.length),"#7b61c4"),
+        kpi("Retorno critico",fmt(retCrit.length),"retornou amarelo/laranja/vermelho","#e8a93b")
       ].join("");
-      const totalM=group(d,r=>r.anoMes), retM=group(ret,r=>r.anoMes), keys=Object.keys(totalM).map(Number).sort(), retVals=keys.map(k=>+(((retM[k]||0)/totalM[k])*100).toFixed(1));chart("chartRetMes",{type:"bar",data:{labels:keys.map(monthLabel),datasets:[{data:retVals,backgroundColor:keys.map(k=>((retM[k]||0)/totalM[k]*100)>meta("metaRet")?"#c8493e":"#38ac8b"),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},targetLine:{lines:[{value:meta("metaRet"),label:"meta retorno",color:"#eab308"}]}},scales:{...axes(),y:{grid:{color:gridColor()},ticks:{color:tickColor(),callback:v=>v+"%"},suggestedMax:Math.max(meta("metaRet"),...retVals,1)*1.25}}}});
-      const byH=group(ret,r=>r.hora);chart("chartRetHora",{type:"bar",data:{labels:Array.from({length:24},(_,i)=>i+"h"),datasets:[{data:Array.from({length:24},(_,i)=>byH[i]||0),backgroundColor:"#f97316",borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
-      chart("chartRetJanelas",{type:"bar",data:{labels:["24h","48h","72h","7 dias"],datasets:[{data:[r24.length,r48.length,ret.length,ret7.length],backgroundColor:["#c8493e","#f97316","#eab308","#a78bfa"],borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+      const totalM=group(d,r=>r.anoMes), retM=group(ret,r=>r.anoMes), keys=Object.keys(totalM).map(Number).sort(), retVals=keys.map(k=>+(((retM[k]||0)/totalM[k])*100).toFixed(1));chart("chartRetMes",{type:"bar",data:{labels:keys.map(monthLabel),datasets:[{data:retVals,backgroundColor:keys.map(k=>((retM[k]||0)/totalM[k]*100)>meta("metaRet")?"#c8493e":"#38ac8b"),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},targetLine:{lines:[{value:meta("metaRet"),label:"meta retorno",color:"#e8a93b"}]}},scales:{...axes(),y:{grid:{color:gridColor()},ticks:{color:tickColor(),callback:v=>v+"%"},suggestedMax:Math.max(meta("metaRet"),...retVals,1)*1.25}}}});
+      const byH=group(ret,r=>r.hora);chart("chartRetHora",{type:"bar",data:{labels:Array.from({length:24},(_,i)=>i+"h"),datasets:[{data:Array.from({length:24},(_,i)=>byH[i]||0),backgroundColor:"#e8a93b",borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+      chart("chartRetJanelas",{type:"bar",data:{labels:["24h","48h","72h","7 dias"],datasets:[{data:[r24.length,r48.length,ret.length,ret7.length],backgroundColor:["#c8493e","#e8a93b","#2f9e7e","#7b61c4"],borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
       const top=Object.entries(byP).filter(([,v])=>v.length>1).sort((a,b)=>b[1].length-a[1].length).slice(0,20);
       $("tableRet").innerHTML=`<thead><tr><th>Prontuário</th><th>Visitas</th><th>Retornos 72h</th><th>Ultima visita</th></tr></thead><tbody>${top.map(([p,v])=>`<tr><td class="mono">${esc(p)}</td><td class="mono">${v.length}</td><td class="mono">${ret.filter(r=>r.pront===p).length}</td><td class="mono">${v[v.length-1].dh.toLocaleDateString("pt-BR")}</td></tr>`).join("")}</tbody>`;
 
@@ -4337,8 +4331,8 @@
         const topCidsRep=Object.entries(byCidRep).sort((a,b)=>b[1]-a[1]).slice(0,10);
         $("kpisRetCid").innerHTML=[
           kpi("Retornos com mesmo CID",fmt(retComCid.length),`${taxaFalha}% dos retornos ≤72h`,"#c8493e"),
-          kpi("Taxa de falha diagnóstica potencial",taxaFalha+"%",`${retComCid.length} de ${fmt(ret.length)} retornos`,"#f97316"),
-          kpi("CIDs com maior recidiva",fmt(topCidsRep.length),"diagnósticos repetidos em retornos","#a78bfa"),
+          kpi("Taxa de falha diagnóstica potencial",taxaFalha+"%",`${retComCid.length} de ${fmt(ret.length)} retornos`,"#e8a93b"),
+          kpi("CIDs com maior recidiva",fmt(topCidsRep.length),"diagnósticos repetidos em retornos","#7b61c4"),
         ].join("");
         $("tableRetMesmoCid").innerHTML=`<thead><tr><th>#</th><th>CID repetido</th><th>Ocorrências</th><th>% dos retornos c/ mesmo CID</th></tr></thead><tbody>${
           topCidsRep.map(([cid,n],i)=>`<tr>
@@ -4463,7 +4457,7 @@
         kpi("Maior melhora",best?best.nome:"-",best?`${best.diff>0?"+":""}${best.diff.toFixed(1)}${best.unit}`:"sem dados","#38ac8b")
       ].join("");
       $("tableEvolucao").innerHTML=`<thead><tr><th>Indicador</th><th>${monthLabel(prev.k)}</th><th>${monthLabel(cur.k)}</th><th>Variação</th><th>Leitura</th></tr></thead><tbody>${metrics.map(x=>`<tr><td>${esc(x.nome)}</td><td class="mono">${x.prev.toFixed(1)}${x.unit}</td><td class="mono">${x.cur.toFixed(1)}${x.unit}</td><td class="mono ${x.bad?"erc":"okc"}">${x.diff>0?"+":""}${x.diff.toFixed(1)}${x.unit} (${x.pct>0?"+":""}${x.pct.toFixed(1)}%)</td><td class="mono ${x.bad?"erc":"okc"}">${x.bad?"piorou":"melhorou"}</td></tr>`).join("")}</tbody>`;
-      chart("chartEvolucao",{type:"line",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{label:"Espera médico",data:m.map(x=>x.medAvg),borderColor:"#f97316",tension:.3,spanGaps:true},{label:"Tempo total",data:m.map(x=>x.totAvg),borderColor:"#c8493e",tension:.3,spanGaps:true},{label:"Volume /100",data:m.map(x=>x.vol/100),borderColor:"#1357a6",tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}}},scales:axes()}});
+      chart("chartEvolucao",{type:"line",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{label:"Espera médico",data:m.map(x=>x.medAvg),borderColor:"#e8a93b",tension:.3,spanGaps:true},{label:"Tempo total",data:m.map(x=>x.totAvg),borderColor:"#c8493e",tension:.3,spanGaps:true},{label:"Volume /100",data:m.map(x=>x.vol/100),borderColor:"#1357a6",tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}}},scales:axes()}});
     }
     function buildReportText(){
       const {s,e}=dateRange(), d=state.filt, m=monthlyStats(d), {ret}=returns72(), alerts=topAlerts(d);
@@ -4514,19 +4508,19 @@
 
       $("kpisTri").innerHTML=[
         kpi("Triagens",fmt(total),`${fmt(state.filt.length)} atendimentos médicos no período`,"#1357a6"),
-        kpi("Gap triagem-médico",fmt(Math.max(total-branco-state.filt.length,0)),"triados não brancos sem atendimento médico aparente","#eab308"),
-        kpi("Espera média",avg(d,r=>r.tEsp)!=null?Math.round(avg(d,r=>r.tEsp))+" min":"-",`meta ≤ ${meta("metaTri")} min`,"#f97316"),
+        kpi("Gap triagem-médico",fmt(Math.max(total-branco-state.filt.length,0)),"triados não brancos sem atendimento médico aparente","#e8a93b"),
+        kpi("Espera média",avg(d,r=>r.tEsp)!=null?Math.round(avg(d,r=>r.tEsp))+" min":"-",`meta ≤ ${meta("metaTri")} min`,"#e8a93b"),
         fromHist
           ? kpi("Triadores","—","carregue planilha de triagem","#94a3b8")
-          : kpi("Triadores",fmt(triadores),"profissionais distintos","#a78bfa")
+          : kpi("Triadores",fmt(triadores),"profissionais distintos","#7b61c4")
       ].join("");
 
       const byH=group(d,r=>r.hora), esp={};
       d.forEach(r=>{if(r.tEsp==null)return;(esp[r.hora]??=[]).push(r.tEsp)});
       chart("chartTriHora",{type:"bar",data:{labels:Array.from({length:24},(_,i)=>i+"h"),datasets:[
         {type:"bar",label:"Triagens",data:Array.from({length:24},(_,i)=>byH[i]||0),backgroundColor:"rgba(79,142,247,.55)",yAxisID:"y"},
-        {type:"line",label:"Espera (min)",data:Array.from({length:24},(_,i)=>esp[i]?avg(esp[i],v=>v):null),borderColor:"#f97316",yAxisID:"y1",spanGaps:true,tension:.3,pointRadius:3}
-      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaTri"),label:"meta espera",color:"#eab308"}]}},scales:{x:{grid:{color:gridColor()},ticks:{color:tickColor()}},y:{position:"left",grid:{color:gridColor()},ticks:{color:tickColor()}},y1:{position:"right",grid:{display:false},ticks:{color:"#f97316",callback:v=>v+" min"}}}}});
+        {type:"line",label:"Espera (min)",data:Array.from({length:24},(_,i)=>esp[i]?avg(esp[i],v=>v):null),borderColor:"#e8a93b",yAxisID:"y1",spanGaps:true,tension:.3,pointRadius:3}
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaTri"),label:"meta espera",color:"#e8a93b"}]}},scales:{x:{grid:{color:gridColor()},ticks:{color:tickColor()}},y:{position:"left",grid:{color:gridColor()},ticks:{color:tickColor()}},y1:{position:"right",grid:{display:false},ticks:{color:"#e8a93b",callback:v=>v+" min"}}}}});
 
       const risks=group(d,r=>r.cor), rkeys=RISK_ORDER.filter(k=>risks[k]).reverse();
       chart("chartTriRisco",{type:"bar",data:{labels:rkeys,datasets:[{data:rkeys.map(k=>risks[k]),backgroundColor:rkeys.map(k=>RISK_COLOR[k]||"#64748b"),borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.parsed.x)} triagens (${pct(c.parsed.x,total)})`}}},scales:{x:{grid:{color:gridColor()},ticks:{color:tickColor()}},y:{grid:{color:gridColor()},ticks:{color:tickColor(),font:{size:10}}}}}});
@@ -4580,9 +4574,9 @@
         kpi("Triados",fmt(totTriados),"passaram pela triagem","#1357a6"),
         kpi("Brancos",fmt(totBrancos),"redirecionados — excluidos do calculo","#94a3b8"),
         kpi("Atendidos",fmt(totAtendidos),"atendimento medico registrado","#38ac8b"),
-        kpi("Recepcionados",totRecep!=null?fmt(totRecep):noRecepMsg,"total registrado na recepcao","#a78bfa","",totRecep==null?"kpi-warn":""),
+        kpi("Recepcionados",totRecep!=null?fmt(totRecep):noRecepMsg,"total registrado na recepcao","#7b61c4","",totRecep==null?"kpi-warn":""),
         kpi("Evasoes",totEvasoes!=null?(totEvasoes<0?"<0 (revisar)":fmt(totEvasoes)):noRecepMsg,"saíram sem atendimento (excl. brancos)","#c8493e","",totEvasoes==null?"kpi-warn":""),
-        kpi("Taxa de Evasao",totTaxa!=null?(totTaxa<0?"<0%":totTaxa.toFixed(1)+"%"):noRecepMsg,"(Recep - Brancos - Atend.) / Recep","#f97316","",totTaxa==null?"kpi-warn":"",totTaxa!=null?{expr:"(Recepcionados − Brancos − Atendidos) ÷ Recepcionados",linhas:[["recepcionados (entrada)",fmt(totRecep)],["classificados brancos",fmt(totBrancos)],["atendimentos médicos",fmt(totAtendidos)],["evasões",totEvasoes<0?"<0 (revisar)":fmt(Math.max(0,totEvasoes))],["taxa de evasão",totTaxa<0?"<0%":totTaxa.toFixed(1)+"%"]]}:null)
+        kpi("Taxa de Evasao",totTaxa!=null?(totTaxa<0?"<0%":totTaxa.toFixed(1)+"%"):noRecepMsg,"(Recep - Brancos - Atend.) / Recep","#e8a93b","",totTaxa==null?"kpi-warn":"",totTaxa!=null?{expr:"(Recepcionados − Brancos − Atendidos) ÷ Recepcionados",linhas:[["recepcionados (entrada)",fmt(totRecep)],["classificados brancos",fmt(totBrancos)],["atendimentos médicos",fmt(totAtendidos)],["evasões",totEvasoes<0?"<0 (revisar)":fmt(Math.max(0,totEvasoes))],["taxa de evasão",totTaxa<0?"<0%":totTaxa.toFixed(1)+"%"]]}:null)
       ].join("");
       // Grafico tendencia mensal
       const comTaxa=mData.filter(r=>r.taxa!=null);
@@ -4616,7 +4610,7 @@
         },options:{responsive:true,maintainAspectRatio:false,
           plugins:{
             legend:{display:false},
-            targetLine:{lines:[{value:metaEv,label:`meta ${metaEv}%`,color:'#f59e0b'}]}
+            targetLine:{lines:[{value:metaEv,label:`meta ${metaEv}%`,color:'#e8a93b'}]}
           },
           scales:{
             x:{grid:{color:gridColor()},ticks:{color:tickColor()}},
@@ -4630,9 +4624,9 @@
           labels:mData.map(r=>r.label),
           datasets:[
             {label:"Taxa de Evasao (%)",data:mData.map(r=>r.taxa),borderColor:"#c8493e",backgroundColor:"rgba(200,73,62,.12)",fill:true,tension:.35,pointRadius:4,pointBackgroundColor:"#c8493e",yAxisID:"y"},
-            {label:"Evasoes",data:mData.map(r=>r.evasoes),borderColor:"#f97316",backgroundColor:"transparent",tension:.35,pointRadius:3,pointBackgroundColor:"#f97316",borderDash:[5,4],yAxisID:"y1"}
+            {label:"Evasoes",data:mData.map(r=>r.evasoes),borderColor:"#e8a93b",backgroundColor:"transparent",tension:.35,pointRadius:3,pointBackgroundColor:"#e8a93b",borderDash:[5,4],yAxisID:"y1"}
           ]
-        },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true,padding:16}},tooltip:{callbacks:{label:c=>c.dataset.yAxisID==="y"?`Evasao: ${c.parsed.y!=null?c.parsed.y.toFixed(1)+"%":"-"}`:c.dataset.yAxisID==="y1"?`Evasoes: ${c.parsed.y!=null?fmt(c.parsed.y):"-"}`:""}}},scales:{x:{grid:{color:gridColor()},ticks:{color:tickColor()}},y:{position:"left",grid:{color:gridColor()},ticks:{color:tickColor(),callback:v=>v+"%"},beginAtZero:true},y1:{position:"right",grid:{display:false},ticks:{color:"#f97316",callback:v=>Math.round(v)},beginAtZero:true}}}});
+        },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true,padding:16}},tooltip:{callbacks:{label:c=>c.dataset.yAxisID==="y"?`Evasao: ${c.parsed.y!=null?c.parsed.y.toFixed(1)+"%":"-"}`:c.dataset.yAxisID==="y1"?`Evasoes: ${c.parsed.y!=null?fmt(c.parsed.y):"-"}`:""}}},scales:{x:{grid:{color:gridColor()},ticks:{color:tickColor()}},y:{position:"left",grid:{color:gridColor()},ticks:{color:tickColor(),callback:v=>v+"%"},beginAtZero:true},y1:{position:"right",grid:{display:false},ticks:{color:"#e8a93b",callback:v=>Math.round(v)},beginAtZero:true}}}});
       }
       // Tabela detalhada
       $("tableEvasao").innerHTML=`<thead><tr><th>Mes</th><th>Recepcionados</th><th>Triados</th><th>Brancos</th><th>Atendidos</th><th>Evasoes</th><th>Taxa</th></tr></thead><tbody>${
@@ -4704,13 +4698,13 @@
     function renderCid(){
       if(!state.cidRaw.length){$("cidEmpty").classList.remove("hidden");$("cidContent").classList.add("hidden");return}
       $("cidEmpty").classList.add("hidden");$("cidContent").classList.remove("hidden");const d=state.cidFilt,total=d.length,att=new Set(d.map(r=>r.idAtend).filter(Boolean)).size,cids=new Set(d.map(r=>r.cid)).size;
-      $("kpisCid").innerHTML=[kpi("Registros CID",fmt(total),"linhas importadas no período","#1357a6"),kpi("Atendimentos com CID",fmt(att||"-"),att?pct(att,state.filt.length)+" do historico":"sem ID confiável","#38ac8b"),kpi("CIDs distintos",fmt(cids),"diagnósticos diferentes","#a78bfa")].join("");
+      $("kpisCid").innerHTML=[kpi("Registros CID",fmt(total),"linhas importadas no período","#1357a6"),kpi("Atendimentos com CID",fmt(att||"-"),att?pct(att,state.filt.length)+" do historico":"sem ID confiável","#38ac8b"),kpi("CIDs distintos",fmt(cids),"diagnósticos diferentes","#7b61c4")].join("");
 
       // ── Diagnósticos sentinela ─────────────────────────────────────────
       const SENTINELA={
         "Dor Torácica":{cids:["R07","R070","R071","R072","R073","R074","I20","I200","I208","I209"],color:"#c8493e",icon:"💔"},
-        "Sepse":       {cids:["A41","A418","A419"],                                   color:"#f97316",icon:"🦠"},
-        "AVE/AVC":     {cids:["I64","I640","I641","I642","I643","I649","I610","I611","I612","I613","I614","I615","I616","I618","I619","I630","I631","I632","I633","I634","I635","I638","I639","I694"],color:"#8b5cf6",icon:"🧠"}
+        "Sepse":       {cids:["A41","A418","A419"],                                   color:"#e8a93b",icon:"🦠"},
+        "AVE/AVC":     {cids:["I64","I640","I641","I642","I643","I649","I610","I611","I612","I613","I614","I615","I616","I618","I619","I630","I631","I632","I633","I634","I635","I638","I639","I694"],color:"#7b61c4",icon:"🧠"}
       };
       const sentMatch=r=>Object.entries(SENTINELA).find(([,g])=>g.cids.some(c=>r.cid===c||r.cid.startsWith(c)));
       const sentCounts={},sentMonthly={};
@@ -4738,7 +4732,7 @@
       // ─────────────────────────────────────────────────────────────────
       const byM={};d.forEach(r=>{byM[r.anoMes]??={};byM[r.anoMes][r.cap]=(byM[r.anoMes][r.cap]||0)+1});const keys=Object.keys(byM).map(Number).sort(), capCount=group(d,r=>r.cap), caps=Object.entries(capCount).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([c])=>c);
       chart("chartCidCap",{type:"bar",data:{labels:keys.map(monthLabel),datasets:caps.map(c=>({label:CAP[c]||c,data:keys.map(k=>byM[k]?.[c]||0),backgroundColor:CAP_COLOR[c]||"#94a3b8"}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}}},scales:{x:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}},y:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}}}}});
-      const cidCount=group(d,r=>r.cid), top=Object.entries(cidCount).sort((a,b)=>b[1]-a[1]).slice(0,15).reverse();chart("chartCidTop",{type:"bar",data:{labels:top.map(([c])=>c),datasets:[{data:top.map(([,n])=>n),backgroundColor:"#06b6d4",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+      const cidCount=group(d,r=>r.cid), top=Object.entries(cidCount).sort((a,b)=>b[1]-a[1]).slice(0,15).reverse();chart("chartCidTop",{type:"bar",data:{labels:top.map(([c])=>c),datasets:[{data:top.map(([,n])=>n),backgroundColor:"#4aa3c9",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
       const semCid=Math.max(state.filt.length-att,0);chart("chartCidCoverage",{type:"bar",data:{labels:["Cobertura"],datasets:[{label:"Com CID",data:[att],backgroundColor:"#38ac8b",borderRadius:3},{label:"Sem CID ou sem ID",data:[semCid],backgroundColor:"#334155",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.parsed.x)} (${pct(c.parsed.x,att+semCid)})`}}},scales:{x:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}},y:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}}}}});
       renderCidTable();
       renderCidTrend();
@@ -5276,10 +5270,10 @@
       $("kpisExames").innerHTML=[
         kpi("Guias processadas",fmt(totGuias),state.examesMeta.periodo||"período","#1357a6"),
         kpi("Total de exames",fmt(totEx),state.examesMeta.prestador||"laboratório","#38ac8b"),
-        kpi("Valor total","R$ "+totVal.toLocaleString("pt-BR",{minimumFractionDigits:2}),"custo com exames","#a78bfa"),
-        kpi("Médicos solicitantes",fmt(totMed),"com guias no período","#f97316"),
-        kpi("Média exames/guia",String(mediaGlobal),mediaGlobal>9?"⚠ acima de 9 — revisar":"≤ 9 dentro do esperado",mediaGlobal>9?"#c8493e":"#06b6d4"),
-        kpi("Custo médio/guia","R$ "+(totVal/totGuias).toFixed(2),"por atendimento com exame","#eab308")
+        kpi("Valor total","R$ "+totVal.toLocaleString("pt-BR",{minimumFractionDigits:2}),"custo com exames","#7b61c4"),
+        kpi("Médicos solicitantes",fmt(totMed),"com guias no período","#e8a93b"),
+        kpi("Média exames/guia",String(mediaGlobal),mediaGlobal>9?"⚠ acima de 9 — revisar":"≤ 9 dentro do esperado",mediaGlobal>9?"#c8493e":"#4aa3c9"),
+        kpi("Custo médio/guia","R$ "+(totVal/totGuias).toFixed(2),"por atendimento com exame","#e8a93b")
       ].join("");
 
       // Top exames
@@ -5301,8 +5295,8 @@
       $("tableExames").innerHTML=`<thead><tr><th>#</th><th>Médico</th><th>Guias</th><th>Exames</th><th>Méd./guia</th><th>Valor</th><th>% total</th><th>R$/guia</th>${crossTh}<th>Vol.</th></tr></thead><tbody>`+
         ranking.map((r,i)=>{
           const pct=Math.round(r.guias/maxG*100);
-          const bc=r.alerta?"#c8493e":r.mediaGuia>8?"#f59e0b":"#1357a6";
-          const mgStyle=r.alerta?"color:#c8493e;font-weight:700":r.mediaGuia>8?"color:#f59e0b":"";
+          const bc=r.alerta?"#c8493e":r.mediaGuia>8?"#e8a93b":"#1357a6";
+          const mgStyle=r.alerta?"color:#c8493e;font-weight:700":r.mediaGuia>8?"color:#e8a93b":"";
           const alertBadge=r.alerta?` <span style="font-size:9px;background:#FCEBEB;color:#A32D2D;padding:2px 5px;border-radius:99px">⚠ alto</span>`:"" ;
           const crossTds=hasVivver?`<td class="mono">${r.vivverAtend>0?fmt(r.vivverAtend):"—"}</td><td class="mono ${r.pctSolicit!=null&&r.pctSolicit>30?"erc":r.pctSolicit!=null&&r.pctSolicit>20?"wnc":""}">${r.pctSolicit!=null?r.pctSolicit+"%":"—"}</td><td class="mono">${r.custoPorAtend!=null?"R$ "+r.custoPorAtend.toFixed(2):"—"}</td>`:"";
           return `<tr><td class="mono muted">${i+1}</td><td style="font-weight:600">${esc(shortName(r.doc))}${alertBadge}</td><td class="mono">${r.guias}</td><td class="mono">${fmt(r.exames)}</td><td class="mono" style="${mgStyle}">${r.mediaGuia}</td><td class="mono">R$ ${r.valor.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}</td><td class="mono muted">${r.pctVal}%</td><td class="mono">R$ ${r.custoGuia.toFixed(2)}</td>${crossTds}<td><div style="background:var(--bdr);border-radius:2px;height:4px;width:70px"><div style="width:${pct}%;height:4px;border-radius:2px;background:${bc}"></div></div></td></tr>`;
@@ -5723,10 +5717,10 @@
       const tecTotal=tecRows.reduce((s,r)=>s+r.qde,0);
       const triagensEnf=enfRows.filter(r=>procTipoSimple(r.proc)==='Triagem').reduce((s,r)=>s+r.qde,0);
       $('kpisEnf').innerHTML=[
-        kpi('Enfermeiros ativos',fmt(enfProfs),'no período','#a78bfa'),
+        kpi('Enfermeiros ativos',fmt(enfProfs),'no período','#7b61c4'),
         kpi('Técnicos ativos',fmt(tecProfs),'no período','#1357a6'),
         kpi('Triagens realizadas',fmt(triagensEnf),'por enfermeiros','#38ac8b'),
-        kpi('Proc. técnicos',fmt(tecTotal),'administrações e cuidados','#f97316'),
+        kpi('Proc. técnicos',fmt(tecTotal),'administrações e cuidados','#e8a93b'),
       ].join('');
 
       // ── Enfermeiros: ranking e triagens ───────────────────
@@ -5742,7 +5736,7 @@
       const top8enf=enfList.slice(0,8).reverse();
       chart('chartEnfTriagem',{type:'bar',data:{
         labels:top8enf.map(r=>shortName(r.prof)),
-        datasets:[{label:'Triagens',data:top8enf.map(r=>r.tipos['Triagem']||0),backgroundColor:'#a78bfa',borderRadius:3},{label:'Outros proc.',data:top8enf.map(r=>r.total-(r.tipos['Triagem']||0)),backgroundColor:'#0f4789',borderRadius:3}]
+        datasets:[{label:'Triagens',data:top8enf.map(r=>r.tipos['Triagem']||0),backgroundColor:'#7b61c4',borderRadius:3},{label:'Outros proc.',data:top8enf.map(r=>r.total-(r.tipos['Triagem']||0)),backgroundColor:'#0f4789',borderRadius:3}]
       },options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true}}},scales:{x:{stacked:true,...axes().x},y:{stacked:true,...axes().y}}}});
 
       const tiposEnf={};
@@ -5750,7 +5744,7 @@
       const tiposEnfArr=Object.entries(tiposEnf).sort((a,b)=>b[1]-a[1]);
       chart('chartEnfProcPerfil',{type:'doughnut',data:{
         labels:tiposEnfArr.map(x=>x[0]),
-        datasets:[{data:tiposEnfArr.map(x=>x[1]),backgroundColor:['#a78bfa','#1357a6','#0f4789','#4f8ef7','#38ac8b','#f59e0b','#c8493e','#06b6d4'],borderWidth:0}]
+        datasets:[{data:tiposEnfArr.map(x=>x[1]),backgroundColor:['#7b61c4','#1357a6','#0f4789','#4480c2','#38ac8b','#e8a93b','#c8493e','#4aa3c9'],borderWidth:0}]
       },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:tickColor(),usePointStyle:true,font:{size:10}}}}}});
 
       $('tableEnfRanking').innerHTML=`<thead><tr><th>#</th><th>Enfermeiro</th><th>Total proc.</th><th>Triagens</th><th>EV</th><th>IM</th><th>VO</th><th>Outros</th></tr></thead><tbody>${
@@ -5783,7 +5777,7 @@
       },options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
 
       const viasLabels=['EV','IM','VO','SC','Neb','Curativo','Sondagem','Outros'];
-      const viasCores=['#4f8ef7','#f59e0b','#38ac8b','#a78bfa','#06b6d4','#f97316','#ec4899','#64748b'];
+      const viasCores=['#4480c2','#e8a93b','#38ac8b','#7b61c4','#4aa3c9','#e8a93b','#ec4899','#64748b'];
       const viasData=viasLabels.map(v=>tecRows.filter(r=>procTipoSimple(r.proc)===v).reduce((s,r)=>s+r.qde,0));
       chart('chartTecVias',{type:'doughnut',data:{
         labels:viasLabels,datasets:[{data:viasData,backgroundColor:viasCores,borderWidth:0}]
@@ -5859,17 +5853,17 @@
       const tecProfs=new Set(byCategoria.tec.map(r=>norm(r.prof))).size;
       $('kpisProc').innerHTML=[
         kpi('Total BPA',fmt(total),`${fmt(profs)} profissionais ativos`,'#1357a6'),
-        kpi('Equipe médica',fmt(sum(byCategoria.med,r=>r.qde)),`${medProfs} médicos — ${total?(sum(byCategoria.med,r=>r.qde)/total*100).toFixed(0):'0'}% do total`,'#a78bfa'),
+        kpi('Equipe médica',fmt(sum(byCategoria.med,r=>r.qde)),`${medProfs} médicos — ${total?(sum(byCategoria.med,r=>r.qde)/total*100).toFixed(0):'0'}% do total`,'#7b61c4'),
         kpi('Enfermeiros',fmt(sum(byCategoria.enf,r=>r.qde)),`${enfProfs} enfermeiros — ${total?(sum(byCategoria.enf,r=>r.qde)/total*100).toFixed(0):'0'}% do total`,'#38ac8b'),
-        kpi('Téc. de enfermagem',fmt(sum(byCategoria.tec,r=>r.qde)),`${tecProfs} técnicos — ${total?(sum(byCategoria.tec,r=>r.qde)/total*100).toFixed(0):'0'}% do total`,'#f97316'),
-        kpi('Faturáveis',pct(fat,total),`${fmt(fat)} procedimentos`,'#06b6d4'),
+        kpi('Téc. de enfermagem',fmt(sum(byCategoria.tec,r=>r.qde)),`${tecProfs} técnicos — ${total?(sum(byCategoria.tec,r=>r.qde)/total*100).toFixed(0):'0'}% do total`,'#e8a93b'),
+        kpi('Faturáveis',pct(fat,total),`${fmt(fat)} procedimentos`,'#4aa3c9'),
       ].join('');
 
       // ── Tabela resumo executivo ───────────────────────────────────
       const cats=[
-        {label:'Médicos Clínicos',cat:'med',cor:'#a78bfa'},
+        {label:'Médicos Clínicos',cat:'med',cor:'#7b61c4'},
         {label:'Enfermeiros',cat:'enf',cor:'#38ac8b'},
-        {label:'Técnicos de Enfermagem',cat:'tec',cor:'#f97316'},
+        {label:'Técnicos de Enfermagem',cat:'tec',cor:'#e8a93b'},
         {label:'Outros',cat:'out',cor:'#94a3b8'},
       ];
       const resumoRows=cats.map(c=>{
@@ -5944,10 +5938,10 @@
         const k=norm(r.prof);m[k]??={prof:r.prof,total:0};m[k].total+=r.qde;return m;
       },{})).sort((a,b)=>b.total-a.total);
       const topMed=medByProf.slice(0,15).reverse();
-      chart('chartMedTotal',{type:'bar',data:{labels:topMed.map(r=>shortName(r.prof)),datasets:[{data:topMed.map(r=>r.total),backgroundColor:'#a78bfa',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.x} procedimentos`}}},scales:axes()}});
+      chart('chartMedTotal',{type:'bar',data:{labels:topMed.map(r=>shortName(r.prof)),datasets:[{data:topMed.map(r=>r.total),backgroundColor:'#7b61c4',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.x} procedimentos`}}},scales:axes()}});
 
       // Gráfico empilhado por tipo: consulta / ECG / radio / outros
-      const medProcTypes=[['consulta','Consulta/Urgência','#a78bfa'],['ecg','ECG','#1357a6'],['radio','Radiologia','#06b6d4'],['outro','Outros','#94a3b8']];
+      const medProcTypes=[['consulta','Consulta/Urgência','#7b61c4'],['ecg','ECG','#1357a6'],['radio','Radiologia','#4aa3c9'],['outro','Outros','#94a3b8']];
       const topMed15=medByProf.slice(0,15);
       const medProfMap=medRows.reduce((m,r)=>{const k=norm(r.prof);(m[k]=m[k]||{})[procTipo(r)]=(m[k][procTipo(r)]||0)+r.qde;return m},{});
       chart('chartMedPerfil',{type:'bar',data:{labels:topMed15.map(r=>shortName(r.prof)),datasets:medProcTypes.map(([t,l,c])=>({label:l,data:topMed15.map(r=>medProfMap[norm(r.prof)]?.[t]||0),backgroundColor:c,borderRadius:2}))},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true,font:{size:10}}}},scales:{...axes(),x:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}},y:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor(),font:{size:9}}}}}});
@@ -5972,7 +5966,7 @@
               <td class="mono">${(c.radio||0)>0?fmt(c.radio||0):'-'}</td>
               <td class="mono">${(c.outro||0)>0?fmt(c.outro||0):'-'}</td>
               <td class="mono" style="font-weight:700;color:var(--ac)">${fmt(r.total)}</td>
-              <td class="mono" style="font-size:10px;letter-spacing:-1px;color:#a78bfa">${bars}</td></tr>`;
+              <td class="mono" style="font-size:10px;letter-spacing:-1px;color:#7b61c4">${bars}</td></tr>`;
           }).join('')}</tbody>`;
       }
 
@@ -5989,7 +5983,7 @@
       const topEnf=enfByProf.slice(0,14).reverse();
       chart('chartEnfTotal',{type:'bar',data:{labels:topEnf.map(r=>shortName(r.prof)),datasets:[{data:topEnf.map(r=>r.total),backgroundColor:'#38ac8b',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
 
-      const enfProcTypes=[['triagem','Triagens','#38ac8b'],['ev','Med. EV','#1357a6'],['im','Med. IM','#f97316'],['vo','Med. VO','#eab308'],['outro','Outros','#94a3b8']];
+      const enfProcTypes=[['triagem','Triagens','#38ac8b'],['ev','Med. EV','#1357a6'],['im','Med. IM','#e8a93b'],['vo','Med. VO','#e8a93b'],['outro','Outros','#94a3b8']];
       const enfProfMap=enfRows.reduce((m,r)=>{const k=norm(r.prof);(m[k]=m[k]||{})[procTipo(r)]=(m[k][procTipo(r)]||0)+r.qde;return m},{});
       const topEnf14=enfByProf.slice(0,14);
       chart('chartEnfPerfil',{type:'bar',data:{labels:topEnf14.map(r=>shortName(r.prof)),datasets:enfProcTypes.map(([t,l,c])=>({label:l,data:topEnf14.map(r=>enfProfMap[norm(r.prof)]?.[t]||0),backgroundColor:c,borderRadius:2}))},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true,font:{size:10}}}},scales:{...axes(),x:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}},y:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor(),font:{size:9}}}}}});
@@ -6025,9 +6019,9 @@
         const k=norm(r.prof);m[k]??={prof:r.prof,total:0};m[k].total+=r.qde;return m;
       },{})).sort((a,b)=>b.total-a.total);
       const topTec=tecByProf.slice(0,15).reverse();
-      chart('chartTecTotal',{type:'bar',data:{labels:topTec.map(r=>shortName(r.prof)),datasets:[{data:topTec.map(r=>r.total),backgroundColor:'#f97316',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+      chart('chartTecTotal',{type:'bar',data:{labels:topTec.map(r=>shortName(r.prof)),datasets:[{data:topTec.map(r=>r.total),backgroundColor:'#e8a93b',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
 
-      const tecProcTypes=[['ev','Med. EV','#f97316'],['im','Med. IM','#eab308'],['vo','Med. VO','#38ac8b'],['sc','Med. SC','#1357a6'],['neb','Nebulização','#a78bfa'],['outro','Outros','#94a3b8']];
+      const tecProcTypes=[['ev','Med. EV','#e8a93b'],['im','Med. IM','#e8a93b'],['vo','Med. VO','#38ac8b'],['sc','Med. SC','#1357a6'],['neb','Nebulização','#7b61c4'],['outro','Outros','#94a3b8']];
       const tecProfMap=tecRows.reduce((m,r)=>{const k=norm(r.prof);(m[k]=m[k]||{})[procTipo(r)]=(m[k][procTipo(r)]||0)+r.qde;return m},{});
       const topTec15=tecByProf.slice(0,15);
       chart('chartTecPerfil',{type:'bar',data:{labels:topTec15.map(r=>shortName(r.prof)),datasets:tecProcTypes.map(([t,l,c])=>({label:l,data:topTec15.map(r=>tecProfMap[norm(r.prof)]?.[t]||0),backgroundColor:c,borderRadius:2}))},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true,font:{size:10}}}},scales:{...axes(),x:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}},y:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor(),font:{size:9}}}}}});
@@ -6048,8 +6042,8 @@
               <td class="mono">${(c.sc||0)>0?fmt(c.sc||0):'-'}</td>
               <td class="mono">${(c.neb||0)>0?fmt(c.neb||0):'-'}</td>
               <td class="mono">${(c.outro||0)+(c.glicemia||0)+(c.curativo||0)>0?fmt((c.outro||0)+(c.glicemia||0)+(c.curativo||0)):'-'}</td>
-              <td class="mono" style="font-weight:700;color:#f97316">${fmt(r.total)}</td>
-              <td class="mono" style="font-size:10px;letter-spacing:-1px;color:#f97316">${bars}</td></tr>`;
+              <td class="mono" style="font-weight:700;color:#e8a93b">${fmt(r.total)}</td>
+              <td class="mono" style="font-size:10px;letter-spacing:-1px;color:#e8a93b">${bars}</td></tr>`;
           }).join('')}</tbody>`;
       }
 
@@ -6140,7 +6134,7 @@
     // PAINEL: COMPARATIVO DE PERÍODOS (A vs B)
     // ════════════════════════════════════════════════════════════
     function renderAnoAano(){
-           const YR_COLORS=['#1357a6','#f97316','#38ac8b','#a78bfa','#c8493e','#06b6d4'];
+           const YR_COLORS=['#1357a6','#e8a93b','#38ac8b','#7b61c4','#c8493e','#4aa3c9'];
       const rawAll=state.raw;
       const years=[...new Set(rawAll.map(r=>r.dh&&!isNaN(r.dh)?r.dh.getFullYear():null).filter(Boolean))].sort();
       if(!years.length){$('secAnoAano').style.display='none';return;}
@@ -6165,7 +6159,7 @@
       // Gráfico: volume mensal
       chart('chartAnoVol',{type:'bar',data:{labels:MES,datasets:years.map((y,i)=>({label:String(y),data:byYr[y].map(m=>m.vol||null),backgroundColor:YR_COLORS[i%YR_COLORS.length]+'99',borderColor:YR_COLORS[i%YR_COLORS.length],borderWidth:1,borderRadius:3}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true}}},scales:axes()}});
       // Gráfico: espera médica mensal
-      chart('chartAnoMed',{type:'line',data:{labels:MES,datasets:years.map((y,i)=>({label:String(y),data:byYr[y].map(m=>m.med.length?+avg(m.med,v=>v).toFixed(1):null),borderColor:YR_COLORS[i%YR_COLORS.length],backgroundColor:YR_COLORS[i%YR_COLORS.length]+'22',tension:.35,spanGaps:true,pointRadius:3}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaMed"),label:"meta",color:"#eab308"}]}},scales:{...axes(),y:{grid:{color:gridColor()},ticks:{color:tickColor()},beginAtZero:true}}}});
+      chart('chartAnoMed',{type:'line',data:{labels:MES,datasets:years.map((y,i)=>({label:String(y),data:byYr[y].map(m=>m.med.length?+avg(m.med,v=>v).toFixed(1):null),borderColor:YR_COLORS[i%YR_COLORS.length],backgroundColor:YR_COLORS[i%YR_COLORS.length]+'22',tension:.35,spanGaps:true,pointRadius:3}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaMed"),label:"meta",color:"#e8a93b"}]}},scales:{...axes(),y:{grid:{color:gridColor()},ticks:{color:tickColor()},beginAtZero:true}}}});
       // Tabela resumo anual
       const yStats=years.map(y=>{
         const mo=byYr[y], total=mo.reduce((s,m)=>s+m.vol,0);
@@ -6190,7 +6184,7 @@
       </tr>`).join('')}</tbody>`;
 
       // ── Gráfico: espera de triagem mensal por ano ──────────────
-      chart('chartAnoTri',{type:'line',data:{labels:MES,datasets:years.map((y,i)=>({label:String(y),data:byYr[y].map(m=>m.tri.length?+avg(m.tri,v=>v).toFixed(1):null),borderColor:YR_COLORS[i%YR_COLORS.length],backgroundColor:YR_COLORS[i%YR_COLORS.length]+'22',tension:.35,spanGaps:true,pointRadius:3}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaTri"),label:"meta",color:"#eab308"}]}},scales:{...axes(),y:{grid:{color:gridColor()},ticks:{color:tickColor()},beginAtZero:true}}}});
+      chart('chartAnoTri',{type:'line',data:{labels:MES,datasets:years.map((y,i)=>({label:String(y),data:byYr[y].map(m=>m.tri.length?+avg(m.tri,v=>v).toFixed(1):null),borderColor:YR_COLORS[i%YR_COLORS.length],backgroundColor:YR_COLORS[i%YR_COLORS.length]+'22',tension:.35,spanGaps:true,pointRadius:3}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaTri"),label:"meta",color:"#e8a93b"}]}},scales:{...axes(),y:{grid:{color:gridColor()},ticks:{color:tickColor()},beginAtZero:true}}}});
 
       // ── Gráfico: distribuição de risco por ano (%) ─────────────
       const RISK_SHOW=['VERMELHO','LARANJA','AMARELO','VERDE','AZUL','BRANCO'];
@@ -6306,8 +6300,8 @@
         <div class="grid" style="margin-bottom:12px">
           ${kpi('Visitas',fmt(visits.length),'no histórico completo','#1357a6')}
           ${kpi('Retornos ≤72h',fmt(retornos72.length),pct(retornos72.length,visits.length),'#c8493e')}
-          ${kpi('Espera médico',tMed!=null?Math.round(tMed)+' min':'-','média histórica','#f97316')}
-          ${kpi('Tempo total',tTot!=null?Math.round(tTot)+' min':'-','média histórica','#a78bfa')}
+          ${kpi('Espera médico',tMed!=null?Math.round(tMed)+' min':'-','média histórica','#e8a93b')}
+          ${kpi('Tempo total',tTot!=null?Math.round(tTot)+' min':'-','média histórica','#7b61c4')}
         </div>
         <div class="pront-card">
           <div class="card-title">Prontuário ${esc(q)} — ${visits.length} visita${visits.length!==1?'s':''} · Risco predominante: <span style="color:${RISK_COLOR[topRisco?.[0]]||'var(--mut)'}">${esc(topRisco?.[0]||'-')}</span></div>
@@ -6397,7 +6391,7 @@
         kpi('Médicos distintos',fmt(new Set(d.filter(r=>r.prof).map(r=>r.prof)).size),'ativos no período','#1357a6'),
         kpi('Média médicos/hora',mediaMedicos,'base histórica do período','#38ac8b'),
         kpi('Horas em déficit',fmt(horasDeficit),'de 24 slots diários','#c8493e'),
-        kpi('Pico de déficit',maxDeficit>0?(maxDeficit.toFixed(1)+' atend/h'):'—',topDef?`${topDef.h}h — requer reforço`:'cobertura adequada','#f97316'),
+        kpi('Pico de déficit',maxDeficit>0?(maxDeficit.toFixed(1)+' atend/h'):'—',topDef?`${topDef.h}h — requer reforço`:'cobertura adequada','#e8a93b'),
       ].join('');
       // Gráfico barras agrupadas: volume vs capacidade
       const labels=byH.map(r=>r.h+'h');
@@ -6406,7 +6400,7 @@
         data:{
           labels,
           datasets:[
-            {label:'Volume médio/hora',data:byH.map(r=>+r.volMedio.toFixed(1)),backgroundColor:'rgba(59,130,246,.55)',borderRadius:3},
+            {label:'Volume médio/hora',data:byH.map(r=>+r.volMedio.toFixed(1)),backgroundColor:'rgba(68,128,194,.55)',borderRadius:3},
             {label:'Capacidade instalada',data:byH.map(r=>+r.capacidade.toFixed(1)),backgroundColor:'rgba(47,158,126,.42)',borderRadius:3},
           ]
         },
@@ -6791,7 +6785,7 @@
       // ── Gráfico: distribuição por tipo ───────────────────
       const tipos = ['temporal','outlier','classificacao','duplicata','campo'];
       const tipoLabels = ['Temporal','Outlier','Classificação','Duplicata','Campo'];
-      const tipoColors = ['#f59e0b','#c8493e','#a855f7','#06b6d4','#64748b'];
+      const tipoColors = ['#e8a93b','#c8493e','#7b61c4','#4aa3c9','#64748b'];
       const tipoData = tipos.map(t=>issues.filter(i=>i.tipo===t).length);
       chart('chartAuditTipos',{
         type:'doughnut',
@@ -6823,7 +6817,7 @@
           labels:topMedErr.map(x=>x.n),
           datasets:[
             {label:'Alta',data:topMedErr.map(x=>x.alta),backgroundColor:'#c8493e',borderRadius:2},
-            {label:'Média',data:topMedErr.map(x=>x.media),backgroundColor:'#f59e0b',borderRadius:2},
+            {label:'Média',data:topMedErr.map(x=>x.media),backgroundColor:'#e8a93b',borderRadius:2},
             {label:'Baixa',data:topMedErr.map(x=>x.baixa),backgroundColor:'#64748b',borderRadius:2},
           ]
         },
