@@ -1200,12 +1200,12 @@
     /* ─────────────────────────────────────────────────────────────
        TABLES
     ───────────────────────────────────────────────────────────── */
-    .table-wrap{overflow:auto;max-height:440px;border-radius:10px;border:1px solid var(--bdr)}
+    .table-wrap{overflow:auto;max-height:440px;border-radius:var(--radius-lg);border:1px solid var(--bdr)}
     .card.full .table-wrap{max-height:520px}
     #tableRetMed{min-width:700px}
     .table{width:100%;border-collapse:collapse}
     .table th{
-      position:sticky;top:0;background:var(--sur);
+      position:sticky;top:0;background:var(--sur2);
       font-size:10px;color:var(--txt2);text-transform:uppercase;
       letter-spacing:.09em;text-align:left;padding:10px 12px 9px;
       border-bottom:1px solid var(--bdr2);z-index:1;font-weight:600;
@@ -1229,10 +1229,7 @@
     .table td.mono{font-variant-numeric:tabular-nums;letter-spacing:0}
     .table tr:last-child td{border-bottom:none}
     .table tbody tr{position:relative}
-    .table tbody tr:hover td{
-      background:linear-gradient(90deg,var(--ac-glow) 0%,transparent 100%);
-    }
-    .table tbody tr:hover td:first-child{color:var(--ac);font-weight:700}
+    .table tbody tr:hover td{background:var(--sur3)}
     /* Linhas pares ficam levemente recuadas visualmente */
     .table tbody tr:nth-child(even) td{
       background:var(--sur2)
@@ -1246,9 +1243,9 @@
     .alert-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
     .alert{border:1px solid;border-radius:10px;padding:14px 16px}
     .alert.ok{border-color:rgba(47,158,126,.25);background:rgba(47,158,126,.06)}
-    .alert.warn{border-color:rgba(245,158,11,.22);background:rgba(245,158,11,.05)}
-    .alert.err{border-color:rgba(239,68,68,.22);background:rgba(239,68,68,.05)}
-    .alert.info{border-color:rgba(6,182,212,.22);background:rgba(6,182,212,.05)}
+    .alert.warn{border-color:rgba(232,169,59,.22);background:rgba(232,169,59,.05)}
+    .alert.err{border-color:rgba(200,73,62,.22);background:rgba(200,73,62,.05)}
+    .alert.info{border-color:rgba(74,163,201,.22);background:rgba(74,163,201,.05)}
     .alert strong{display:block;margin-bottom:6px;font-size:14px;font-weight:600}
     .alert p{margin:0;color:var(--txt2);line-height:1.6;font-size:12px;font-family:'IBM Plex Mono',monospace}
 
@@ -1390,6 +1387,21 @@
     .manchester-table th{background:var(--sur2);font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;padding:8px 12px;border-bottom:1px solid var(--bdr);font-family:"IBM Plex Mono",monospace}
     .manchester-table td{padding:8px 12px;border-bottom:1px solid var(--bdr);font-family:"IBM Plex Mono",monospace}
     .manchester-table tr:last-child td{border-bottom:none}
+    /* TriageBadge — protocolo Manchester, cores fixas por nível */
+    .triage-badge{
+      display:inline-flex;align-items:center;gap:5px;
+      padding:3px 9px;border-radius:6px;white-space:nowrap;
+      font-size:11px;font-weight:700;
+      font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:.01em;
+      background:var(--sur3);color:var(--txt2);border:1px solid transparent
+    }
+    .tb-dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.9;flex:none}
+    .triage-badge.tb-vermelho{background:#c8493e;color:#fff}
+    .triage-badge.tb-laranja{background:#e07a35;color:#fff}
+    .triage-badge.tb-amarelo{background:#e8a93b;color:#3d280b}
+    .triage-badge.tb-verde{background:#2f9e7e;color:#fff}
+    .triage-badge.tb-azul{background:#3a7ca5;color:#fff}
+    .triage-badge.tb-branco{background:#ffffff;color:#515e70;border-color:#c7cfdb}
     /* ── PACIENTES ── */
     .pront-card{background:var(--sur2);border:1px solid var(--bdr);border-radius:10px;padding:16px 18px;margin-bottom:10px}
     .pront-visit{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--bdr);align-items:center;font-size:12px;font-family:"IBM Plex Mono",monospace}
@@ -3877,12 +3889,13 @@
             const rateN=x.N?.total?x.N.ok/x.N.total*100:null;
             const cls=rate>=90?"okc":rate>=70?"wnc":"erc";
             const status=rate>=90?"\u2713 ok":rate>=70?"aten\u00e7\u00e3o":"fora";
-            const dot='<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+(RISK_COLOR[cor]||"#64748b")+';margin-right:6px"></span>';
+            const tbCls={VERMELHO:'tb-vermelho',LARANJA:'tb-laranja',AMARELO:'tb-amarelo',VERDE:'tb-verde',AZUL:'tb-azul',BRANCO:'tb-branco'}[cor]||'';
+            const badge='<span class="triage-badge '+tbCls+'"><span class="tb-dot"></span>'+cor.charAt(0)+cor.slice(1).toLowerCase()+'</span>';
             const cobCell=baixaCob?'<td class="mono wnc" title="Cobertura baixa">'+cobertura.toFixed(0)+'% \u26a0\ufe0f</td>':'<td class="mono">'+cobertura.toFixed(0)+'% <span class="muted">('+fmt(x.total)+'/'+fmt(totalCor)+')</span></td>';
             const difDN=rateD!=null&&rateN!=null?Math.abs(rateD-rateN):0;
             const piordDN=difDN>=10?(rateD<rateN?'D':'N'):null;
             const fmtTurno=(r,t)=>r==null?'<td class="mono muted">-</td>':'<td class="mono '+(r<70?"erc":r<90?"wnc":"okc")+'" title="'+(t==="D"?"Plantão diurno":"Plantão noturno")+'">'+r.toFixed(1)+'%'+(piordDN===t?' \u26a0\ufe0f':'')+' </td>';
-            return '<tr><td>'+dot+cor.charAt(0)+cor.slice(1).toLowerCase()+'</td>'
+            return '<tr><td>'+badge+'</td>'
               +'<td class="mono">'+(x.meta===0?"imediato":x.meta+" min")+'</td>'
               +'<td class="mono" style="color:'+(RISK_COLOR[cor]||"#64748b")+'">'+rate.toFixed(1)+'%</td>'
               +fmtTurno(rateD,"D")+fmtTurno(rateN,"N")+cobCell
@@ -4529,7 +4542,7 @@
         d.forEach(r=>{if(!r.triador)return;triMap[r.triador]??={name:r.triador,total:0,esp:[],risks:{}};triMap[r.triador].total++;if(r.tEsp!=null)triMap[r.triador].esp.push(r.tEsp);triMap[r.triador].risks[r.cor]=(triMap[r.triador].risks[r.cor]||0)+1});
         const rows=Object.values(triMap).sort((a,b)=>b.total-a.total);
         chart("chartTriador",{type:"bar",data:{labels:rows.slice(0,12).reverse().map(r=>shortName(r.name)),datasets:[{data:rows.slice(0,12).reverse().map(r=>r.total),backgroundColor:"#38ac8b",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
-        $("tableTri").innerHTML=`<thead><tr><th>Triador</th><th>Total</th><th>Espera média</th><th>Cor predominante</th></tr></thead><tbody>${rows.map(r=>{const top=Object.entries(r.risks).sort((a,b)=>b[1]-a[1])[0]||["-",0];return`<tr><td>${esc(r.name)}</td><td class="mono">${fmt(r.total)}</td><td class="mono">${r.esp.length?Math.round(avg(r.esp,v=>v))+" min":"-"}</td><td class="mono" style="color:${RISK_COLOR[top[0]]||"var(--mut)"}">${esc(top[0])} ${pct(top[1],r.total,0)}</td></tr>`}).join("")}</tbody>`;
+        $("tableTri").innerHTML=`<thead><tr><th>Triador</th><th>Total</th><th>Espera média</th><th>Cor predominante</th></tr></thead><tbody>${rows.map(r=>{const top=Object.entries(r.risks).sort((a,b)=>b[1]-a[1])[0]||["-",0];return`<tr><td>${esc(r.name)}</td><td class="mono">${fmt(r.total)}</td><td class="mono">${r.esp.length?Math.round(avg(r.esp,v=>v))+" min":"-"}</td><td><span class="triage-badge ${({VERMELHO:'tb-vermelho',LARANJA:'tb-laranja',AMARELO:'tb-amarelo',VERDE:'tb-verde',AZUL:'tb-azul',BRANCO:'tb-branco'})[top[0]]||''}"><span class="tb-dot"></span>${esc(top[0])}</span>&nbsp;<span class="mono muted" style="font-size:11px">${pct(top[1],r.total,0)}</span></td></tr>`}).join("")}</tbody>`;
       }
       // ── Taxa de Evasao ────────────────────────────────────────────────────
       renderEvasao(d);
