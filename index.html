@@ -7600,7 +7600,7 @@
       const bar=document.createElement('div');
       bar.id='depWarnBar';
       bar.setAttribute('role','alert');
-      bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:var(--er,#a83a31);color:#fff;padding:10px 16px;font:600 13px 'Plus Jakarta Sans',system-ui,sans-serif;display:flex;align-items:center;gap:10px;justify-content:center;text-align:center';
+      bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:var(--er,#a83a31);color:#fff;padding:10px 16px;font:600 13px \'Plus Jakarta Sans\',system-ui,sans-serif;display:flex;align-items:center;gap:10px;justify-content:center;text-align:center';
       bar.innerHTML='<span>⚠ Sem conexão com a internet: '+missing.join(' e ')+' indisponíveis. Conecte-se e recarregue a página (F5). O parser interno de .xlsx continua funcionando parcialmente.</span><button type="button" style="background:rgba(255,255,255,.2);border:0;color:#fff;padding:4px 12px;border-radius:6px;cursor:pointer;font:inherit" onclick="location.reload()">Recarregar</button>';
       document.body.prepend(bar);
     }
@@ -7613,14 +7613,14 @@
       ov.style.cssText='position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px';
       ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-labelledby','privTitle');
       ov.innerHTML='<div style="background:var(--sur,#16191f);border:1px solid var(--bdr2,rgba(255,255,255,.09));border-radius:10px;max-width:480px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.5)">'
-        +'<div id="privTitle" style="font:700 16px 'Plus Jakarta Sans',system-ui,sans-serif;color:var(--txt,#e8eaf0);margin-bottom:12px">Proteção de dados de pacientes</div>'
-        +'<div style="font:400 13px/1.6 'Plus Jakarta Sans',system-ui,sans-serif;color:var(--txt2,#8b90a0)">'
+        +'<div id="privTitle" style="font:700 16px \'Plus Jakarta Sans\',system-ui,sans-serif;color:var(--txt,#e8eaf0);margin-bottom:12px">Proteção de dados de pacientes</div>'
+        +'<div style="font:400 13px/1.6 \'Plus Jakarta Sans\',system-ui,sans-serif;color:var(--txt2,#8b90a0)">'
         +'<p style="margin:0 0 10px">Os relatórios carregados contêm dados pessoais sensíveis (prontuário, nome, idade), armazenados <strong style="color:var(--txt,#e8eaf0)">apenas neste navegador</strong>, sem envio a servidores.</p>'
         +'<p style="margin:0 0 10px">Por segurança, os dados <strong style="color:var(--txt,#e8eaf0)">expiram automaticamente após 12 horas</strong> e são apagados na próxima abertura.</p>'
         +'<p style="margin:0">Use esta ferramenta somente em computador de acesso restrito. Para apagar tudo imediatamente, use Configurações → Limpar banco de dados.</p>'
         +'</div>'
         +'<div style="display:flex;justify-content:flex-end;margin-top:18px">'
-        +'<button type="button" id="privAckBtn" style="background:var(--ac,#1357a6);border:0;color:#fff;padding:9px 22px;border-radius:7px;cursor:pointer;font:600 13px 'Plus Jakarta Sans',system-ui,sans-serif">Entendi</button>'
+        +'<button type="button" id="privAckBtn" style="background:var(--ac,#1357a6);border:0;color:#fff;padding:9px 22px;border-radius:7px;cursor:pointer;font:600 13px \'Plus Jakarta Sans\',system-ui,sans-serif\">Entendi</button>'
         +'</div></div>';
       document.body.appendChild(ov);
       const btn=ov.querySelector('#privAckBtn');
