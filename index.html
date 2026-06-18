@@ -1830,10 +1830,6 @@
       <div class="topbar-row1">
         <div class="topbar-section">
           <h1 id="topbarSectionTitle" class="topbar-section-title">Visão geral</h1>
-          <span class="topbar-live" aria-label="Dados em tempo real">
-            <span class="live-dot" aria-hidden="true"></span>
-            Tempo real
-          </span>
         </div>
         <!-- id mantido por compatibilidade com JS -->
         <span id="topbarUnitSub" style="display:none"></span>
@@ -1953,7 +1949,7 @@
         <button type="button" class="nav-item active" data-label="Visão geral" data-pane="geral" aria-current="page">
 <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Visão geral</span></button>
         <button type="button" class="nav-item" data-label="Indicadores" data-pane="indicadores">
-<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l3 3"/><path d="M16 2a6 6 0 0 1 6 6"/></svg><span>Indicadores</span></button>
+<svg aria-hidden="true" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Indicadores</span></button>
         <button type="button" class="nav-item" data-label="Fluxo" data-pane="fluxo">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m15 7 5 5-5 5"/><path d="M9 7H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h5"/></svg><span>Fluxo</span></button>
         <button type="button" class="nav-item" data-label="Gargalos" data-pane="gargalos">
@@ -1965,11 +1961,11 @@
         <button type="button" class="nav-item" data-label="Triagem" data-pane="triagem">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h6"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/><path d="m9 12 2 2 4-4"/></svg><span>Triagem</span></button>
         <button type="button" class="nav-item" data-label="Procedimentos" data-pane="procedimentos">
-<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 22V2"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Procedimentos</span></button>
+<svg aria-hidden="true" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg><span>Procedimentos</span></button>
         <button type="button" class="nav-item" data-label="Enfermagem" data-pane="enfermagem">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M11 2a2 2 0 0 0-2 2v5H4a2 2 0 0 0-2 2v2c0 1.1.9 2 2 2h5v5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-5h5a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-5V4a2 2 0 0 0-2-2z"/></svg><span>Enfermagem</span></button>
         <button type="button" class="nav-item" data-label="Exames Lab." data-pane="exames">
-<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v5l7 7 7-7V5a2 2 0 0 0-2-2h-4"/><path d="M9 3V1"/><path d="M15 3V1"/><path d="m14 14-2.5 2.5"/><path d="m16.5 11.5-2 2"/></svg><span>Exames Lab.</span></button>
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg><span>Exames Lab.</span></button>
         <button type="button" class="nav-item" data-label="Retornos ≤72h" data-pane="retornos">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg><span>Retornos ≤72h</span></button>
         <div class="nav-divider"></div>
@@ -1979,15 +1975,15 @@
         <button type="button" class="nav-item" data-label="CID / Diagnósticos" data-pane="cid">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span>CID / Diagnósticos</span></button>
         <button type="button" class="nav-item" data-label="Relatório" data-pane="relatorio">
-<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 12a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1 1 1 0 0 1 1 1v1a1 1 0 0 0 1 1"/><path d="M14 18a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1 1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1"/></svg><span>Relatório</span></button>
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg><span>Relatório</span></button>
         <div class="nav-divider"></div>
         <div class="nav-group">Pacientes & Escala</div>
         <button type="button" class="nav-item" data-label="Pacientes" data-pane="pacientes">
-<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></svg><span>Pacientes</span></button>
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Pacientes</span></button>
         <button type="button" class="nav-item" data-label="Escala / Dimensionamento" data-pane="escala">
 <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg><span>Escala / Dimensionamento</span></button>
         <button type="button" class="nav-item" data-label="Anotações" data-pane="anotacoes">
-<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3z"/><path d="M15 3v6h6"/><path d="M10 16s.8 1 2 1 2-1 2-1"/><path d="M8 13h.01"/><path d="M16 13h.01"/></svg><span>Anotações</span></button>
+<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg><span>Anotações</span></button>
         <div class="nav-divider"></div>
         <div class="nav-group">Sistema</div>
         <button type="button" class="nav-item" data-label="Auditoria" data-pane="auditoria">
