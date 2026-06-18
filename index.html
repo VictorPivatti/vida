@@ -40,7 +40,7 @@
       --ok:#38ac8b;--wn:#e8a93b;--er:#d35a4c;--inf:#4aa3c9;
       --sh:0 8px 32px rgba(0,0,0,.7);--sh2:0 2px 12px rgba(0,0,0,.5);--sh3:0 1px 3px rgba(0,0,0,.6);
       --grad:#1357a6;
-      --sidebar-w:52px;--radius:10px;--radius-lg:14px
+      --sidebar-w:248px;--radius:10px;--radius-lg:14px
     }
     [data-theme="light"]{
       --bg:#f0f1f5;
@@ -52,7 +52,7 @@
       --ok:#2f9e7e;--wn:#d2912a;--er:#c8493e;--inf:#3a7ca5;
       --sh:0 4px 20px rgba(16,25,42,.1);--sh2:0 2px 8px rgba(16,25,42,.06);--sh3:0 1px 3px rgba(16,25,42,.05);
       --grad:#1357a6;
-      --sidebar-w:52px;--radius:10px;--radius-lg:14px
+      --sidebar-w:248px;--radius:10px;--radius-lg:14px
     }
 
     /* ─────────────────────────────────────────────────────────────
@@ -646,37 +646,68 @@
       border-bottom:1px solid var(--bdr);
       display:flex;flex-direction:column
     }
-    /* Linha 1: brand breadcrumb + ações */
+    /* Linha 1: seção ativa + ações */
     .topbar-row1{
       display:flex;align-items:center;
-      padding:0 14px;gap:10px;
+      padding:0 20px;gap:14px;
       border-bottom:1px solid var(--bdr);
-      min-height:44px
+      min-height:60px
     }
-    .topbar .brand{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
-    .topbar .logo{
-      width:28px;height:28px;border-radius:7px;flex:none;
-      background:var(--grad);
-      display:flex;align-items:center;justify-content:center
+    /* Seção ativa + indicador tempo real */
+    .topbar-section{display:flex;align-items:center;gap:14px;flex:1;min-width:0}
+    .topbar-section-title{
+      font-size:16px;font-weight:700;letter-spacing:-.02em;
+      color:var(--txt);line-height:1;margin:0
     }
-    .brand-sep{color:var(--mut);font-size:12px;opacity:.4;flex:none}
-    .brand-info{display:flex;flex-direction:column;justify-content:center;gap:1px;min-width:0}
-    .brand-title{
-      display:flex;align-items:center;gap:5px;
-      font-weight:800;font-size:13px;white-space:nowrap;
-      color:var(--txt);line-height:1.1;
-      font-family:'IBM Plex Mono',monospace;letter-spacing:.06em
+    .topbar-live{
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:11px;font-family:'IBM Plex Mono',monospace;
+      color:var(--mut);letter-spacing:.02em;flex:none
     }
+    .live-dot{
+      position:relative;display:inline-block;
+      width:8px;height:8px;flex:none
+    }
+    .live-dot::before,.live-dot::after{
+      content:"";position:absolute;inset:0;
+      border-radius:50%;background:var(--ok)
+    }
+    .live-dot::after{
+      animation:livePing 2.4s ease-in-out infinite;
+      opacity:.5
+    }
+    @keyframes livePing{
+      0%,100%{transform:scale(1);opacity:.5}
+      50%{transform:scale(2.4);opacity:0}
+    }
+    @media(prefers-reduced-motion:reduce){.live-dot::after{animation:none}}
+    /* Sidebar brand */
+    .sidebar-brand{
+      display:flex;align-items:center;gap:10px;
+      padding:12px 12px 14px;
+      border-bottom:1px solid var(--bdr);
+      flex:none
+    }
+    .sidebar-brand img{
+      width:34px;height:34px;border-radius:9px;flex:none;display:block
+    }
+    .sidebar-brand-text{display:flex;flex-direction:column;gap:3px;min-width:0}
+    .sidebar-brand-name{
+      font-size:13px;font-weight:800;letter-spacing:.08em;
+      color:var(--txt);font-family:'IBM Plex Mono',monospace;
+      line-height:1;white-space:nowrap
+    }
+    .sidebar-brand-sub{
+      font-size:9px;color:var(--mut);font-family:'IBM Plex Mono',monospace;
+      letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      line-height:1
+    }
+    /* Version badge agora no sidebar */
     .vida-version-badge{
       font-size:9px;font-weight:700;
-      background:rgba(99,102,241,.13);color:var(--ac);
+      background:var(--ac-glow);color:var(--ac);
       padding:2px 6px;border-radius:99px;letter-spacing:.04em;
-      font-family:'IBM Plex Mono',monospace
-    }
-    .brand-sub{
-      font-size:9.5px;color:var(--mut);font-family:'IBM Plex Mono',monospace;
-      letter-spacing:.01em;white-space:nowrap;
-      overflow:hidden;text-overflow:ellipsis
+      font-family:'IBM Plex Mono',monospace;flex:none
     }
     .topbar-actions{display:flex;gap:4px;align-items:center;flex:none}
     /* Linha 2: filtros */
@@ -757,7 +788,7 @@
     /* ─────────────────────────────────────────────────────────────
        SIDEBAR
     ───────────────────────────────────────────────────────────── */
-    /* ══ Sidebar — refined icon rail ════════════════════════════ */
+    /* ══ Sidebar — rail compacto (telas ≤1120px) ════════════════ */
     .sidebar{
       width:52px;flex:none;
       display:flex;flex-direction:column;
@@ -766,12 +797,7 @@
       border-right:1px solid var(--bdr);
       position:relative;z-index:20
     }
-    /* Gradient overlay sutil no topo */
-    .sidebar::before{
-      content:"";position:absolute;top:0;left:0;right:0;height:80px;
-      background:linear-gradient(180deg,var(--ac-glow) 0%,transparent 100%);
-      opacity:.4;pointer-events:none;z-index:-1
-    }
+    .sidebar::before{display:none}
     .nav-group{display:none}
     .nav-divider{
       height:1px;background:var(--bdr);
@@ -841,30 +867,29 @@
        CONTENT AREA
     ───────────────────────────────────────────────────────────── */
     .sidebar{
-      width:204px;gap:2px;padding:10px 8px 16px;
+      width:var(--sidebar-w);gap:2px;padding:0 8px 16px;
       overflow-y:auto;overflow-x:hidden;
       background:var(--sur)
     }
-    .sidebar::before{display:none}
     .nav-group{
-      display:block;margin:14px 8px 5px;
+      display:block;margin:16px 4px 4px;
       font-size:9px;font-weight:700;line-height:1;
       font-family:'IBM Plex Mono',monospace;text-transform:uppercase;
-      letter-spacing:.12em;color:var(--mut)
+      letter-spacing:.14em;color:var(--mut);padding:0 6px
     }
-    .nav-group:first-child{margin-top:4px}
+    .nav-group:first-child{margin-top:10px}
     .nav-divider{display:none}
     .nav-item{
       justify-content:flex-start;gap:10px;
       width:100%;min-height:36px;height:auto;
       margin:1px 0;padding:8px 10px;
-      border-radius:7px;text-align:left;
+      border-radius:var(--radius);text-align:left;
       font-family:'Plus Jakarta Sans',sans-serif
     }
-    .nav-item:hover{transform:translateX(2px)}
+    .nav-item:hover{transform:none;background:var(--sur3);color:var(--txt)}
     .nav-item.active{
-      background:linear-gradient(90deg,var(--ac-glow),rgba(19,87,166,.06));
-      box-shadow:inset 0 0 0 1px rgba(19,87,166,.14)
+      background:var(--ac-glow);
+      color:var(--ac)
     }
     .nav-item svg{stroke-width:1.7}
     .nav-item span:not(.nav-indicator){
@@ -874,7 +899,8 @@
     .nav-item::after,.nav-item::before{display:none}
     .nav-item.active span.nav-indicator{left:0;top:8px;bottom:8px}
     @media(max-width:1120px){
-      .sidebar{width:48px;padding:8px 6px 14px;overflow:visible}
+      .sidebar{width:52px;padding:8px 6px 14px;overflow:visible}
+      .sidebar-brand{display:none}
       .nav-group{display:none}
       .nav-divider{display:block;height:1px;background:var(--bdr);margin:8px 10px}
       .nav-item{width:36px;height:36px;min-height:36px;margin:1px auto;padding:0;justify-content:center}
@@ -1798,20 +1824,17 @@
     <!-- Topbar unificada -->
     <header class="topbar">
 
-      <!-- Linha 1: identidade + ações -->
+      <!-- Linha 1: seção ativa + ações -->
       <div class="topbar-row1">
-        <div class="brand">
-          <div class="logo" aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h3l2-6 4 12 2-6h5"/></svg>
-          </div>
-          <div class="brand-info">
-            <div class="brand-title">
-              V.I.D.A.
-              <span class="vida-version-badge">v3.3.0</span>
-            </div>
-            <div class="brand-sub" id="topbarUnitSub">Visualização Integrada de Dados Assistenciais</div>
-          </div>
+        <div class="topbar-section">
+          <h1 id="topbarSectionTitle" class="topbar-section-title">Visão geral</h1>
+          <span class="topbar-live" aria-label="Dados em tempo real">
+            <span class="live-dot" aria-hidden="true"></span>
+            Tempo real
+          </span>
         </div>
+        <!-- id mantido por compatibilidade com JS -->
+        <span id="topbarUnitSub" style="display:none"></span>
         <div class="topbar-actions">
           <input id="triFile" class="hidden" type="file" accept=".xlsx,.xls,.csv">
           <input id="cidFile" class="hidden" type="file" accept=".xlsx,.xls,.csv" multiple>
@@ -1917,7 +1940,13 @@
 
       <!-- Sidebar de navegação -->
       <nav class="sidebar" role="navigation" aria-label="Navegação principal">
-        <div id="sidebarUnitSub" style="display:none;font-size:9.5px;color:var(--mut);font-family:'IBM Plex Mono',monospace;padding:2px 8px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.7"></div>
+        <div class="sidebar-brand">
+          <img src="assets/vida-mark.svg" width="34" height="34" alt="">
+          <div class="sidebar-brand-text">
+            <div class="sidebar-brand-name">V.I.D.A.</div>
+            <div class="sidebar-brand-sub" id="sidebarUnitSub">UPA Tiago Cardoso Santos</div>
+          </div>
+        </div>
         <div class="nav-group">Operação</div>
         <button type="button" class="nav-item active" data-label="Visão geral" data-pane="geral" aria-current="page">
 <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Visão geral</span></button>
@@ -5442,12 +5471,17 @@
     });}
 
     // Sidebar navigation with lazy render
+    function updateTopbarTitle(label){
+      const el=document.getElementById("topbarSectionTitle");
+      if(el)el.textContent=label||"Visão geral";
+    }
     document.querySelectorAll(".nav-item[data-pane]").forEach(item=>{
       item.addEventListener("click",()=>{
         document.querySelectorAll(".nav-item[data-pane]").forEach(x=>x.classList.remove("active"));
         document.querySelectorAll(".pane").forEach(x=>x.classList.remove("active"));
         item.classList.add("active");
         $("pane-"+item.dataset.pane).classList.add("active");
+        updateTopbarTitle(item.dataset.label);
         renderActivePane();
       });
     });
