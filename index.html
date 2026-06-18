@@ -91,6 +91,10 @@
       --t-base:  200ms ease-out;
       --t-modal: 250ms cubic-bezier(.16,1,.3,1);
       --t-slow:  350ms ease-out;
+      /* Sombras DS */
+      --shadow-xs: 0 1px 2px rgba(16,25,42,.06);
+      --shadow-sm: 0 1px 3px rgba(16,25,42,.08), 0 1px 2px rgba(16,25,42,.04);
+      --shadow-md: 0 4px 12px rgba(16,25,42,.1), 0 2px 4px rgba(16,25,42,.06);
     }
 
     /* ─────────────────────────────────────────────────────────────
@@ -172,11 +176,11 @@
       animation:shimmer 1.4s ease-in-out infinite
     }
     @media(prefers-reduced-motion:reduce){.skeleton{animation:none;background:var(--sur2)}}
-    .skeleton-kpi{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--radius);padding:16px 18px 18px;overflow:hidden}
+    .skeleton-kpi{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--radius-lg);padding:20px;overflow:hidden}
     .skeleton-kpi .s-label{height:9px;width:60%;margin-bottom:16px}
     .skeleton-kpi .s-value{height:36px;width:45%;margin-bottom:12px}
     .skeleton-kpi .s-sub{height:10px;width:80%}
-    .skeleton-chart{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--radius);padding:14px 16px}
+    .skeleton-chart{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--radius-lg);padding:16px 20px}
     .skeleton-chart .s-title{height:10px;width:40%;margin-bottom:16px}
     .skeleton-chart .s-canvas{height:270px;border-radius:4px}
     .skeleton-kpi-grid{
@@ -1027,11 +1031,11 @@
        CARDS
     ───────────────────────────────────────────────────────────── */
     .card{
-      background:var(--sur);border:1px solid var(--bdr);border-radius:var(--radius);
-      padding:14px 16px;box-shadow:none;overflow:hidden;
-      transition:border-color var(--t-fast)
+      background:var(--sur);border:1px solid var(--bdr);border-radius:var(--radius-lg);
+      padding:16px 20px;box-shadow:var(--shadow-sm);overflow:hidden;
+      transition:border-color var(--t-fast),box-shadow var(--t-fast)
     }
-    .card:hover{border-color:var(--bdr2)}
+    .card:hover{border-color:var(--bdr2);box-shadow:var(--shadow-md)}
     .card.full{grid-column:1/-1}
 
 
@@ -1086,21 +1090,16 @@
     }
     .layout-edit-mode .layout-edit-banner{display:block}
 
-    /* ══ KPI — hierarquia refinada ══════════════════════════════ */
-    .kpi{position:relative;padding:16px 18px 18px;overflow:hidden}
-    .kpi::before{
-      content:"";position:absolute;inset:0;border-radius:var(--radius);
-      background:radial-gradient(ellipse 80% 60% at 100% 0%,var(--k,var(--ac)) 0%,transparent 60%);
-      opacity:.06;pointer-events:none;
-      transition:opacity .25s ease
+    /* ══ KPI — DS StatCard pattern ══════════════════════════════ */
+    .kpi{position:relative;padding:20px 20px 18px;overflow:hidden}
+    /* Barra de acento vertical — 3px, lado esquerdo */
+    .kpi-stripe{
+      position:absolute;left:0;top:18px;bottom:18px;
+      width:3px;border-radius:0 3px 3px 0;
+      background:var(--k,var(--ac));flex:none
     }
-    .kpi:hover::before{opacity:.12}
-    .kpi::after{
-      content:"";position:absolute;top:0;left:0;width:24px;height:1.5px;
-      border-radius:0 0 99px 0;background:var(--k,var(--ac));
-      transition:width .3s ease
-    }
-    .kpi:hover::after{width:64px}
+    /* Remove pseudo-elementos anteriores */
+    .kpi::before,.kpi::after{display:none}
     /* ── KPI info button & formula panel ── */
     .card.kpi{position:relative}
     .kpi-info-btn{
@@ -1138,21 +1137,16 @@
     .kpi-formula-table tr.kpi-formula-total td:last-child{color:var(--ac)}
 
     .k-label{
-      font-size:9px;color:var(--mut);text-transform:uppercase;
-      letter-spacing:.14em;font-weight:600;margin-bottom:14px;
+      font-size:10px;color:var(--mut);text-transform:uppercase;
+      letter-spacing:.1em;font-weight:600;margin-bottom:12px;
       font-family:'IBM Plex Mono',monospace;
-      display:flex;align-items:center;gap:8px
-    }
-    .k-label::before{
-      content:"";width:5px;height:5px;border-radius:50%;
-      background:var(--k,var(--ac));flex:none;
-      box-shadow:0 0 8px var(--k,var(--ac))
+      display:flex;align-items:center;gap:6px
     }
     .k-value{
-      font-size:36px;font-weight:600;line-height:.95;
-      letter-spacing:-.035em;color:var(--txt);
-      font-family:'IBM Plex Mono',monospace;
-      font-feature-settings:"tnum","zero";
+      font-size:34px;font-weight:700;line-height:1;
+      letter-spacing:-.02em;color:var(--txt);
+      font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+      font-variant-numeric:tabular-nums;
       display:flex;align-items:baseline;gap:4px;
       word-break:break-word
     }
@@ -3733,8 +3727,8 @@
       const byM=group(d,r=>r.anoMes), keys=Object.keys(byM).map(Number).sort();
       const volVals=keys.map(k=>byM[k]);
       chart("chartMensal",{type:"bar",data:{labels:keys.map(monthLabel),datasets:[{data:volVals,backgroundColor:"#1357a6",borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},targetLine:{lines:[{value:meta("metaVol"),label:"meta volume",color:"#eab308"}]}},scales:{...axes(),y:{...axes().y,suggestedMax:Math.max(meta("metaVol"),...volVals,1)*1.15}}}});
-      const byDow=group(d,r=>r.diaSem);chart("chartDow",{type:"bar",data:{labels:DOWO.map(i=>DOW[i]),datasets:[{data:DOWO.map(i=>byDow[i]||0),backgroundColor:"#38ac8b",borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
-      const byH=group(d,r=>r.hora);chart("chartHora",{type:"line",data:{labels:Array.from({length:24},(_,i)=>i+"h"),datasets:[{data:Array.from({length:24},(_,i)=>byH[i]||0),borderColor:"#7c3aed",backgroundColor:"rgba(124,58,237,.12)",fill:true,tension:.35,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+      const byDow=group(d,r=>r.diaSem);chart("chartDow",{type:"bar",data:{labels:DOWO.map(i=>DOW[i]),datasets:[{data:DOWO.map(i=>byDow[i]||0),backgroundColor:"#2f9e7e",borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+      const byH=group(d,r=>r.hora);chart("chartHora",{type:"line",data:{labels:Array.from({length:24},(_,i)=>i+"h"),datasets:[{data:Array.from({length:24},(_,i)=>byH[i]||0),borderColor:"#7b61c4",backgroundColor:"rgba(123,97,196,.12)",fill:true,tension:.35,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
       renderHeatmap(d);
       // Callout compacto de projeção
       const _pj=calcProjecao(d), pgn=$("projGeralNotice");
@@ -3935,7 +3929,7 @@
       ].join("");
       const m=monthlyStats(d), fluxoVals=m.flatMap(x=>[x.triAvg,x.medAvg,x.totAvg]).filter(Number.isFinite);chart("chartTempos",{type:"line",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{label:"Espera triagem",data:m.map(x=>x.triAvg),borderColor:"#1357a6",tension:.3,spanGaps:true},{label:"Espera médico",data:m.map(x=>x.medAvg),borderColor:"#f97316",tension:.3,spanGaps:true},{label:"Total",data:m.map(x=>x.totAvg),borderColor:"#c8493e",tension:.3,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}},targetLine:{lines:[{value:meta("metaTri"),label:"meta triagem",color:"#1357a6"},{value:meta("metaMed"),label:"meta médico",color:"#f97316"},{value:meta("metaTotal"),label:"meta total",color:"#c8493e"}]}},scales:{...axes(),y:{...axes().y,suggestedMax:Math.max(meta("metaTri"),meta("metaMed"),meta("metaTotal"),...fluxoVals,1)*1.15}}}});
       const risks=group(d,r=>r.cor), keys=RISK_ORDER.filter(k=>risks[k]).reverse();chart("chartRisco",{type:"bar",data:{labels:keys,datasets:[{data:keys.map(k=>risks[k]),backgroundColor:keys.map(k=>RISK_COLOR[k]||"#64748b"),borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.parsed.x)} atend. (${pct(c.parsed.x,d.length)})`}}},scales:{x:{grid:{color:gridColor()},ticks:{color:tickColor()}},y:{grid:{color:gridColor()},ticks:{color:tickColor(),font:{size:10}}}}}});
-      const turns=group(d,r=>r.turno);chart("chartTurno",{type:"bar",data:{labels:["Diurno","Noturno"],datasets:[{data:[turns.D||0,turns.N||0],backgroundColor:["#1357a6","#7c3aed"],borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+      const turns=group(d,r=>r.turno);chart("chartTurno",{type:"bar",data:{labels:["Diurno","Noturno"],datasets:[{data:[turns.D||0,turns.N||0],backgroundColor:["#1357a6","#7b61c4"],borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
 
       // ── INDICADOR 2: Permanência prolongada ───────────────────────
       const permEl=$("cardPermanencia");
@@ -4052,7 +4046,7 @@
       const medTop=[...buckets].filter(x=>x.medAvg!=null).sort((a,b)=>b.medAvg-a.medAvg).slice(0,10).reverse();
       chart("chartGargMed",{type:"bar",data:{labels:medTop.map(label),datasets:[{data:medTop.map(x=>Math.round(x.medAvg)),backgroundColor:medTop.map(x=>x.medAvg>meta("metaMed")?"#c8493e":"#38ac8b"),borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},targetLine:{lines:[{value:meta("metaMed"),label:"meta",color:"#eab308"}]}},scales:axes()}});
       const cargaTop=[...buckets].sort((a,b)=>b.carga-a.carga).slice(0,10).reverse();
-      chart("chartCarga",{type:"bar",data:{labels:cargaTop.map(label),datasets:[{data:cargaTop.map(x=>+x.carga.toFixed(1)),backgroundColor:"#7c3aed",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
+      chart("chartCarga",{type:"bar",data:{labels:cargaTop.map(label),datasets:[{data:cargaTop.map(x=>+x.carga.toFixed(1)),backgroundColor:"#7b61c4",borderRadius:3}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
       // Comparativo por dia da semana
       // (Comparativo/resumo por dia da semana removidos — redundantes com o heatmap da Visão Geral)
 
