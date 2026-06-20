@@ -964,13 +964,13 @@
     .app-body{display:flex;flex:1;overflow:hidden}
     .content-area{flex:1;overflow-y:auto;overflow-x:hidden}
     main{max-width:1440px;margin:0 auto;padding:16px 20px}
-    .page-header{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--bdr)}
+    .page-header{margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--bdr)}
     .page-title{font-size:22px;font-weight:700;letter-spacing:-.03em;margin-bottom:2px;font-family:'Plus Jakarta Sans',sans-serif}
     .page-desc{font-size:13px;color:var(--mut)}
     .pane{display:none}
     .pane.active{display:block;animation:fadeUp var(--t-base) ease}
     @keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-    :root{--kpi-min:190px;--chart-min:360px;--card-gap:14px}
+    :root{--kpi-min:190px;--chart-min:360px;--card-gap:16px}
     .grid{
       display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--kpi-min)),1fr));
       gap:var(--card-gap);margin-bottom:var(--card-gap);grid-auto-flow:dense
@@ -1204,8 +1204,7 @@
     }
     .card-title::before{
       content:"";width:3px;height:12px;background:var(--ac);
-      border-radius:99px;flex:none;
-      box-shadow:0 0 8px rgba(19,87,166,.45)
+      border-radius:99px;flex:none
     }
 
     /* ─────────────────────────────────────────────────────────────
@@ -1260,6 +1259,11 @@
       border-bottom:none
     }
 
+    .section-title-inset{
+      margin:18px 0 10px;font-size:11px;font-weight:700;
+      text-transform:uppercase;letter-spacing:.1em;color:var(--mut)
+    }
+
     /* ─────────────────────────────────────────────────────────────
        ALERTS
     ───────────────────────────────────────────────────────────── */
@@ -1287,7 +1291,7 @@
     /* ─────────────────────────────────────────────────────────────
        EXECUTIVE
     ───────────────────────────────────────────────────────────── */
-    .executive{display:grid;grid-template-columns:1.1fr .9fr;gap:12px;margin-bottom:14px}
+    .executive{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-bottom:20px}
     @media(max-width:900px){.executive{grid-template-columns:1fr}}
     .exec-score-row{display:flex;gap:20px;align-items:flex-start;margin-bottom:8px}
     .exec-score{
@@ -2231,7 +2235,7 @@
           <div class="grid" id="kpisEnf"></div>
 
           <!-- Seção Enfermeiros -->
-          <div class="section-title" style="margin:18px 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mut)">Enfermeiros</div>
+          <div class="section-title-inset">Enfermeiros</div>
           <div class="chart-grid">
             <div class="card"><div class="card-title">Triagens por enfermeiro</div><div class="chart tall"><canvas id="chartEnfTriagem" role="img" aria-label="Gráfico de barras: triagens e procedimentos por enfermeiro"></canvas></div></div>
             <div class="card"><div class="card-title">Perfil de procedimentos</div><div class="chart tall"><canvas id="chartEnfProcPerfil" role="img" aria-label="Gráfico de rosca: perfil de procedimentos dos enfermeiros"></canvas></div></div>
@@ -2239,7 +2243,7 @@
           </div>
 
           <!-- Seção Técnicos -->
-          <div class="section-title" style="margin:18px 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mut)">Técnicos de Enfermagem</div>
+          <div class="section-title-inset">Técnicos de Enfermagem</div>
           <div class="chart-grid">
             <div class="card"><div class="card-title">Volume por técnico</div><div class="chart tall"><canvas id="chartTecProd" role="img" aria-label="Gráfico de barras: volume por técnico de enfermagem"></canvas></div></div>
             <div class="card"><div class="card-title">Vias de administração</div><div class="chart tall"><canvas id="chartTecVias" role="img" aria-label="Gráfico de rosca: vias de administração dos técnicos"></canvas></div></div>
