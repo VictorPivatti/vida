@@ -358,7 +358,6 @@
       line-height:1
     }
     .up-wordmark-sub{
-      font-family:'IBM Plex Mono',monospace;
       font-size:8.5px;color:var(--mut);
       letter-spacing:.06em;line-height:1
     }
@@ -375,9 +374,8 @@
 
     /* Eyebrow */
     .up-eyebrow{
-      font-family:'IBM Plex Mono',monospace;
-      font-size:12px;letter-spacing:.28em;text-transform:uppercase;
-      color:var(--ac);font-weight:600;margin-bottom:20px;
+      font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+      color:var(--ac);font-weight:700;margin-bottom:20px;
       display:flex;align-items:center;gap:10px
     }
     .up-eyebrow::before,.up-eyebrow::after{
@@ -405,9 +403,8 @@
 
     /* Nome completo abaixo do título */
     .up-fullname{
-      font-family:'IBM Plex Mono',monospace;
-      font-size:10px;letter-spacing:.12em;text-transform:uppercase;
-      color:var(--mut);font-weight:500;
+      font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+      color:var(--mut);font-weight:600;
       margin-top:10px;margin-bottom:36px;
       line-height:1.7;text-align:center
     }
@@ -419,9 +416,8 @@
     }
     /* Subtítulo movido para a linha de rodapé */
     .up-desc{
-      font-size:11.5px;color:var(--mut);line-height:1.6;
-      font-weight:400;text-align:center;width:100%;
-      font-family:'IBM Plex Mono',monospace;letter-spacing:.01em
+      font-size:12px;color:var(--mut);line-height:1.6;
+      font-weight:400;text-align:center;width:100%
     }
 
     /* ── Zona de drop única ── */
@@ -476,8 +472,7 @@
       font-size:14px;font-weight:600;color:var(--txt);margin-bottom:4px
     }
     .up-drop-sub{
-      font-size:11.5px;font-family:'IBM Plex Mono',monospace;
-      color:var(--mut);line-height:1.5
+      font-size:12px;color:var(--mut);line-height:1.5
     }
     .up-drop-filename{
       margin-top:10px;font-size:11px;font-family:'IBM Plex Mono',monospace;
@@ -494,8 +489,7 @@
       animation:upFadeDown .7s cubic-bezier(.16,1,.3,1) both
     }
     .up-theme-label{
-      font-size:10px;font-family:'IBM Plex Mono',monospace;
-      color:var(--mut);letter-spacing:.04em
+      font-size:10px;color:var(--mut);letter-spacing:.04em
     }
     .up-theme-btns{
       display:flex;gap:3px;padding:2px;
@@ -516,8 +510,7 @@
     .bar{height:100%;width:0;background:var(--grad);transition:width .3s ease}
     .status{
       min-height:18px;margin-top:8px;text-align:center;
-      color:var(--txt2);font-size:11px;font-family:'IBM Plex Mono',monospace;
-      letter-spacing:.01em
+      color:var(--txt2);font-size:11px
     }
 
     /* ── Rodapé: versão canto inferior direito ── */
@@ -532,37 +525,35 @@
       content:"";width:16px;height:1px;background:var(--bdr3)
     }
 
-    /* ── Botão configurar — canto inferior esquerdo ── */
+    /* ── Botão configurar — inline no topo direito ── */
     .up-config-btn{
-      position:fixed;bottom:18px;left:22px;z-index:2;
-      font-family:'IBM Plex Mono',monospace;font-size:10px;
-      color:var(--mut);letter-spacing:.04em;
-      background:none;border:1px solid var(--bdr);border-radius:6px;
-      padding:5px 10px;cursor:pointer;
-      transition:color .15s,border-color .15s,background .15s;
-      animation:upFadeUp .8s cubic-bezier(.16,1,.3,1) .25s both
+      font-size:11px;font-weight:500;
+      color:var(--txt2);
+      background:var(--sur);border:1px solid var(--bdr2);border-radius:var(--radius);
+      padding:5px 12px;cursor:pointer;
+      transition:color var(--t-fast),border-color var(--t-fast),background var(--t-fast)
     }
-    .up-config-btn:hover{color:var(--txt);border-color:var(--bdr2);background:var(--sur)}
+    .up-config-btn:hover{color:var(--txt);border-color:var(--bdr3);background:var(--sur3)}
 
-    /* ── Banner de dados salvos ── */
+    /* ── Banner de dados salvos — card primary-subtle ── */
     .up-saved-banner{
-      width:100%;display:flex;align-items:center;gap:10px;
-      background:rgba(47,158,126,.08);
-      border:1px solid rgba(47,158,126,.22);
-      border-radius:var(--radius);padding:10px 14px;
+      width:100%;display:flex;align-items:center;gap:12px;
+      background:var(--ac-glow);
+      border:1px solid rgba(19,87,166,.22);
+      border-radius:var(--radius-lg);padding:12px 16px;
       margin-bottom:14px;
       animation:upFadeUp .5s cubic-bezier(.16,1,.3,1) both
     }
-    .up-saved-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);flex-shrink:0;box-shadow:0 0 6px var(--ok)}
-    .up-saved-text{font-size:11.5px;font-family:'IBM Plex Mono',monospace;color:var(--ok);flex:1;line-height:1.4}
+    .up-saved-dot{width:7px;height:7px;border-radius:50%;background:var(--ac);flex-shrink:0;box-shadow:0 0 6px var(--ac)}
+    .up-saved-text{font-size:12px;color:var(--ac);flex:1;line-height:1.4;font-weight:500}
     .up-saved-btn{
-      font-size:10px;font-family:'IBM Plex Mono',monospace;
-      color:var(--ok);border:1px solid rgba(47,158,126,.38);
-      border-radius:5px;padding:4px 10px;background:none;
+      font-size:11px;font-weight:600;
+      color:#fff;border:none;
+      border-radius:var(--radius);padding:5px 14px;background:var(--ac2);
       cursor:pointer;white-space:nowrap;flex-shrink:0;
-      transition:background var(--t-fast),border-color .15s
+      transition:background var(--t-fast)
     }
-    .up-saved-btn:hover{background:rgba(47,158,126,.14);border-color:rgba(47,158,126,.5)}
+    .up-saved-btn:hover{background:#0d396d}
 
     /* ── Drag overlay fullscreen ── */
     #upDragOverlay{
@@ -583,7 +574,7 @@
       color:var(--ac)
     }
     .up-drag-label{font-size:18px;font-weight:700;color:var(--ac);letter-spacing:-.01em}
-    .up-drag-sub{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--mut)}
+    .up-drag-sub{font-size:12px;color:var(--mut)}
 
     /* ── Unidade no rodapé ── */
     .up-unit-footer{
@@ -592,9 +583,8 @@
       animation:upFadeUp .8s cubic-bezier(.16,1,.3,1) .25s both
     }
     .up-unit-name-tag{
-      font-family:'IBM Plex Mono',monospace;font-size:9.5px;
-      color:var(--ac);font-weight:600;letter-spacing:.04em;
-      display:none
+      font-size:10px;color:var(--ac);font-weight:600;
+      letter-spacing:.02em;display:none
     }
     .up-unit-name-tag.visible{display:block}
 
@@ -622,6 +612,44 @@
     .up-drop-progress-text{
       font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--ac);opacity:.85
     }
+
+    /* ── Botão "Selecionar arquivo" dentro do drop ── */
+    .up-drop-select-btn{
+      display:inline-flex;align-items:center;gap:6px;
+      background:var(--ac2);color:#fff;
+      font-size:13px;font-weight:600;
+      border-radius:var(--radius);padding:9px 22px;
+      margin-top:16px;pointer-events:none;
+      box-shadow:0 2px 8px rgba(19,87,166,.25)
+    }
+    .up-dropzone:hover .up-drop-select-btn,.up-dropzone.drag .up-drop-select-btn{
+      background:#0d396d
+    }
+    .up-dropzone.ready .up-drop-select-btn{display:none}
+
+    /* ── Linha de privacidade ── */
+    .up-privacy{
+      display:flex;align-items:center;justify-content:center;gap:6px;
+      margin-top:14px;
+      font-size:11px;color:var(--ok);line-height:1.4;text-align:center;
+      opacity:.85
+    }
+    .up-privacy svg{flex:none}
+
+    /* ── Trilha de fontes em chips ── */
+    .up-source-trail{
+      display:flex;align-items:center;gap:6px;
+      flex-wrap:wrap;justify-content:center;
+      margin-top:16px
+    }
+    .up-source-chip{
+      font-size:10px;font-weight:600;letter-spacing:.03em;
+      color:var(--txt2);background:var(--sur2);
+      border:1px solid var(--bdr2);border-radius:99px;
+      padding:3px 10px;white-space:nowrap
+    }
+    .up-source-chip.loaded{color:var(--ok);background:rgba(47,158,126,.08);border-color:rgba(47,158,126,.25)}
+    .up-source-sep{font-size:10px;color:var(--mut);flex:none}
 
     /* ── Elementos obsoletos: esconder ── */
     .upload-left,.upload-right,.up-brand,.upload-hero-block,
@@ -662,8 +690,7 @@
     }
     .topbar-live{
       display:inline-flex;align-items:center;gap:6px;
-      font-size:11px;font-family:'IBM Plex Mono',monospace;
-      color:var(--mut);letter-spacing:.02em;flex:none
+      font-size:11px;color:var(--mut);flex:none
     }
     .live-dot{
       position:relative;display:inline-block;
@@ -699,7 +726,7 @@
       line-height:1;white-space:nowrap
     }
     .sidebar-brand-sub{
-      font-size:9px;color:var(--mut);font-family:'IBM Plex Mono',monospace;
+      font-size:9px;color:var(--mut);
       letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
       line-height:1
     }
@@ -730,7 +757,7 @@
     .field{
       background:var(--sur2);color:var(--txt);
       border:1px solid var(--bdr2);border-radius:4px;
-      padding:2px 7px;font-size:11px;font-family:'IBM Plex Mono',monospace;
+      padding:2px 7px;font-size:11px;
       transition:border-color .12s;flex:none
     }
     .field:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 2px var(--ac-glow)}
@@ -1020,7 +1047,7 @@
       font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--txt);
       min-width:0;text-align:right
     }
-    .modal-input-row small{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace}
+    .modal-input-row small{font-size:11px;color:var(--mut)}
     .modal-footer{margin-top:22px;display:flex;justify-content:flex-end;gap:8px}
 
     /* ─────────────────────────────────────────────────────────────
@@ -1062,15 +1089,14 @@
     }
     .card-drag-handle::after{
       content:"⠿ arrastar";font-size:9px;color:var(--mut);
-      font-family:"IBM Plex Mono",monospace;letter-spacing:.1em
+      letter-spacing:.04em
     }
     .layout-edit-mode .card-drag-handle{display:flex}
     .card-drag-handle:active{cursor:grabbing}
     .card-size-btn{
       background:var(--sur2);border:1px solid var(--bdr);
       border-radius:4px;padding:2px 6px;font-size:9px;
-      font-family:"IBM Plex Mono",monospace;color:var(--mut);
-      cursor:pointer;white-space:nowrap;transition:all .12s
+      color:var(--mut);cursor:pointer;white-space:nowrap;transition:all .12s
     }
     .card-size-btn:hover,.card-size-btn.active{
       background:var(--ac);color:#fff;border-color:var(--ac)
@@ -1081,8 +1107,8 @@
     .layout-edit-banner{
       display:none;position:sticky;top:0;z-index:100;
       background:var(--ac);color:#fff;
-      font-size:11px;font-family:"IBM Plex Mono",monospace;
-      padding:6px 16px;text-align:center;letter-spacing:.04em
+      font-size:11px;font-weight:600;
+      padding:6px 16px;text-align:center;letter-spacing:.02em
     }
     .layout-edit-mode .layout-edit-banner{display:block}
 
@@ -1244,7 +1270,7 @@
     .alert.err{border-color:rgba(200,73,62,.22);background:rgba(200,73,62,.05)}
     .alert.info{border-color:rgba(74,163,201,.22);background:rgba(74,163,201,.05)}
     .alert strong{display:block;margin-bottom:6px;font-size:14px;font-weight:600}
-    .alert p{margin:0;color:var(--txt2);line-height:1.6;font-size:12px;font-family:'IBM Plex Mono',monospace}
+    .alert p{margin:0;color:var(--txt2);line-height:1.6;font-size:13px}
 
     /* ─────────────────────────────────────────────────────────────
        QUALITY LIST
@@ -1351,7 +1377,7 @@
     }
 
     .compare-side{flex:1;min-width:260px;background:var(--sur);border:1px solid var(--bdr);border-radius:var(--radius-lg);padding:16px 18px}
-    .compare-side-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-family:"IBM Plex Mono",monospace;margin-bottom:12px}
+    .compare-side-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin-bottom:12px}
     .compare-kpi-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--bdr)}
     .compare-kpi-row:last-child{border-bottom:none}
     .compare-kpi-name{font-size:12px;color:var(--txt2)}
@@ -1381,7 +1407,7 @@
 
     /* ── METAS MANCHESTER ── */
     .manchester-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
-    .manchester-table th{background:var(--sur2);font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;padding:8px 12px;border-bottom:1px solid var(--bdr);font-family:"IBM Plex Mono",monospace}
+    .manchester-table th{background:var(--sur2);font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;padding:8px 12px;border-bottom:1px solid var(--bdr)}
     .manchester-table td{padding:8px 12px;border-bottom:1px solid var(--bdr);font-family:"IBM Plex Mono",monospace}
     .manchester-table tr:last-child td{border-bottom:none}
     /* TriageBadge — protocolo Manchester, cores fixas por nível */
@@ -1408,7 +1434,7 @@
     .anot-item{background:var(--sur2);border:1px solid var(--bdr);border-radius:var(--radius);padding:12px 14px;position:relative}
     .anot-item:hover{border-color:var(--bdr2)}
     .anot-header{display:flex;gap:8px;align-items:center;margin-bottom:6px}
-    .anot-mes{font-size:11px;font-weight:700;color:var(--txt);font-family:"IBM Plex Mono",monospace}
+    .anot-mes{font-size:11px;font-weight:700;color:var(--txt)}
     .anot-cat{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
     .anot-cat.operacional{background:rgba(68,128,194,.12);color:#1357a6}
     .anot-cat.clinico{background:rgba(47,158,126,.14);color:#2f9e7e}
@@ -1449,7 +1475,7 @@
     .proj-kpi-sub{font-size:11px;margin-top:2px}
     .proj-bar-track{background:var(--sur);border-radius:4px;height:8px;overflow:hidden;margin-top:2px}
     .proj-bar-fill{height:100%;background:linear-gradient(90deg,#1357a6,#2f9e7e);border-radius:4px;transition:width .4s}
-    .proj-note{font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-top:4px}
+    .proj-note{font-size:10px;color:var(--mut);margin-top:4px}
     .proj-notice{padding:10px 16px;background:var(--sur2);border:1px solid var(--bdr);border-radius:8px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;font-size:12px}
     .proj-notice-label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);flex:none}
     .secAnoAano{border-top:1px solid var(--bdr);margin-top:24px;padding-top:20px}
@@ -1466,7 +1492,7 @@
     .sexo-rlabel{font-size:11px;color:var(--txt2);font-weight:500}
     .sexo-rval{font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;line-height:1;letter-spacing:-.03em}
     .sexo-rpct{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;text-align:right}
-    .sexo-note{font-size:9px;color:var(--mut);font-family:'IBM Plex Mono',monospace;padding-top:10px;border-top:1px solid var(--bdr);line-height:1.5;letter-spacing:.01em}
+    .sexo-note{font-size:10px;color:var(--mut);padding-top:10px;border-top:1px solid var(--bdr);line-height:1.5}
     .sexo-na{text-align:center;padding:24px 16px;color:var(--txt2);font-size:12px;line-height:1.6}
 
     /* ── Upload v3.0: estilos adicionais (legado removido) ── */
@@ -1495,9 +1521,9 @@
     .upload-menu-item:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
     .upload-menu-item svg{color:var(--ac);flex-shrink:0}
     .upload-menu-label{font-size:12px;font-weight:600;color:var(--txt);line-height:1.2}
-    .upload-menu-sub{font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-top:1px}
+    .upload-menu-sub{font-size:10px;color:var(--mut);margin-top:1px}
     .upload-menu-status{
-      margin-left:auto;font-size:9px;font-weight:700;font-family:'IBM Plex Mono',monospace;
+      margin-left:auto;font-size:9px;font-weight:700;
       padding:2px 6px;border-radius:99px;white-space:nowrap;flex-shrink:0
     }
     .upload-menu-status.loaded{background:rgba(47,158,126,.14);color:var(--ok)}
@@ -1507,7 +1533,7 @@
   
     .chart-empty-state{
       display:flex;flex-direction:column;align-items:center;justify-content:center;
-      min-height:180px;color:var(--mut);font-size:12px;font-family:'IBM Plex Mono',monospace;
+      min-height:180px;color:var(--mut);font-size:13px;
       text-align:center;gap:4px;padding:20px
     }
 
@@ -1526,7 +1552,7 @@
     .trend-alert.stable{border-left:3px solid var(--ac)}
     .trend-alert-header{display:flex;align-items:center;gap:8px}
     .trend-alert-badge{
-      font-size:9px;font-weight:700;font-family:'IBM Plex Mono',monospace;
+      font-size:9px;font-weight:700;
       padding:2px 7px;border-radius:99px;white-space:nowrap;flex-shrink:0
     }
     .badge-rising{background:rgba(200,73,62,.12);color:#c8493e}
@@ -1534,29 +1560,29 @@
     .badge-stable{background:var(--ac-glow);color:var(--ac)}
     .trend-alert-cid{font-size:11px;font-weight:600;color:var(--txt);font-family:'IBM Plex Mono',monospace}
     .trend-alert-desc{font-size:12px;color:var(--txt);line-height:1.4;flex:1}
-    .trend-alert-meta{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;display:flex;gap:10px;flex-wrap:wrap}
+    .trend-alert-meta{font-size:11px;color:var(--mut);display:flex;gap:10px;flex-wrap:wrap}
     .trend-sparkline{height:32px;width:100%;display:flex;align-items:flex-end;gap:2px}
     .trend-bar{flex:1;border-radius:2px 2px 0 0;min-height:3px;transition:height var(--t-base)}
     .trend-empty-alert{
       grid-column:1/-1;text-align:center;padding:24px;
-      color:var(--mut);font-size:12px;font-family:'IBM Plex Mono',monospace
+      color:var(--mut);font-size:13px
     }
     .trend-section-header{
       display:flex;align-items:center;justify-content:space-between;
       margin-bottom:10px;gap:8px;flex-wrap:wrap
     }
     .trend-section-title{font-size:13px;font-weight:600;color:var(--txt)}
-    .trend-section-sub{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace}
+    .trend-section-sub{font-size:12px;color:var(--mut)}
     .trend-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
     .trend-filter-btn{
-      font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--bdr2);
+      font-size:11px;font-weight:500;padding:3px 10px;border-radius:99px;border:1px solid var(--bdr2);
       background:transparent;color:var(--txt2);cursor:pointer;
-      font-family:'IBM Plex Mono',monospace;transition:all var(--t-fast)
+      transition:all var(--t-fast)
     }
     .trend-filter-btn.active{background:var(--ac);border-color:var(--ac);color:#fff}
     .trend-filter-btn:hover:not(.active){background:var(--sur2)}
     .trend-threshold-note{
-      font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;
+      font-size:12px;color:var(--mut);
       padding:8px 12px;background:var(--sur2);border-radius:var(--radius);
       border:1px solid var(--bdr);margin-bottom:12px;line-height:1.5
     }
@@ -1589,8 +1615,8 @@
       display:inline-block;background:var(--sur2);border:1px solid var(--bdr);
       border-radius:4px;padding:1px 5px;margin:1px 2px 1px 0;cursor:default
     }
-    .notif-patients{font-size:11px;color:var(--txt2);font-family:'IBM Plex Mono',monospace}
-    .notif-trend{display:flex;align-items:center;gap:4px;font-size:11px;font-family:'IBM Plex Mono',monospace}
+    .notif-patients{font-size:11px;color:var(--txt2)}
+    .notif-trend{display:flex;align-items:center;gap:4px;font-size:11px}
     .notif-trend.up{color:#c8493e}
     .notif-trend.down{color:#2f9e7e}
     .notif-trend.stable{color:var(--mut)}
@@ -1604,14 +1630,14 @@
     .notif-summary-lbl{font-size:10px;color:var(--mut);margin-top:1px}
     .notif-grupo-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
     .notif-filter-btn{
-      font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--bdr2);
+      font-size:11px;font-weight:500;padding:3px 10px;border-radius:99px;border:1px solid var(--bdr2);
       background:transparent;color:var(--txt2);cursor:pointer;
-      font-family:'IBM Plex Mono',monospace;transition:all var(--t-fast)
+      transition:all var(--t-fast)
     }
     .notif-filter-btn.active{background:var(--wn);border-color:var(--wn);color:#fff}
     .notif-filter-btn:hover:not(.active){background:var(--sur2)}
     .notif-prazo-note{
-      font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;
+      font-size:12px;color:var(--mut);
       padding:8px 12px;background:rgba(245,200,66,.07);border-radius:var(--radius);
       border:1px solid rgba(245,200,66,.2);margin-bottom:12px;line-height:1.6
     }
@@ -1636,7 +1662,7 @@
     }
     .notif-check-body{flex:1}
     .notif-check-doenca{font-weight:600;color:var(--txt)}
-    .notif-check-detail{font-size:11px;color:var(--txt2);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+    .notif-check-detail{font-size:11px;color:var(--txt2);margin-top:2px}
 
   </style>
 </head>
@@ -1668,8 +1694,8 @@
     <!-- Banner dados salvos (visível via JS quando IDB tem dados) -->
     <div class="up-saved-banner" id="upSavedBanner" style="display:none">
       <div class="up-saved-dot"></div>
-      <div class="up-saved-text" id="upSavedText">dados salvos do banco local</div>
-      <button type="button" class="up-saved-btn" id="upSavedBtn">↩ retomar</button>
+      <div class="up-saved-text" id="upSavedText">Continuar de onde parou</div>
+      <button type="button" class="up-saved-btn" id="upSavedBtn">Carregar</button>
     </div>
 
     <!-- Drop zone único -->
@@ -1684,7 +1710,11 @@
       </div>
       <div class="up-drop-label-wrap">
         <div class="up-drop-label">Histórico de atendimentos</div>
-        <div class="up-drop-sub">Arraste ou clique &nbsp;·&nbsp; .xlsx &nbsp;·&nbsp; .xls &nbsp;·&nbsp; .csv</div>
+        <div class="up-drop-sub">Arraste o arquivo aqui &nbsp;·&nbsp; .xlsx &nbsp;·&nbsp; .xls &nbsp;·&nbsp; .csv</div>
+        <div class="up-drop-select-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Selecionar arquivo
+        </div>
       </div>
       <div class="up-drop-filename" id="histFileName"></div>
       <div class="up-drop-progress-row">
@@ -1693,9 +1723,28 @@
       </div>
     </label>
 
-    <!-- Rodapé: descrição -->
+    <!-- Rodapé: descrição + privacidade + trilha de fontes -->
     <div class="up-footer-row">
       <p class="up-desc">Carregue a base de atendimentos para iniciar a análise. Aceita múltiplos arquivos e anos.</p>
+    </div>
+
+    <!-- Linha de privacidade -->
+    <div class="up-privacy" aria-label="Privacidade dos dados">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Processado 100% no seu navegador — nenhum dado sai do dispositivo
+    </div>
+
+    <!-- Trilha de fontes -->
+    <div class="up-source-trail" aria-label="Fontes de dados suportadas">
+      <span class="up-source-chip">Histórico</span>
+      <span class="up-source-sep">→</span>
+      <span class="up-source-chip">Triagem</span>
+      <span class="up-source-sep">→</span>
+      <span class="up-source-chip">CID</span>
+      <span class="up-source-sep">→</span>
+      <span class="up-source-chip">Procedimentos</span>
+      <span class="up-source-sep">→</span>
+      <span class="up-source-chip">Exames</span>
     </div>
 
     <!-- Progress -->
@@ -1705,7 +1754,7 @@
     </div>
 
     <!-- autoLoadHint -->
-    <div id="autoLoadHint" style="margin-top:6px;font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;min-height:14px;text-align:center"></div>
+    <div id="autoLoadHint" style="margin-top:6px;font-size:11px;color:var(--mut);min-height:14px;text-align:center"></div>
 
   </div>
 
@@ -1731,14 +1780,14 @@
     <div class="up-drag-sub">histórico de atendimentos · .xlsx .xls .csv</div>
   </div>
 
-  <!-- Unidade + configurar: canto inferior esquerdo -->
+  <!-- Unidade: canto inferior esquerdo -->
   <div class="up-unit-footer">
     <span class="up-unit-name-tag" id="upUnitNameTag"></span>
-    <button type="button" class="up-config-btn" onclick="openUnitConfig()">Configurar unidade</button>
   </div>
 
-  <!-- Theme toggle: canto superior direito -->
+  <!-- Theme toggle + configurar: canto superior direito -->
   <div class="up-theme-row">
+    <button type="button" class="up-config-btn" onclick="openUnitConfig()">Configurar unidade</button>
     <div class="up-theme-btns">
       <button class="up-theme-btn" type="button" data-theme-choice="light" title="Claro" aria-label="Modo claro">
 <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
@@ -1791,7 +1840,7 @@
           </div>
         </div>
         <div style="grid-column:1/-1;margin-top:8px;border-top:1px solid var(--bdr);padding-top:12px">
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-weight:700;font-family:'IBM Plex Mono',monospace;margin-bottom:10px">Metas Manchester por classificação de risco</div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);font-weight:700;margin-bottom:10px">Metas Manchester por classificação de risco</div>
           <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
             <div class="modal-field"><div class="modal-label" style="color:#c8493e">Vermelho — imediato</div><div class="modal-input-row"><span>≤</span><input id="metaVermelho" type="number" min="0" value="0"><small>min</small></div></div>
             <div class="modal-field"><div class="modal-label" style="color:#e07a35">Laranja — muito urgente</div><div class="modal-input-row"><span>≤</span><input id="metaLaranja" type="number" min="1" value="15"><small>min</small></div></div>
@@ -1802,7 +1851,7 @@
           </div>
         </div>
         <div style="grid-column:1/-1;margin-top:8px;border-top:1px solid var(--bdr);padding-top:12px" id="recepSection">
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-weight:700;font-family:'IBM Plex Mono',monospace;margin-bottom:4px">Pacientes recepcionados por mes</div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);font-weight:700;margin-bottom:4px">Pacientes recepcionados por mês</div>
           <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">Informe os recepcionados (relatório separado). Triados, brancos e atendidos são calculados automaticamente — edite para corrigir. Campos com borda <span style="color:var(--ac);font-weight:700">roxa</span> têm valor manual. ↺ restaura o automático.</div>
           <div id="recepTableWrap" style="max-height:220px;overflow-y:auto">
             <table class="table" style="font-size:12px" id="recepInputTable">
@@ -2166,11 +2215,11 @@
           </div>
           <div style="font-weight:700;font-size:15px;margin-bottom:12px">Painel de Enfermagem requer 2 arquivos</div>
           <div style="display:inline-flex;flex-direction:column;gap:8px;margin-bottom:16px;text-align:left">
-            <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--txt2)">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt2)">
               <span style="width:18px;height:18px;border-radius:50%;background:var(--ac-glow);border:1px solid var(--ac);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--ac);flex-shrink:0">1</span>
               <span><strong style="color:var(--txt)">Procedimentos</strong> — Vivver: BPA Individualizado → Procedimentos por Profissional</span>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--txt2)">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt2)">
               <span style="width:18px;height:18px;border-radius:50%;background:var(--ac-glow);border:1px solid var(--ac);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--ac);flex-shrink:0">2</span>
               <span><strong style="color:var(--txt)">Triagem</strong> — Vivver: Relatórios → Triagem (opcional, para nome do triador)</span>
             </div>
@@ -2212,13 +2261,13 @@
         </div>
         <div id="examesContent" class="hidden">
           <div class="grid" id="kpisExames"></div>
-          <div id="examesCrossNote" class="hidden" style="margin-bottom:10px;padding:10px 14px;background:rgba(19,87,166,.06);border:1px solid var(--ac);border-radius:8px;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--mut)"></div>
+          <div id="examesCrossNote" class="hidden" style="margin-bottom:10px;padding:10px 14px;background:rgba(19,87,166,.06);border:1px solid var(--ac);border-radius:8px;font-size:12px;color:var(--mut)"></div>
           <div class="chart-grid">
             <div class="card"><div class="card-title">Top 12 exames solicitados</div><div class="chart tall"><canvas id="chartExamesTop" role="img" aria-label="Gráfico de barras: top 12 exames solicitados"></canvas></div></div>
             <div class="card"><div class="card-title">Grupos clínicos</div><div class="chart tall"><canvas id="chartExamesGrupos" role="img" aria-label="Gráfico de rosca: grupos clínicos de exames"></canvas></div></div>
             <div class="card full"><div class="card-title">Ranking por médico solicitante</div><div class="table-wrap"><table class="table" id="tableExames"></table></div></div>
           </div>
-          <div id="examesValidacao" style="font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace;padding:6px 10px;background:var(--sur2);border-radius:6px;margin-top:4px"></div>
+          <div id="examesValidacao" style="font-size:11px;color:var(--mut);padding:6px 10px;background:var(--sur2);border-radius:6px;margin-top:4px"></div>
         </div>
       </section>
 
@@ -2471,7 +2520,7 @@
                 <button type="button" class="btn" id="auditExportBtn" style="font-size:10px">⬇ Exportar log</button>
               </span>
             </div>
-            <div style="font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-bottom:10px" id="auditLogCount"></div>
+            <div style="font-size:11px;color:var(--mut);margin-bottom:10px" id="auditLogCount"></div>
             <div class="table-wrap" style="max-height:420px">
               <table class="table" id="tableAuditLog"></table>
             </div>
@@ -3916,7 +3965,7 @@
               ${[["P50 (mediana)",p50t],["P75",p75t],["P90",p90t],["P95",p95t]].map(([l,v])=>v!=null?`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:var(--txt)">${l}</span><span class="mono muted" style="font-size:10px">meta: ${metaTri_} min</span></div>${bar(v,metaTri_,maxT)}</div>`:'').join('')}
             </div>
           </div>
-          <div style="font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace;padding-bottom:4px">
+          <div style="font-size:11px;color:var(--mut);padding-bottom:4px">
             P50 = metade dos pacientes esperou menos que isso · P95 = apenas 5% esperou mais · Meta ${metaMed_}min para espera médica
           </div>`;
       }
@@ -3953,7 +4002,7 @@
             ${kpi("Alerta regulação (>24h)",obs24h.length>0?"⚠ "+fmt(obs24h.length):"0 casos",obs24h.length>0?"critério de regulação — encaminhar":"dentro do padrão esperado",obs24h.length>0?"#a83a31":"#38ac8b")}
             ${kpi("Média permanência obs.",medObs!=null?Math.round(medObs)+" min":"-","entre pacientes em observação (>4h)","#7b61c4")}
           </div>
-          <div style="font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace">
+          <div style="font-size:11px;color:var(--mut)">
             Portaria GM/MS 10/2017: pacientes em observação > 24h devem ser notificados à Central de Regulação para internação. Total ${fmt(comTotal.length)} registros com tempo de saída.
           </div>`;
         // Gráfico mensal: % em observação por mês
@@ -4770,7 +4819,7 @@
         <div style="margin-bottom:12px;padding:10px 14px;background:var(--sur2);border-radius:8px;border:1px solid var(--bdr)">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin-bottom:4px">Índice geral de completude</div>
           <div style="font-size:28px;font-weight:800;color:${completude>=90?"var(--ok)":completude>=70?"var(--wn)":"var(--er)"};font-family:'IBM Plex Mono',monospace">${completude}%</div>
-          <div style="font-size:10px;color:var(--mut);font-family:'IBM Plex Mono',monospace">${fmt(n)} registros no período filtrado</div>
+          <div style="font-size:11px;color:var(--mut)">${fmt(n)} registros no período filtrado</div>
         </div>
         <table class="table" style="font-size:11px">
           <thead><tr><th>Campo</th><th>Fonte</th><th>Preenchidos</th><th>Faltantes</th><th>Completude</th></tr></thead>
@@ -4795,7 +4844,7 @@
       
       <!-- Consistência cruzada -->
       <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--bdr)">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-bottom:8px">Consistência cruzada entre bases</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin-bottom:8px">Consistência cruzada entre bases</div>
         <div id="auditConsistencia" style="font-family:'IBM Plex Mono',monospace;font-size:11px"></div>
       </div>
       `;
@@ -7324,7 +7373,7 @@
         if(banner&&savedText){
           // Descobrir período dos dados
           const count=s.atendimentos;
-          savedText.textContent=`${count.toLocaleString('pt-BR')} registros salvos`;
+          savedText.innerHTML=`Continuar de onde parou <span style="font-weight:400;opacity:.7">· ${count.toLocaleString('pt-BR')} registros</span>`;
           banner.style.display='flex';
           // Botão retomar: esconder banner e disparar o load
           if(savedBtn) savedBtn.onclick=()=>{
