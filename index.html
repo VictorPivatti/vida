@@ -2816,7 +2816,7 @@
           if(py<chart.chartArea.top||py>chart.chartArea.bottom)return;
           const lc=line.color||"#9aa6b6";
           ctx.save();ctx.strokeStyle=lc;ctx.lineWidth=1.5;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(left,py);ctx.lineTo(right,py);ctx.stroke();ctx.setLineDash([]);
-          const lbl=line.label||"meta";ctx.font="500 10px 'Plus Jakarta Sans',system-ui,sans-serif";const tw=ctx.measureText(lbl).width;const px2=right-6;const py2=py-6;ctx.fillStyle=state.theme==="dark"?"#18202a":"#ffffff";ctx.beginPath();ctx.roundRect(px2-tw-8,py2-10,tw+10,14,3);ctx.fill();ctx.fillStyle=lc;ctx.strokeStyle=lc;ctx.lineWidth=.75;ctx.stroke();ctx.fillStyle=state.theme==="dark"?"#8896a8":"#515e70";ctx.textAlign="right";ctx.fillText(lbl,px2,py2);ctx.restore();
+          const lbl=line.label||"meta";ctx.font="500 10px 'Plus Jakarta Sans',system-ui,sans-serif";const tw=ctx.measureText(lbl).width;const px2=right-6;const py2=py-6;const rx=px2-tw-8,ry=py2-10,rw=tw+10,rh=14,rr=3;ctx.fillStyle=state.theme==="dark"?"#18202a":"#ffffff";ctx.beginPath();if(ctx.roundRect){ctx.roundRect(rx,ry,rw,rh,rr);}else{ctx.moveTo(rx+rr,ry);ctx.lineTo(rx+rw-rr,ry);ctx.arcTo(rx+rw,ry,rx+rw,ry+rr,rr);ctx.lineTo(rx+rw,ry+rh-rr);ctx.arcTo(rx+rw,ry+rh,rx+rw-rr,ry+rh,rr);ctx.lineTo(rx+rr,ry+rh);ctx.arcTo(rx,ry+rh,rx,ry+rh-rr,rr);ctx.lineTo(rx,ry+rr);ctx.arcTo(rx,ry,rx+rr,ry,rr);ctx.closePath();}ctx.fill();ctx.fillStyle=lc;ctx.strokeStyle=lc;ctx.lineWidth=.75;ctx.stroke();ctx.fillStyle=state.theme==="dark"?"#8896a8":"#515e70";ctx.textAlign="right";ctx.fillText(lbl,px2,py2);ctx.restore();
         });
       }
     };
@@ -3383,8 +3383,8 @@
           }
           const ev=state.filt.filter(r=>r.evadido).length;
           if(ev>0&&state.filt.length>0){
-            const evRate=(ev/state.filt.length*100).toFixed(1);
-            if(parseFloat(evRate)>=2)showToast(`${ev} evasões detectadas (${evRate}% do período). Verifique o fluxo de triagem.`,"warn",6000);
+            const evRate=fmtN(ev/state.filt.length*100,1);
+            if(parseFloat(evRate.replace(",","."))>=2)showToast(`${ev} evasões detectadas (${evRate}% do período). Verifique o fluxo de triagem.`,"warn",6000);
           }
         },1200);
         const tri=state.pending.tri||$("triFileUp").files[0];if(tri)await loadTri(tri);
@@ -3623,18 +3623,18 @@
       const tMed=avg(rows,r=>r.tEspMed), tTri=avg(rows,r=>r.tEspTri), tTot=avg(rows,r=>r.tTotal);
       const n=rows.length||1;
       // Alertas com regra explícita visível
-      if(retRate>meta("metaRet"))alerts.push(["err","Retorno ≤72h acima da meta",`Taxa de ${retRate.toFixed(1)}% (${ret.length} eventos de retorno ÷ ${fmt(rows.length)} atendimentos). Um paciente com múltiplos retornos conta múltiplas vezes. Meta: < ${meta("metaRet")}%.`]);
-      if(tMed!=null&&tMed>meta("metaMed"))alerts.push(["warn","⏱ Espera médica acima da meta",`Média de ${Math.round(tMed)} min para atendimento médico (meta: ≤ ${meta("metaMed")} min). Regra: média(tEspMed) > meta_medico. Afeta ${pct(rows.filter(r=>r.tEspMed!=null&&r.tEspMed>meta("metaMed")).length,n)} dos atendimentos com dado.`]);
-      if(tTri!=null&&tTri>meta("metaTri"))alerts.push(["warn","⏱ Espera de triagem acima da meta",`Média de ${Math.round(tTri)} min para triagem (meta: ≤ ${meta("metaTri")} min). Regra: média(tEspTri) > meta_triagem. Afeta ${pct(rows.filter(r=>r.tEspTri!=null&&r.tEspTri>meta("metaTri")).length,n)} dos atendimentos.`]);
-      if(tTot!=null&&tTot>meta("metaTotal"))alerts.push(["warn","⏱ Tempo total acima da meta",`Média de ${Math.round(tTot)} min recepção→alta (meta: ≤ ${meta("metaTotal")} min). Regra: média(tTotal) > meta_total. ${pct(rows.filter(r=>r.tTotal!=null&&r.tTotal>meta("metaTotal")).length,n)} dos atendimentos ultrapassaram a meta individual.`]);
+      if(retRate>meta("metaRet"))alerts.push(["err","Retorno ≤72h acima da meta",`Taxa de ${fmtN(retRate,1)}% (${ret.length} eventos de retorno ÷ ${fmt(rows.length)} atendimentos). Um paciente com múltiplos retornos conta múltiplas vezes. Meta: < ${meta("metaRet")}%.`]);
+      if(tMed!=null&&tMed>meta("metaMed"))alerts.push(["warn","Espera médica acima da meta",`Média de ${Math.round(tMed)} min para atendimento médico (meta: ≤ ${meta("metaMed")} min). Regra: média(tEspMed) > meta_medico. Afeta ${pct(rows.filter(r=>r.tEspMed!=null&&r.tEspMed>meta("metaMed")).length,n)} dos atendimentos com dado.`]);
+      if(tTri!=null&&tTri>meta("metaTri"))alerts.push(["warn","Espera de triagem acima da meta",`Média de ${Math.round(tTri)} min para triagem (meta: ≤ ${meta("metaTri")} min). Regra: média(tEspTri) > meta_triagem. Afeta ${pct(rows.filter(r=>r.tEspTri!=null&&r.tEspTri>meta("metaTri")).length,n)} dos atendimentos.`]);
+      if(tTot!=null&&tTot>meta("metaTotal"))alerts.push(["warn","Tempo total acima da meta",`Média de ${Math.round(tTot)} min recepção→alta (meta: ≤ ${meta("metaTotal")} min). Regra: média(tTotal) > meta_total. ${pct(rows.filter(r=>r.tTotal!=null&&r.tTotal>meta("metaTotal")).length,n)} dos atendimentos ultrapassaram a meta individual.`]);
       // Alertas sem médico
       const semMed=rows.filter(r=>!r.prof).length;
-      if(semMed/n>0.1)alerts.push(["warn","👤 Alto índice de atendimentos sem médico",`${fmt(semMed)} atendimentos (${pct(semMed,n)}) sem médico identificado. Regra: missing_prof > 10%. Pode indicar falha de registro ou atendimento por outro profissional.`]);
+      if(semMed/n>0.1)alerts.push(["warn","Alto índice de atendimentos sem médico",`${fmt(semMed)} atendimentos (${pct(semMed,n)}) sem médico identificado. Regra: missing_prof > 10%. Pode indicar falha de registro ou atendimento por outro profissional.`]);
       // Alerta de risco crítico sem atendimento rápido
       const vermSemRapido=rows.filter(r=>r.cor==="VERMELHO"&&r.tEspMed!=null&&r.tEspMed>10).length;
-      if(vermSemRapido>0)alerts.push(["err","🔴 Vermelhos com espera > 10 min",`${fmt(vermSemRapido)} paciente(s) classificados como VERMELHO aguardaram mais de 10 min pelo médico. Regra: cor=VERMELHO e tEspMed > 10. Risco de desfecho adverso.`]);
+      if(vermSemRapido>0)alerts.push(["err","Vermelhos com espera > 10 min",`${fmt(vermSemRapido)} paciente(s) classificados como VERMELHO aguardaram mais de 10 min pelo médico. Regra: cor=VERMELHO e tEspMed > 10. Risco de desfecho adverso.`]);
       const byM=group(rows,r=>r.anoMes), keys=Object.keys(byM).map(Number).sort();
-      for(let i=1;i<keys.length;i++){const p=byM[keys[i-1]],v=byM[keys[i]],drop=(v-p)/p*100;if(drop<-10)alerts.push(["warn","Queda de volume mensal",`${monthLabel(keys[i])}: ${drop.toFixed(1)}% (${fmt(p)} para ${fmt(v)}).`])}
+      for(let i=1;i<keys.length;i++){const p=byM[keys[i-1]],v=byM[keys[i]],drop=(v-p)/p*100;if(drop<-10)alerts.push(["warn","Queda de volume mensal",`${monthLabel(keys[i])}: ${fmtN(drop,1)}% (${fmt(p)} para ${fmt(v)}).`])}
       if(!alerts.length)alerts.push(["ok","Sem alerta crítico no período","Metas principais dentro do esperado com os dados disponíveis."]);
       return alerts;
     }
@@ -3771,7 +3771,7 @@
       if(bad>0)penItems.push({label:`${bad} alerta${bad>1?"s":""} crítico${bad>1?"s":""}`,val:-(bad*p.criticalAlert),tip:`${bad} × 24 pts`});
       if(warn>0)penItems.push({label:`${warn} alerta${warn>1?"s":""} de atenção`,val:-(warn*p.warningAlert),tip:`${warn} × 9 pts`});
       const penRet=Math.max(0,retRate-meta("metaRet"))*p.retornoPerPoint;
-      if(penRet>0)penItems.push({label:`Retorno ${retRate.toFixed(1)}% (meta ${meta("metaRet")}%)`,val:-penRet,tip:`${(retRate-meta("metaRet")).toFixed(1)} pp × 1,4`});
+      if(penRet>0)penItems.push({label:`Retorno ${fmtN(retRate,1)}% (meta ${meta("metaRet")}%)`,val:-penRet,tip:`${fmtN(retRate-meta("metaRet"),1)} pp × 1,4`});
       const penMed=Math.max(0,(tMed||0)-meta("metaMed"))*p.medicoPerMinute;
       if(penMed>0)penItems.push({label:`Espera médico ${tMed!=null?Math.round(tMed)+" min":"-"} (meta ${meta("metaMed")} min)`,val:-penMed,tip:`${Math.round((tMed||0)-meta("metaMed"))} min × 0,35`});
       const penTri=Math.max(0,(tTri||0)-meta("metaTri"))*p.triagemPerMinute;
@@ -3779,7 +3779,7 @@
       const penTot=Math.max(0,(totalTime||0)-meta("metaTotal"))*p.totalPerMinute;
       if(penTot>0)penItems.push({label:`Tempo total ${totalTime!=null?Math.round(totalTime)+" min":"-"} (meta ${meta("metaTotal")} min)`,val:-penTot,tip:`${Math.round((totalTime||0)-meta("metaTotal"))} min × 0,18`});
       const penGrave=Math.max(0,graveRate-35)*p.graveShareOver35PerPoint;
-      if(penGrave>0)penItems.push({label:`Casos amarelo+ ${graveRate.toFixed(1)}% (acima de 35%)`,val:-penGrave,tip:`${(graveRate-35).toFixed(1)} pp × 0,35`});
+      if(penGrave>0)penItems.push({label:`Casos amarelo+ ${fmtN(graveRate,1)}% (acima de 35%)`,val:-penGrave,tip:`${fmtN(graveRate-35,1)} pp × 0,35`});
       const penHTML=penItems.length?penItems.map(x=>`<div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:3px"><span style="color:var(--txt2)">${esc(x.label)}</span><span style="color:var(--er);font-weight:700;white-space:nowrap" title="${esc(x.tip)}">${Math.round(x.val)} pts</span></div>`).join(""):`<div style="color:var(--ok)">Nenhuma penalidade aplicada no período.</div>`;
       $("execSituation").innerHTML=`
         <div class="card-title">Situação executiva</div>
@@ -3803,7 +3803,7 @@
           </div>
         </div>
         <div class="k-sub" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr)">
-          Demanda: ${fmt(total)} atendimentos (${fmt(daily)}/dia) · Permanência média: ${totalTime==null?"-":Math.round(totalTime)+" min"} · Retorno 72h: ${retRate.toFixed(1)}% · Casos amarelo+: ${graveRate.toFixed(1)}%
+          Demanda: ${fmt(total)} atendimentos (${fmt(daily)}/dia) · Permanência média: ${totalTime==null?"-":Math.round(totalTime)+" min"} · Retorno 72h: ${fmtN(retRate,1)}% · Casos amarelo+: ${fmtN(graveRate,1)}%
         </div>
         <details style="margin-top:10px">
           <summary style="cursor:pointer;font-size:11px;color:var(--mut);user-select:none">ℹ Metodologia do score</summary>
@@ -4450,10 +4450,10 @@
       const best=[...metrics].sort((a,b)=>(a.bad?Math.abs(a.pct):-Math.abs(a.pct))-(b.bad?Math.abs(b.pct):-Math.abs(b.pct)))[0];
       $("kpisEvolucao").innerHTML=[
         kpi("Mês comparado",monthLabel(cur.k),`vs ${monthLabel(prev.k)}`,"#1357a6"),
-        kpi("Maior piora",worst?worst.nome:"-",worst?`${worst.diff>0?"+":""}${worst.diff.toFixed(1)}${worst.unit}`:"sem dados","#c8493e"),
-        kpi("Maior melhora",best?best.nome:"-",best?`${best.diff>0?"+":""}${best.diff.toFixed(1)}${best.unit}`:"sem dados","#38ac8b")
+        kpi("Maior piora",worst?worst.nome:"-",worst?`${worst.diff>0?"+":""}${fmtN(worst.diff,1)}${worst.unit}`:"sem dados","#c8493e"),
+        kpi("Maior melhora",best?best.nome:"-",best?`${best.diff>0?"+":""}${fmtN(best.diff,1)}${best.unit}`:"sem dados","#38ac8b")
       ].join("");
-      $("tableEvolucao").innerHTML=`<thead><tr><th>Indicador</th><th>${monthLabel(prev.k)}</th><th>${monthLabel(cur.k)}</th><th>Variação</th><th>Leitura</th></tr></thead><tbody>${metrics.map(x=>`<tr><td>${esc(x.nome)}</td><td class="mono">${x.prev.toFixed(1)}${x.unit}</td><td class="mono">${x.cur.toFixed(1)}${x.unit}</td><td class="mono ${x.bad?"erc":"okc"}">${x.diff>0?"+":""}${x.diff.toFixed(1)}${x.unit} (${x.pct>0?"+":""}${x.pct.toFixed(1)}%)</td><td class="mono ${x.bad?"erc":"okc"}">${x.bad?"piorou":"melhorou"}</td></tr>`).join("")}</tbody>`;
+      $("tableEvolucao").innerHTML=`<thead><tr><th>Indicador</th><th>${monthLabel(prev.k)}</th><th>${monthLabel(cur.k)}</th><th>Variação</th><th>Leitura</th></tr></thead><tbody>${metrics.map(x=>`<tr><td>${esc(x.nome)}</td><td class="mono">${fmtN(x.prev,1)}${x.unit}</td><td class="mono">${fmtN(x.cur,1)}${x.unit}</td><td class="mono ${x.bad?"erc":"okc"}">${x.diff>0?"+":""}${fmtN(x.diff,1)}${x.unit} (${x.pct>0?"+":""}${fmtN(x.pct,1)}%)</td><td class="mono ${x.bad?"erc":"okc"}">${x.bad?"piorou":"melhorou"}</td></tr>`).join("")}</tbody>`;
       chart("chartEvolucao",{type:"line",data:{labels:m.map(x=>monthLabel(x.k)),datasets:[{label:"Espera médico",data:m.map(x=>x.medAvg),borderColor:"#e8a93b",tension:.3,spanGaps:true},{label:"Tempo total",data:m.map(x=>x.totAvg),borderColor:"#c8493e",tension:.3,spanGaps:true},{label:"Volume /100",data:m.map(x=>x.vol/100),borderColor:"#1357a6",tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:tickColor(),usePointStyle:true}}},scales:axes()}});
     }
     function buildReportText(){
@@ -4469,7 +4469,7 @@
       const medLabel=(()=>{const el=$("filtroMedico");const v=el?el.value.trim():"";return v?`Médico: ${v}`:"Todos os médicos";})();
       const riscoLabel=(()=>{const el=$("filtroRisco");return el&&el.value!=="all"?`Risco: ${el.value}`:"Todos os riscos";})();
       const ev=d.filter(r=>r.evadido).length;
-      const evRate=d.length?(ev/d.length*100).toFixed(1):"0";
+      const evRate=d.length?fmtN(ev/d.length*100,1):"0";
       const _evasaoDispRel=evasaoDisponivel(d);
       const evasaoLinha=_evasaoDispRel
         ?`\nEvasão: ${fmt(ev)} saídas sem atendimento (${evRate}% do período${ev>0?", acima de 2% merece atenção":""}).`
@@ -4573,7 +4573,7 @@
         kpi("Atendidos",fmt(totAtendidos),"atendimento medico registrado","#38ac8b"),
         kpi("Recepcionados",totRecep!=null?fmt(totRecep):noRecepMsg,"total registrado na recepcao","#7b61c4","",totRecep==null?"kpi-warn":""),
         kpi("Evasoes",totEvasoes!=null?(totEvasoes<0?"<0 (revisar)":fmt(totEvasoes)):noRecepMsg,"saíram sem atendimento (excl. brancos)","#c8493e","",totEvasoes==null?"kpi-warn":""),
-        kpi("Taxa de evasão",totTaxa!=null?(totTaxa<0?"<0%":totTaxa.toFixed(1)+"%"):noRecepMsg,"(Recep - Brancos - Atend.) / Recep","#e8a93b","",totTaxa==null?"kpi-warn":"",totTaxa!=null?{expr:"(Recepcionados − Brancos − Atendidos) ÷ Recepcionados",linhas:[["recepcionados (entrada)",fmt(totRecep)],["classificados brancos",fmt(totBrancos)],["atendimentos médicos",fmt(totAtendidos)],["evasões",totEvasoes<0?"<0 (revisar)":fmt(Math.max(0,totEvasoes))],["taxa de evasão",totTaxa<0?"<0%":totTaxa.toFixed(1)+"%"]]}:null)
+        kpi("Taxa de evasão",totTaxa!=null?(totTaxa<0?"<0%":fmtN(totTaxa,1)+"%"):noRecepMsg,"(Recep - Brancos - Atend.) / Recep","#e8a93b","",totTaxa==null?"kpi-warn":"",totTaxa!=null?{expr:"(Recepcionados − Brancos − Atendidos) ÷ Recepcionados",linhas:[["recepcionados (entrada)",fmt(totRecep)],["classificados brancos",fmt(totBrancos)],["atendimentos médicos",fmt(totAtendidos)],["evasões",totEvasoes<0?"<0 (revisar)":fmt(Math.max(0,totEvasoes))],["taxa de evasão",totTaxa<0?"<0%":fmtN(totTaxa,1)+"%"]]}:null)
       ].join("");
       // Grafico tendencia mensal
       const comTaxa=mData.filter(r=>r.taxa!=null);
