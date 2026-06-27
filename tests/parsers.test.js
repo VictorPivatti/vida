@@ -12,7 +12,7 @@
  *   6. parseCidLegacy  — medico=p[14] ≠ paciente=p[8] (regressão v3.3.0)
  *   7. parseProcedimentosText — offset auto-detectado (dados +1 col vs cabeçalho)
  *   8. chooseParsed    — prefere header quando completeness ≥ legacy, e vice-versa
- *   9. [REGRESSÃO DOCUMENTADA] parseHist (header-based) usa teto 200 min, não 720
+ *   9. parseHist — tEspMed usa triagem_atendimento (campo direto) com teto=720 (fix bug teto=200)
  *
  * Uso: node tests/parsers.test.js
  */
@@ -175,29 +175,25 @@ try {
   __ok('chooseParsed — modern vence com completeness ≥ legacy; legacy vence quando maior');
 } catch(e) { __fail('chooseParsed — modern vence com completeness ≥ legacy; legacy vence quando maior', e.message); }
 
-// ─── Caso 9: [REGRESSÃO DOCUMENTADA] parseHist usa teto 200 min, não 720 ─
-// parseHistLegacy foi corrigido em v3.3.0 (CONFIG.MAX_MINUTES = 720).
-// parseHist (leitura por cabeçalho) ainda usa safeMinutes(d, 200): esperas
-// entre 200–719 min retornam null em vez do valor real.
-// Quando o bug for corrigido, tEsp9 passará a ser 250 e o teste falhará —
-// atualize a asserção (remova este teste ou mude a asserção para 250).
+// ─── Caso 9: parseHist — tEspMed usa triagem_atendimento (campo direto, teto=720) ─
+// Bug corrigido em v3.4.0: parseHist agora lê triagem_atendimento via ALIAS/FALLBACK
+// e usa CONFIG.MAX_MINUTES (720) como teto, igual ao parseHistLegacy.
+// Cenário: triagem_atendimento = 250 min (estava retornando null com teto=200).
 try {
   var hdr9 = ['numprontuario','classificacao','nompaciente','nomprofissional','tipo_entrada',
                'dh_recepcao','dh_acolhimento','dh_atendimento','recepcao_triagem','triagem_duracao',
-               'tempo_consulta','recepcao_alta'];
-  // dhAcol=10:00, dhAtend=14:10 → diff = 250 min (acima do teto 200, abaixo do teto 720)
+               'triagem_atendimento','tempo_consulta','recepcao_alta'];
+  // triagem_atendimento = 250 min (acima do antigo teto de 200, abaixo do correto 720)
   var row9 = ['1001','AMARELO','PACIENTE A','DR SILVA A','NORMAL COM TRIAGEM',
               '15/01/2026 10:00','15/01/2026 10:00','15/01/2026 14:10',
-              '00:05:00','00:05:00','00:20:00','04:10:00'];
+              '00:05:00','00:05:00','04:10:00','00:20:00','05:00:00'];
   var parsed9 = parseHist([hdr9, row9], false);
   if (!parsed9.length) throw new Error('nenhuma linha parseada pelo parseHist');
   var tEsp9 = parsed9[0].tEspMed;
-  // Com teto 200: tEsp9 === null  (bug atual)
-  // Com teto 720: tEsp9 === 250   (comportamento correto — ainda não implementado)
-  if (tEsp9 !== null)
-    throw new Error('Bug corrigido? tEspMed=' + tEsp9 + ' — atualize este teste para asserir 250');
-  __ok('[REGRESSÃO DOCUMENTADA] parseHist: 250 min → null (teto=200); parseHistLegacy retornaria 250 (teto=720)');
-} catch(e) { __fail('[REGRESSÃO DOCUMENTADA] parseHist teto=200 min', e.message); }
+  if (tEsp9 !== 250)
+    throw new Error('tEspMed=' + tEsp9 + ', esperado 250 — bug teto=200 ainda presente?');
+  __ok('parseHist — triagem_atendimento (250 min) lido corretamente com teto=720 (fix teto=200)');
+} catch(e) { __fail('parseHist tEspMed campo direto teto=720', e.message); }
 
 </script>`;
 

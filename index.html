@@ -2702,6 +2702,7 @@
         dhAtend:["dh_atendimento","data atendimento medico","data atendimento médico","inicio atendimento","início atendimento","atendimento medico"],
         tEspTri:["recepcao_triagem","espera triagem","tempo espera triagem","t espera triagem"],
         tDurTri:["triagem_duracao","triagem duracao","duracao triagem","duração triagem","tempo triagem","media_duracao_triagem"],
+        tEspMed:["triagem_atendimento","espera medico","espera médico","t espera medico","t espera médico"],
         tTotal:["recepcao_alta","tempo total","total recepcao alta","recepcao alta","recepção alta"],
         tConsulta:["tempo_consulta","media_tempo_atendimento","tempo consulta","duracao consulta","duração consulta"]
       },
@@ -2722,7 +2723,7 @@
       // [11]dh_atendimento [12]codespecialidade [13]nomespecialidade [14]codprofissional
       // [15]nomprofissional [16]recepcao_triagem [17]triagem_duracao [18]triagem_atendimento
       // [19]tempo_consulta [20]recepcao_alta [21]dados [22..26]médias [27]total_pacientes
-      hist:{cor:3,pront:5,paciente:6,idade:7,tipo:8,dh:9,dhAcol:10,dhAtend:11,prof:15,tEspTri:16,tDurTri:17,tTotal:20,tConsulta:19},
+      hist:{cor:3,pront:5,paciente:6,idade:7,tipo:8,dh:9,dhAcol:10,dhAtend:11,prof:15,tEspTri:16,tDurTri:17,tEspMed:18,tTotal:20,tConsulta:19},
       // Triagem: [9]=id_recepcao(num) [10]=dh_recepcao [11]=vazio [12]=dh_atendimento_triagem
       // [15]=codprofissional [16]=nomprofissional [17]=vazio [18]=vazio [19]=tDur
       tri:{cor:3,dh:10,dhTri:12,triador:16,tDur:19},
@@ -3348,7 +3349,11 @@
         const dh=parseDate(val(row,idx.dh));
         if(!dh){issues.invalidDate++;return}
         const dhAcol=parseDate(val(row,idx.dhAcol)), dhAtend=parseDate(val(row,idx.dhAtend));
-        let tEspMed=null;if(dhAcol&&dhAtend){const d=(dhAtend-dhAcol)/60000;tEspMed=safeMinutes(d,200)}
+        const _tDurTriH=safeMinutes(parseDuration(val(row,idx.tDurTri)),90);
+        const _rawTEspMed=parseDuration(val(row,idx.tEspMed));
+        let tEspMed=null;
+        if(_rawTEspMed!=null){tEspMed=safeMinutes(_rawTEspMed,CONFIG.MAX_MINUTES)}
+        else if(dhAcol&&dhAtend){tEspMed=safeMinutes((dhAtend-dhAcol)/60000-(_tDurTriH??0),CONFIG.MAX_MINUTES)}
         const tEspTri=safeMinutes(parseDuration(val(row,idx.tEspTri)),300);
         const tipoRaw=String(val(row,idx.tipo)||"").trim();
         const evadido=isEvasao(tipoRaw,val(row,idx.prof));
@@ -3360,7 +3365,7 @@
           prof:String(val(row,idx.prof)||"").trim(),tipo:tipoRaw,evadido,
           idade:Number.parseFloat(String(val(row,idx.idade)).replace(",","."))||null,
           dh,dhAcol,dhAtend,dateKey:ymd(_da),ano:_da.getFullYear(),mes:_da.getMonth()+1,anoMes:monthKey(_da),hora:dh.getHours(),diaSem:_da.getDay(),turno:_t,
-          tEspTri,tDurTri:safeMinutes(parseDuration(val(row,idx.tDurTri)),90),tTotal:safeMinutes(parseDuration(val(row,idx.tTotal)),CONFIG.MAX_MINUTES),tConsulta:safeMinutes(parseDuration(val(row,idx.tConsulta)),300),tEspMed
+          tEspTri,tDurTri:_tDurTriH,tTotal:safeMinutes(parseDuration(val(row,idx.tTotal)),CONFIG.MAX_MINUTES),tConsulta:safeMinutes(parseDuration(val(row,idx.tConsulta)),300),tEspMed
         });
       });
       if(addQuality)state.quality.push({type:"Histórico",total:rows.length-1,valid:data.length,invalid:issues.invalidDate,msg:`${issues.invalidDate} linhas sem data válida foram ignoradas.`});
