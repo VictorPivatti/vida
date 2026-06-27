@@ -970,7 +970,7 @@
     .pane{display:none}
     .pane.active{display:block;animation:fadeUp var(--t-base) ease}
     @keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-    :root{--kpi-min:190px;--chart-min:360px;--card-gap:16px}
+    :root{--kpi-min:190px;--card-gap:16px}
     .grid{
       display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--kpi-min)),1fr));
       gap:var(--card-gap);margin-bottom:var(--card-gap);grid-auto-flow:dense
@@ -1262,6 +1262,10 @@
     .section-title-inset{
       margin:18px 0 10px;font-size:11px;font-weight:700;
       text-transform:uppercase;letter-spacing:.1em;color:var(--mut)
+    }
+    .section-title-inset-sm{
+      font-size:10px;font-weight:700;
+      text-transform:uppercase;letter-spacing:.08em;color:var(--mut)
     }
 
     /* ─────────────────────────────────────────────────────────────
@@ -1844,7 +1848,7 @@
           </div>
         </div>
         <div style="grid-column:1/-1;margin-top:8px;border-top:1px solid var(--bdr);padding-top:12px">
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);font-weight:700;margin-bottom:10px">Metas Manchester por classificação de risco</div>
+          <div class="section-title-inset-sm" style="margin-bottom:10px">Metas Manchester por classificação de risco</div>
           <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
             <div class="modal-field"><div class="modal-label" style="color:#c8493e">Vermelho — imediato</div><div class="modal-input-row"><span>≤</span><input id="metaVermelho" type="number" min="0" value="0"><small>min</small></div></div>
             <div class="modal-field"><div class="modal-label" style="color:#e07a35">Laranja — muito urgente</div><div class="modal-input-row"><span>≤</span><input id="metaLaranja" type="number" min="1" value="15"><small>min</small></div></div>
@@ -1855,7 +1859,7 @@
           </div>
         </div>
         <div style="grid-column:1/-1;margin-top:8px;border-top:1px solid var(--bdr);padding-top:12px" id="recepSection">
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);font-weight:700;margin-bottom:4px">Pacientes recepcionados por mês</div>
+          <div class="section-title-inset-sm" style="margin-bottom:4px">Pacientes recepcionados por mês</div>
           <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">Informe os recepcionados (relatório separado). Triados, brancos e atendidos são calculados automaticamente — edite para corrigir. Campos com borda <span style="color:var(--ac);font-weight:700">roxa</span> têm valor manual. ↺ restaura o automático.</div>
           <div id="recepTableWrap" style="max-height:220px;overflow-y:auto">
             <table class="table" style="font-size:12px" id="recepInputTable">
@@ -3961,11 +3965,11 @@
         dispEl.innerHTML=`
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:8px 0">
             <div>
-              <div style="font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Espera médica — ${fmt(medVals.length)} registros</div>
+              <div class="section-title-inset" style="margin:0 0 10px">Espera médica — ${fmt(medVals.length)} registros</div>
               ${[["P50 (mediana)",p50m],["P75",p75m],["P90",p90m],["P95",p95m]].map(([l,v])=>v!=null?`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:var(--txt)">${l}</span><span class="mono muted" style="font-size:10px">meta: ${metaMed_} min</span></div>${bar(v,metaMed_,maxM)}</div>`:'').join('')}
             </div>
             <div>
-              <div style="font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Espera triagem — ${fmt(triVals.length)} registros</div>
+              <div class="section-title-inset" style="margin:0 0 10px">Espera triagem — ${fmt(triVals.length)} registros</div>
               ${[["P50 (mediana)",p50t],["P75",p75t],["P90",p90t],["P95",p95t]].map(([l,v])=>v!=null?`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:var(--txt)">${l}</span><span class="mono muted" style="font-size:10px">meta: ${metaTri_} min</span></div>${bar(v,metaTri_,maxT)}</div>`:'').join('')}
             </div>
           </div>
@@ -4821,7 +4825,7 @@
       const completude=Math.round(fields.slice(0,7).reduce((acc,f)=>acc+(1-f.falta/n),0)/7*100);
       $("quality").innerHTML=`
         <div style="margin-bottom:12px;padding:10px 14px;background:var(--sur2);border-radius:8px;border:1px solid var(--bdr)">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin-bottom:4px">Índice geral de completude</div>
+          <div class="section-title-inset" style="margin:0 0 4px">Índice geral de completude</div>
           <div style="font-size:28px;font-weight:800;color:${completude>=90?"var(--ok)":completude>=70?"var(--wn)":"var(--er)"};font-family:'IBM Plex Mono',monospace">${completude}%</div>
           <div style="font-size:11px;color:var(--mut)">${fmt(n)} registros no período filtrado</div>
         </div>
@@ -4848,7 +4852,7 @@
       
       <!-- Consistência cruzada -->
       <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--bdr)">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin-bottom:8px">Consistência cruzada entre bases</div>
+        <div class="section-title-inset-sm" style="margin-bottom:8px">Consistência cruzada entre bases</div>
         <div id="auditConsistencia" style="font-family:'IBM Plex Mono',monospace;font-size:11px"></div>
       </div>
       `;
@@ -4997,19 +5001,17 @@
         const grid = pane.querySelector('.chart-grid');
         if (!grid) return;
         const savedOrder = saved[id];
-        const cards = [...grid.children];
+        const cardByTitle = new Map([...grid.children].map(c => [
+          c.querySelector('.card-title')?.textContent?.trim()?.substring(0,50), c
+        ]));
         // Aplicar tamanhos salvos
         savedOrder.forEach(s => {
-          const card = cards.find(c =>
-            c.querySelector('.card-title')?.textContent?.trim()?.substring(0,50) === s.title
-          );
+          const card = cardByTitle.get(s.title);
           if (card && s.cols !== 'auto') applyCardSize(card, s.cols);
         });
         // Reordenar
         savedOrder.forEach(s => {
-          const card = cards.find(c =>
-            c.querySelector('.card-title')?.textContent?.trim()?.substring(0,50) === s.title
-          );
+          const card = cardByTitle.get(s.title);
           if (card) grid.appendChild(card);
         });
       });
@@ -5069,7 +5071,7 @@
         });
         card.addEventListener('dragend', () => {
           card.classList.remove('dragging');
-          grid.querySelectorAll('.card').forEach(c => c.classList.remove('drag-over'));
+          grid.querySelectorAll('.card.drag-over').forEach(c => c.classList.remove('drag-over'));
           dragged = null;
           saveLayout();
         });
@@ -5077,7 +5079,7 @@
           e.preventDefault();
           e.dataTransfer.dropEffect = 'move';
           if (dragged && dragged !== card) {
-            grid.querySelectorAll('.card').forEach(c => c.classList.remove('drag-over'));
+            grid.querySelectorAll('.card.drag-over').forEach(c => c.classList.remove('drag-over'));
             card.classList.add('drag-over');
           }
         });
@@ -5703,9 +5705,9 @@
     // ── Lazy render: only render active pane ─────────────────────
     // Track which pane needs re-render
     const _dirtyPanes = new Set();
+    const _navPaneItems = document.querySelectorAll('.nav-item[data-pane]');
     function markDirty() {
-      // Marca todos os tabs como sujos usando os data-tab dos nav-items
-      document.querySelectorAll('.nav-item[data-pane]').forEach(item => _dirtyPanes.add(item.dataset.pane));
+      _navPaneItems.forEach(item => _dirtyPanes.add(item.dataset.pane));
     }
     function setSelectOptions(id,values,allLabel){
       const el=$(id);if(!el)return;
@@ -7581,16 +7583,15 @@
     setTimeout(updateNavIndicators, 50);
     // ── Controle de densidade dos cards ──────────────────────────
     const DENSITY={
-      compact:{kpi:'160px', chart:'320px', gap:'8px'},
-      normal: {kpi:'190px', chart:'360px', gap:'12px'},
-      wide:   {kpi:'260px', chart:'480px', gap:'16px'},
+      compact:{kpi:'160px', gap:'8px'},
+      normal: {kpi:'190px', gap:'16px'},
+      wide:   {kpi:'260px', gap:'24px'},
     };
     function applyDensity(d){
       const v=DENSITY[d]||DENSITY.normal;
       const r=document.documentElement.style;
-      r.setProperty('--kpi-min',   v.kpi);
-      r.setProperty('--chart-min', v.chart);
-      r.setProperty('--card-gap',  v.gap);
+      r.setProperty('--kpi-min',  v.kpi);
+      r.setProperty('--card-gap', v.gap);
       document.querySelectorAll('.density-btn').forEach(b=>b.classList.toggle('active-pill',b.dataset.density===d));
       try{localStorage.setItem('upa_density',d)}catch(e){}
     }
