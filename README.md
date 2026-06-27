@@ -1,6 +1,6 @@
 # V.I.D.A. — Visualização Integrada de Dados Assistenciais
 
-**v3.2** · UPA 24h Tiago Cardoso dos Santos · CNES 7061838 · Mateus Leme – MG
+**v3.3.0** · UPA 24h Tiago Cardoso dos Santos · CNES 7061838 · Mateus Leme – MG
 
 > Dashboard assistencial de arquivo único para análise de produção, qualidade e gestão de UPA 24h. Desenvolvido e mantido pelo Coordenador Assistencial / ENF RT Victor Matheus Sanches Pivatti (COREN-MG 708057).
 
@@ -63,7 +63,7 @@ Funciona em qualquer dispositivo com Chrome, Edge, Firefox ou Safari atualizado.
 
 ## 3. Bases de dados
 
-O dashboard aceita até **4 arquivos de dados**. Todos são carregados na sessão e processados localmente.
+O dashboard aceita até **5 arquivos de dados**. Todos são carregados na sessão e processados localmente.
 
 ### 3.1 Histórico de atendimentos *(obrigatório)*
 
@@ -123,6 +123,19 @@ Habilita o painel **Produtividade Assistencial** com breakdown por médicos, enf
 
 ---
 
+### 3.5 Exames laboratoriais *(opcional)*
+
+**Formato:** PDF exportado pelo Autolac  
+**Campos utilizados:** médico solicitante, tipo de exame, quantidade, valor, guias
+
+```
+Exemplo de nome: relatorio_exames_2026.pdf
+```
+
+Habilita o painel **Exames Lab.** com ranking por médico solicitante, volume e valor por tipo de exame.
+
+---
+
 ## 4. Painéis disponíveis
 
 ### Operação
@@ -158,6 +171,12 @@ Habilita o painel **Produtividade Assistencial** com breakdown por médicos, enf
 | **Pacientes** | Busca por prontuário, histórico individual | Histórico |
 | **Escala / Dimensionamento** | Déficit/superávit por hora, base COFEN 543/2017 | Histórico |
 | **Anotações** | Registro de observações por período | — |
+
+### Exames
+
+| Painel | O que mostra | Dados necessários |
+|--------|-------------|-------------------|
+| **Exames Lab.** | Ranking por médico solicitante, volume e valor por tipo de exame, guias | Exames (Autolac PDF) |
 
 ### Sistema
 
@@ -276,6 +295,8 @@ Digite apenas parte do nome (ex: `NINOMIYA`). O filtro usa busca parcial normali
 
 | Versão | Data | Principais mudanças |
 |--------|------|---------------------|
+| **v3.3.0** | Jun 2026 | Correção crítica de `tEspMed` (campo `p[18]` do Vivver), teto 720 min, parser CID (médico/paciente trocados), regras Manchester c01/c02, taxa de retorno ≤72h com virada de mês, filtro de data consistente entre histórico e triagem |
+| **v3.2.1** | Jun 2026 | Identificação nominal nos Notificáveis, horário enriquecido por cruzamento histórico×CID |
 | **v3.2** | Jun 2026 | Expiração automática de dados (TTL 12h, LGPD), correção do cruzamento Histórico↔Triagem, cruzamento entre fontes no painel Qualidade, remoção de 5 painéis redundantes, reordenação por severidade, smoke test (harness.js) |
 | **v3.1** | Jun 2026 | Módulo de doenças notificáveis (Portaria GM/MS 217/2023), tendência sazonal de CID, patches de UI/UX e acessibilidade |
 | **v3.0** | Jun 2026 | Tela inicial reformulada, auditoria completa de código, correções nos indicadores de retorno ≤72h |
@@ -287,14 +308,23 @@ Digite apenas parte do nome (ex: `NINOMIYA`). O filtro usa busca parcial normali
 
 ## Desenvolvimento
 
-Após qualquer alteração no `index.html`, rode o smoke test para verificar se algum painel quebrou:
+Após qualquer alteração no `index.html`, rode a suite completa:
 
-```
-npm install jsdom   # uma vez
-node harness.js index.html
+```bash
+npm install        # uma vez
+npm test           # smoke + métricas + parsers
+npm run smoke      # só o smoke test (mais rápido)
 ```
 
-O teste executa as 22 funções de render com dados sintéticos num DOM headless e reporta exceções por painel em ~2 segundos. Ele detecta erros de carregamento e crashes, mas não valida números calculados. O histórico de mudanças está no [CHANGELOG.md](CHANGELOG.md).
+A suite tem três camadas:
+
+| Script | O que valida |
+|--------|-------------|
+| `harness.js` | Crash por painel — executa todas as funções de render com dados sintéticos |
+| `tests/metrics.test.js` | Valores calculados — `tEspMed`, `returns72`, `monthlyStats`, Manchester |
+| `tests/parsers.test.js` | Parsing Vivver — campos críticos com fixtures CSV anonimizados |
+
+O CI no GitHub Actions executa `npm test` em todo push. O histórico de mudanças está no [CHANGELOG.md](CHANGELOG.md).
 
 ---
 

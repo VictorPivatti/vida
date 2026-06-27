@@ -1,0 +1,12 @@
+{
+  "name": "vida-dashboard",
+  "version": "3.3.0",
+  "description": "Dashboard assistencial single-file para UPA 24h",
+  "scripts": {
+    "test": "node harness.js index.html && node tests/metrics.test.js && node tests/parsers.test.js",
+    "smoke": "node harness.js index.html"
+  },
+  "dependencies": {
+    "jsdom": "^29.1.1"
+  }
+}
