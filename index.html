@@ -650,6 +650,9 @@
     }
     .up-source-chip.loaded{color:var(--ok);background:rgba(47,158,126,.08);border-color:rgba(47,158,126,.25)}
     .up-source-sep{font-size:10px;color:var(--mut);flex:none}
+    .tb-source-chip{font-size:9px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;padding:1px 6px;border-radius:99px;border:1px solid var(--bdr2);white-space:nowrap;transition:opacity .2s}
+    .tb-source-chip.loaded{color:var(--ok);background:rgba(47,158,126,.08);border-color:rgba(47,158,126,.25)}
+    .tb-source-chip.derived{color:#e8a93b;background:rgba(232,169,59,.08);border-color:rgba(232,169,59,.25)}
 
     /* ── Elementos obsoletos: esconder ── */
     .upload-left,.upload-right,.up-brand,.upload-hero-block,
@@ -1979,7 +1982,14 @@
           <button type="button" class="pill density-btn" data-density="compact" title="Compacto">▤</button>
           <button type="button" class="pill density-btn" data-density="wide" title="Amplo">▢</button>
         </div>
-                <span id="dbStatsBadge" class="badge" style="display:none;margin-left:auto;background:rgba(34,211,238,.08);border-color:rgba(34,211,238,.25);color:#22d3ee" title=""></span>
+                <div id="tbSourceChips" style="display:none;align-items:center;gap:4px;margin-left:auto">
+          <span class="tb-source-chip" id="tbChipHist" title="Histórico de atendimentos">Hist</span>
+          <span class="tb-source-chip" id="tbChipTri"  title="Triagem">Tri</span>
+          <span class="tb-source-chip" id="tbChipCid"  title="CID / Diagnósticos">CID</span>
+          <span class="tb-source-chip" id="tbChipProc" title="Procedimentos (BPA)">Proc</span>
+          <span class="tb-source-chip" id="tbChipExam" title="Exames laboratoriais">Exam</span>
+        </div>
+        <span id="dbStatsBadge" class="badge" style="display:none;background:rgba(34,211,238,.08);border-color:rgba(34,211,238,.25);color:#22d3ee" title=""></span>
         <span class="badge" id="recordBadge" aria-live="polite">0 registros</span>
       </div>
 
@@ -3407,6 +3417,7 @@
       if(!files.length)return;showLoading("Lendo histórico...");setProgress(0,"Lendo "+files.length+" arquivo(s)...");
       try{
         state.quality=[];
+        const _isFirstLoad=state.raw.length===0;
         const buffers=await Promise.all(files.map(f=>f.arrayBuffer()));
         const result=await workerRun('parseHist',{buffers,names:files.map(f=>f.name)});
         setProgress(90,"Finalizando...");
@@ -3430,7 +3441,12 @@
         state.triSource="hist";
         state.files.tri="";
         updateTriBtn();
-        setupDates();populateMedicoFilter();applyFilters();setHistFileName(state.files.hist);$("upload").style.display="none";$("app").classList.add("visible");setProgress(100,"Histórico carregado.");hideLoading();showToast("Histórico carregado: "+state.filt.length.toLocaleString("pt-BR")+" atendimentos.","ok");
+        setupDates();populateMedicoFilter();applyFilters();setHistFileName(state.files.hist);$("upload").style.display="none";$("app").classList.add("visible");setProgress(100,"Histórico carregado.");hideLoading();
+        // Item 4: quality feedback — mostra "X de Y" quando há linhas ignoradas
+        const _qh=state.quality.find(x=>x.type==="Histórico");
+        const _qMsg=_qh&&_qh.invalid>0?` (${fmt(state.filt.length)} de ${fmt(_qh.total)} válidos)`:'';
+        showToast(`Histórico carregado: ${fmt(state.filt.length)} atendimentos${_qMsg}.`,"ok");
+        updateSourceChips();
         // Alertas proativos de qualidade logo após o carregamento
         setTimeout(()=>{
           const q=state.quality.find(x=>x.type==="Histórico");
@@ -3442,6 +3458,11 @@
           if(ev>0&&state.filt.length>0){
             const evRate=fmtN(ev/state.filt.length*100,1);
             if(parseFloat(evRate.replace(",","."))>=2)showToast(`${ev} evasões detectadas (${evRate}% do período). Verifique o fluxo de triagem.`,"warn",6000);
+          }
+          // Item 3: wizard — sugere Triagem + CID no primeiro carregamento
+          if(_isFirstLoad){
+            const noExtras=!state.cidRaw.length&&state.triSource!=='file'&&!state.procRaw.length;
+            if(noExtras)showToast('Para enriquecer a análise, adicione também Triagem e CID pelo botão "Carregar dados".','inf',9000);
           }
         },1200);
         const tri=state.pending.tri||$("triFileUp").files[0];if(tri)await loadTri(tri);
@@ -7370,24 +7391,24 @@
           return;
         }
 
-        // Indicador leve na tela de upload
-        const statusEl = $('status');
-        const uploadEl = $('upload');
-        const hint = document.getElementById('autoLoadHint');
-        // Banner de dados salvos
+        // Mostra o banner e espera o clique — não carrega automaticamente
         const banner=$('upSavedBanner'), savedText=$('upSavedText'), savedBtn=$('upSavedBtn');
         if(banner&&savedText){
-          // Descobrir período dos dados
-          const count=s.atendimentos;
-          savedText.innerHTML=`Continuar de onde parou <span style="font-weight:400;opacity:.7">· ${count.toLocaleString('pt-BR')} registros</span>`;
+          savedText.innerHTML=`Continuar de onde parou <span style="font-weight:400;opacity:.7">· ${s.atendimentos.toLocaleString('pt-BR')} registros</span>`;
           banner.style.display='flex';
-          // Botão retomar: esconder banner e disparar o load
-          if(savedBtn) savedBtn.onclick=()=>{
-            banner.style.display='none';
-            if(hint)hint.textContent='';
-          };
         }
-        if(hint) hint.textContent='';
+        if(savedBtn) savedBtn.onclick=async()=>{
+          banner.style.display='none';
+          await _execLoadFromDB(s);
+        };
+      } catch(e){
+        console.warn('[VIDA] auto-load falhou:', e);
+      }
+    }
+    async function _execLoadFromDB(s){
+      try {
+        showKpiSkeletons('kpisGeral',4);
+        const statusEl=$('status'), uploadEl=$('upload');
 
         // Lê em paralelo para economizar tempo
         const [rows, cidRows, triRows] = await Promise.all([
@@ -7396,15 +7417,13 @@
           s.triagem > 0 ? VidaDB.getAll('triagem') : Promise.resolve([]),
         ]);
 
-        if(!rows.length) return; // segurança
+        if(!rows.length) return;
 
-        // Garante ordenação por dh (getAll retorna por auto-increment, que é cronológico)
         rows.sort((a,b) => (a.dh?.getTime()||0) - (b.dh?.getTime()||0));
 
         state.raw = rows;
         state.files.hist = `banco local (${s.atendimentos.toLocaleString('pt-BR')} registros)`;
 
-        // Triagem: preferir dados do banco; fallback = derivar do histórico
         if(triRows.length){
           state.triRaw = triRows;
           state.triSource = 'db';
@@ -7415,7 +7434,6 @@
         state.files.tri = '';
         updateTriBtn();
 
-        // CID
         if(cidRows.length){
           state.cidRaw = cidRows;
           const _cAS=document.getElementById('cidStatus');if(_cAS){_cAS.textContent=cidRows.length.toLocaleString('pt-BR')+' reg.';_cAS.className='upload-menu-status loaded';}try{updateUploadStatuses();}catch(e){}
@@ -7425,20 +7443,19 @@
         populateMedicoFilter();
         applyFilters();
 
-        // Mostra o app e esconde a tela de upload
         if(uploadEl) uploadEl.style.display = 'none';
         const appEl = $('app');
         if(appEl) appEl.classList.add('visible');
-        const fnEl = $('fileName');
         setHistFileName(state.files.hist);
+        updateSourceChips();
 
         const minDt = rows[0]?.dh?.toLocaleDateString('pt-BR') || '-';
         const maxDt = rows[rows.length-1]?.dh?.toLocaleDateString('pt-BR') || '-';
         if(statusEl){ statusEl.textContent = `Carregado do banco local — ${s.atendimentos.toLocaleString('pt-BR')} atendimentos (${minDt} a ${maxDt})`; statusEl.className='status mono'; }
-        showToast(`Dados carregados automaticamente: ${s.atendimentos.toLocaleString('pt-BR')} atendimentos (${minDt} a ${maxDt}).`, 'ok', 6000);
+        showToast(`Dados carregados: ${s.atendimentos.toLocaleString('pt-BR')} atendimentos (${minDt} a ${maxDt}).`, 'ok', 6000);
         refreshDbStats();
       } catch(e){
-        console.warn('[VIDA] auto-load falhou:', e);
+        console.warn('[VIDA] _execLoadFromDB falhou:', e);
       }
     }
 
@@ -7805,25 +7822,31 @@
       const loaded=[state.triSource==='file',state.cidRaw.length>0,state.procRaw.length>0,state.examesRaw.length>0].filter(Boolean).length;
       const badge=document.getElementById('uploadBadge');
       if(badge){badge.textContent=loaded+'/4';badge.style.display=loaded>0?'inline':'none';}
+      updateSourceChips();
+    }
+    function updateSourceChips(){
+      const wrap=document.getElementById('tbSourceChips');
+      if(!wrap)return;
+      const hasHist=state.raw.length>0;
+      wrap.style.display=hasHist?'flex':'none';
+      function _chip(id,cls,show){
+        const el=document.getElementById(id);
+        if(!el)return;
+        el.className='tb-source-chip'+(show?' '+cls:'');
+        el.style.display=show?'':'none';
+      }
+      _chip('tbChipHist','loaded',hasHist);
+      _chip('tbChipTri', state.triSource==='file'?'loaded':'derived', state.triRaw.length>0);
+      _chip('tbChipCid', 'loaded', state.cidRaw.length>0);
+      _chip('tbChipProc','loaded', state.procRaw.length>0);
+      _chip('tbChipExam','loaded', state.examesRaw.length>0);
     }
     // Chamar updateUploadStatuses sempre que dados forem carregados
     // (hook nos eventos existentes — chamada no final de loadTri, loadCid, etc.)
     const _origUpdateTriBtn=updateTriBtn;
     updateTriBtn=function(){_origUpdateTriBtn();try{updateUploadStatuses();}catch(e){}};
 
-    // ── SKELETON NO AUTOLOAD ─────────────────────────────────────────
-    // Patch do autoLoadFromDB para mostrar skeleton
-    const _origAutoLoad=autoLoadFromDB;
-    autoLoadFromDB=async function(){
-      // Mostrar skeletons antes de carregar
-      try{
-        const s=await VidaDB.stats();
-        if(s.atendimentos>0){
-          showKpiSkeletons('kpisGeral',4);
-        }
-      }catch(e){}
-      return _origAutoLoad.apply(this,arguments);
-    };
+    // Skeleton movido para _execLoadFromDB (chamado após clique em "Carregar")
 
   
     // ── TENDÊNCIA SAZONAL CID ────────────────────────────────────────────
