@@ -1,0 +1,4 @@
+codprofissional;NomProfissional;codespecialidade;nomespecialidade;CodProcedimento;NomProcedimento;Faturavel;qdeprocedimento;TipLancamento;CodInstrumento
+1;101;DR SILVA A;1;CLINICA GERAL;50000072;CONSULTA MEDICA;S;3;E;
+2;101;DR SILVA A;1;CLINICA GERAL;50000110;EXAME CLINICO;N;5;E;
+3;102;DR COSTA B;2;ORTOPEDIA;40302361;CONSULTA ORTOPEDIA;S;2;E;
