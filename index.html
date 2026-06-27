@@ -653,6 +653,27 @@
     .tb-source-chip{font-size:9px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;padding:1px 6px;border-radius:99px;border:1px solid var(--bdr2);white-space:nowrap;transition:opacity .2s}
     .tb-source-chip.loaded{color:var(--ok);background:rgba(47,158,126,.08);border-color:rgba(47,158,126,.25)}
     .tb-source-chip.derived{color:#e8a93b;background:rgba(232,169,59,.08);border-color:rgba(232,169,59,.25)}
+    /* TTL countdown badge */
+    .ttl-badge{font-size:9px;font-family:'IBM Plex Mono',monospace;padding:1px 7px;border-radius:99px;border:1px solid var(--bdr2);color:var(--mut);background:transparent;white-space:nowrap;cursor:default}
+    .ttl-badge.ttl-warn{color:#e8a93b;background:rgba(232,169,59,.08);border-color:rgba(232,169,59,.3)}
+    .ttl-badge.ttl-crit{color:#c8493e;background:rgba(200,73,62,.08);border-color:rgba(200,73,62,.3)}
+    /* Mobile: sidebar overlay ≤640px */
+    #sidebarToggle{display:none}
+    #sidebarBackdrop{display:none;position:fixed;inset:0;z-index:39;background:rgba(0,0,0,.45)}
+    body.sidebar-open #sidebarBackdrop{display:block}
+    @media(max-width:640px){
+      #sidebarToggle{display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;background:none;border:1px solid var(--bdr2);border-radius:6px;cursor:pointer;color:var(--txt2);flex:none}
+      .sidebar{position:fixed!important;left:0;top:0;bottom:0;width:220px!important;z-index:40;padding:0 8px 16px!important;transform:translateX(-100%);transition:transform .2s ease;box-shadow:4px 0 24px rgba(0,0,0,.35)}
+      body.sidebar-open .sidebar{transform:translateX(0)}
+      .sidebar .nav-item{width:auto!important;height:38px!important;padding:0 10px!important;justify-content:flex-start!important;gap:10px}
+      .sidebar .nav-item span:not(.nav-indicator){display:block!important}
+      .sidebar .nav-item::after,.sidebar .nav-item::before{display:none!important}
+      .sidebar .nav-group,.sidebar .sidebar-brand{display:flex!important}
+      .sidebar .nav-group{display:block!important}
+      .topbar-row1{padding:0 12px!important;min-height:50px!important;gap:8px!important}
+      .topbar-section-title{font-size:13px!important}
+      .density-btn{display:none!important}
+    }
 
     /* ── Elementos obsoletos: esconder ── */
     .upload-left,.upload-right,.up-brand,.upload-hero-block,
@@ -1883,6 +1904,9 @@
 
       <!-- Linha 1: seção ativa + ações -->
       <div class="topbar-row1">
+        <button type="button" id="sidebarToggle" onclick="toggleMobileSidebar()" aria-label="Menu de navegação" title="Menu">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
         <div class="topbar-section">
           <h1 id="topbarSectionTitle" class="topbar-section-title">Visão geral</h1>
         </div>
@@ -1990,12 +2014,14 @@
           <span class="tb-source-chip" id="tbChipExam" title="Exames laboratoriais">Exam</span>
         </div>
         <span id="dbStatsBadge" class="badge" style="display:none;background:rgba(34,211,238,.08);border-color:rgba(34,211,238,.25);color:#22d3ee" title=""></span>
+        <span id="ttlBadge" class="ttl-badge" style="display:none" title="Tempo até os dados expirarem (TTL 12h — proteção LGPD)"></span>
         <span class="badge" id="recordBadge" aria-live="polite">0 registros</span>
       </div>
 
     </header>
 
     <!-- Body: sidebar + conteúdo -->
+    <div id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
     <div class="app-body">
 
       <!-- Sidebar de navegação -->
@@ -3447,6 +3473,7 @@
         const _qMsg=_qh&&_qh.invalid>0?` (${fmt(state.filt.length)} de ${fmt(_qh.total)} válidos)`:'';
         showToast(`Histórico carregado: ${fmt(state.filt.length)} atendimentos${_qMsg}.`,"ok");
         updateSourceChips();
+        updateTtlCountdown();
         // Alertas proativos de qualidade logo após o carregamento
         setTimeout(()=>{
           const q=state.quality.find(x=>x.type==="Histórico");
@@ -7169,6 +7196,9 @@
           pdf.text(p.title, margin, margin+10);
 
           pdf.addImage(imgData, 'JPEG', margin, margin+13, imgW, imgH);
+          pdf.setFontSize(6.5);
+          pdf.setTextColor(150,150,160);
+          pdf.text(`V.I.D.A. · Uso interno · Não substitui notificação SINAN · Gerado em ${new Date().toLocaleString('pt-BR')}`, pdfW/2, pdfH-3, {align:'center'});
           pagina++;
         }} finally { window.getComputedStyle = _origGCS; }
 
@@ -7448,6 +7478,7 @@
         if(appEl) appEl.classList.add('visible');
         setHistFileName(state.files.hist);
         updateSourceChips();
+        updateTtlCountdown();
 
         const minDt = rows[0]?.dh?.toLocaleDateString('pt-BR') || '-';
         const maxDt = rows[rows.length-1]?.dh?.toLocaleDateString('pt-BR') || '-';
@@ -7847,6 +7878,34 @@
     updateTriBtn=function(){_origUpdateTriBtn();try{updateUploadStatuses();}catch(e){}};
 
     // Skeleton movido para _execLoadFromDB (chamado após clique em "Carregar")
+
+    // ── TTL COUNTDOWN ────────────────────────────────────────────────────────
+    function updateTtlCountdown(){
+      const el=document.getElementById('ttlBadge');
+      if(!el)return;
+      if(!state.raw.length){el.style.display='none';return;}
+      try{
+        const ts=parseInt(localStorage.getItem('vida_db_ts')||'0',10);
+        if(!ts){el.style.display='none';return;}
+        const rem=12*60*60*1000-(Date.now()-ts);
+        if(rem<=0){el.style.display='none';return;}
+        const h=Math.floor(rem/3600000);
+        const m=Math.floor((rem%3600000)/60000);
+        el.textContent=`⏳ ${h}h${String(m).padStart(2,'0')}m`;
+        el.title=`Dados expiram em ${h}h${String(m).padStart(2,'0')}min (TTL 12h — proteção LGPD)`;
+        el.className='ttl-badge'+(rem<1800000?' ttl-crit':rem<7200000?' ttl-warn':'');
+        el.style.display='';
+      }catch(e){el.style.display='none';}
+    }
+    setInterval(updateTtlCountdown,60000);
+
+    // ── MOBILE SIDEBAR ───────────────────────────────────────────────────────
+    function toggleMobileSidebar(){document.body.classList.toggle('sidebar-open');}
+    function closeMobileSidebar(){document.body.classList.remove('sidebar-open');}
+    // Fechar sidebar ao navegar (toque em item de menu)
+    document.querySelectorAll('.nav-item[data-pane]').forEach(el=>{
+      el.addEventListener('click',()=>{if(window.innerWidth<=640)closeMobileSidebar();});
+    });
 
   
     // ── TENDÊNCIA SAZONAL CID ────────────────────────────────────────────
