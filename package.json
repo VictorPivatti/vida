@@ -5,7 +5,7 @@
   "scripts": {
     "build": "node scripts/build.js",
     "dev": "esbuild src/js/app.js --bundle --servedir=src --outdir=src/.dev --format=esm --watch",
-    "test": "npm run build && node harness.js index.html && node tests/metrics.test.js && node tests/parsers.test.js && node tests/integration.test.js && node tests/unit/utils.test.mjs",
+    "test": "npm run build && node harness.js index.html && node tests/metrics.test.js && node tests/parsers.test.js && node tests/integration.test.js && node tests/unit/utils.test.mjs && node tests/parsers.unit.test.mjs",
     "smoke": "node harness.js index.html",
     "test:watch": "node -e \"const{execSync:e,watch}=require('fs');const run=()=>{try{e('npm test',{stdio:'inherit'})}catch(_){}};run();watch('.',{recursive:true},(t,f)=>{if(f&&(f.endsWith('.js')||f.endsWith('.html')))run();})\""
   },
