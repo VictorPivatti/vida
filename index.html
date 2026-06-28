@@ -2771,55 +2771,101 @@
       if(replacements/utf8.length<0.005)return utf8; // <0.5% de erros: aceita UTF-8 com poucos bytes ruins
       return new TextDecoder('windows-1252').decode(buf); // Windows-1252 cobre latin1 + 0x80-0x9F
     }
+    // Blob Worker URL para parseHist — construído lazily com toString() das funções de parsing
+    let _histWorkerUrl=null;
+    function _getHistWorkerUrl(){
+      if(_histWorkerUrl)return _histWorkerUrl;
+      const code=[
+        `const CONFIG={MAX_MINUTES:${CONFIG.MAX_MINUTES}};`,
+        `const _CP1252_REV=new Map(${JSON.stringify([..._CP1252_REV])});`,
+        `const norm=${norm.toString()};`,
+        `const ymd=${ymd.toString()};`,
+        `const monthKey=${monthKey.toString()};`,
+        decodeXmlEntities.toString(),
+        fixMojibake.toString(),
+        cleanRisk.toString(),
+        legacyText.toString(),
+        isEvasao.toString(),
+        csvRows.toString(),
+        parseDate.toString(),
+        parseDuration.toString(),
+        safeMinutes.toString(),
+        parseHistLegacy.toString(),
+        `self.onmessage=function(e){`,
+        `  const{csvs,names}=e.data,all=[],seen=new Set();`,
+        `  for(let i=0;i<csvs.length;i++){`,
+        `    const{data:rows}=parseHistLegacy(csvs[i]);`,
+        `    for(const r of rows){const k=r.pront+'|'+r.dateKey+'|'+r.hora;if(!seen.has(k)){seen.add(k);all.push(r);}}`,
+        `    self.postMessage({type:'progress',i:i+1,n:csvs.length,name:names[i],count:rows.length});`,
+        `  }`,
+        `  all.sort((a,b)=>a.dh-b.dh);`,
+        `  self.postMessage({type:'done',rows:all});`,
+        `};`
+      ].join('\n');
+      _histWorkerUrl=URL.createObjectURL(new Blob([code],{type:'text/javascript'}));
+      return _histWorkerUrl;
+    }
     async function workerRun(type, payload){
-      return new Promise(async (resolve, reject)=>{
-        try{
-          setProgress(10, 'Processando...');
-          if(type==='parseHist'){
-            let all=[], seen=new Set();
-            for(let i=0;i<payload.buffers.length;i++){
-              const buf=payload.buffers[i], name=payload.names[i];
-              setProgress(10+Math.round(i/payload.buffers.length*80), 'Lendo '+name+'...');
-              await new Promise(r=>setTimeout(r,0)); // cede controle ao browser
-              const hdr=new Uint8Array(buf,0,4);
-              const isBiff=(hdr[0]===0xD0&&hdr[1]===0xCF); // OLE2 — .xls BIFF8
-              const isZip =(hdr[0]===0x50&&hdr[1]===0x4B); // ZIP — .xlsx
-              const isBin =isBiff||isZip;
-              let csv=isBin?(await xlsxExtract(buf)):null;
-              // Valida que xlsxExtract produziu CSV com separador esperado
-              // (XLSX de outros sistemas pode ter shared strings sem ";")
-              if(csv&&!csv.includes(';'))csv=null;
-              if(!csv&&isBin){
-                // Fallback XLSX.read: cobre BIFF8 e XLSX de formato não-legado
-                try{
-                  const wb=XLSX.read(new Uint8Array(buf),{type:'array',raw:false});
-                  const sh=wb.Sheets[wb.SheetNames[0]];
-                  const arr=XLSX.utils.sheet_to_json(sh,{header:1,defval:'',raw:false});
-                  csv=arr.map(r=>r.join(';')).join('\n');
-                }catch(xlsErr){console.warn('[workerRun] XLSX.read falhou:',xlsErr.message);}
-              }
-              if(!csv)csv=smartDecode(buf);
-              const _lr=parseHistLegacy(csv);const rows=Array.isArray(_lr)?_lr:(_lr.data||[]);
-              for(const r of rows){const k=r.pront+'|'+r.dateKey+'|'+r.hora;if(!seen.has(k)){seen.add(k);all.push(r);}}
-              setProgress(10+Math.round((i+1)/payload.buffers.length*80), name+': '+rows.length.toLocaleString('pt-BR')+' registros');
-              await new Promise(r=>setTimeout(r,0));
-            }
-            all.sort((a,b)=>a.dh-b.dh);
-            resolve({rows:all});
-          } else if(type==='parseCid'){
-            let all=[];
-            for(let i=0;i<payload.buffers.length;i++){
-              setProgress(10+Math.round(i/payload.buffers.length*80), 'Lendo '+payload.names[i]+'...');
-              await new Promise(r=>setTimeout(r,0));
-              let text;
-              text=smartDecode(payload.buffers[i]);
-              all=all.concat(parseCidFromText(text));
-            }
-            all.sort((a,b)=>a.dh-b.dh);
-            resolve({rows:all});
-          } else { reject(new Error('Unknown type: '+type)); }
-        } catch(err){ reject(err); }
-      });
+      if(type==='parseHist'){
+        // Fase A (main thread): buffer → CSV string; precisa da lib XLSX para .xls/.xlsx
+        const csvs=[], names=[];
+        for(let i=0;i<payload.buffers.length;i++){
+          const buf=payload.buffers[i], name=payload.names[i];
+          setProgress(5+Math.round(i/payload.buffers.length*40), 'Lendo '+name+'...');
+          await new Promise(r=>setTimeout(r,0));
+          const hdr=new Uint8Array(buf,0,4);
+          const isBin=(hdr[0]===0xD0&&hdr[1]===0xCF)||(hdr[0]===0x50&&hdr[1]===0x4B);
+          let csv=isBin?(await xlsxExtract(buf)):null;
+          if(csv&&!csv.includes(';'))csv=null;
+          if(!csv&&isBin){
+            try{
+              const wb=XLSX.read(new Uint8Array(buf),{type:'array',raw:false});
+              const sh=wb.Sheets[wb.SheetNames[0]];
+              const arr=XLSX.utils.sheet_to_json(sh,{header:1,defval:'',raw:false});
+              csv=arr.map(r=>r.join(';')).join('\n');
+            }catch(xlsErr){console.warn('[workerRun] XLSX.read falhou:',xlsErr.message);}
+          }
+          if(!csv)csv=smartDecode(buf);
+          csvs.push(csv); names.push(name);
+        }
+        setProgress(50,'Parseando...');
+        // Fase B: tenta Worker real (desbloqueia UI); cai para main thread em ambientes sem Worker
+        if(typeof Worker!=='undefined'){
+          try{
+            const url=_getHistWorkerUrl();
+            const rows=await new Promise((res,rej)=>{
+              const w=new Worker(url);
+              w.onmessage=e=>{
+                if(e.data.type==='progress'){
+                  setProgress(50+Math.round(e.data.i/e.data.n*45),e.data.name+': '+e.data.count.toLocaleString('pt-BR')+' registros');
+                }else{w.terminate();res(e.data.rows);}
+              };
+              w.onerror=e=>{w.terminate();rej(new Error(e.message||'Worker parse error'));};
+              w.postMessage({csvs,names});
+            });
+            return {rows};
+          }catch(workerErr){console.warn('[workerRun] Worker falhou, fallback main thread:',workerErr.message);}
+        }
+        // Fallback main thread
+        const all=[], seen=new Set();
+        for(let i=0;i<csvs.length;i++){
+          const{data:rows}=parseHistLegacy(csvs[i]);
+          for(const r of rows){const k=r.pront+'|'+r.dateKey+'|'+r.hora;if(!seen.has(k)){seen.add(k);all.push(r);}}
+          setProgress(50+Math.round((i+1)/csvs.length*45),names[i]+': '+rows.length.toLocaleString('pt-BR')+' registros');
+          await new Promise(r=>setTimeout(r,0));
+        }
+        all.sort((a,b)=>a.dh-b.dh);
+        return {rows:all};
+      } else if(type==='parseCid'){
+        let all=[];
+        for(let i=0;i<payload.buffers.length;i++){
+          setProgress(10+Math.round(i/payload.buffers.length*80),'Lendo '+payload.names[i]+'...');
+          await new Promise(r=>setTimeout(r,0));
+          all=all.concat(parseCidFromText(smartDecode(payload.buffers[i])));
+        }
+        all.sort((a,b)=>a.dh-b.dh);
+        return {rows:all};
+      } else { throw new Error('Unknown type: '+type); }
     }
     function saveUnitConfig(){
       UC={
@@ -3971,7 +4017,10 @@
       });
       $("heatmap").innerHTML=html;
     }
+    let _msCache=null,_msCacheVer=-1;
     function monthlyStats(d){
+      const isFilt=d===state.filt;
+      if(isFilt&&_msCacheVer===state._filtVersion)return _msCache;
       const map={};d.forEach(r=>{const k=r.anoMes;map[k]??={rows:[],tri:[],med:[],tot:[],triOk:0,triN:0,medOk:0,medN:0,ret:0};map[k].rows.push(r);
         // FIX: usar meta Manchester por cor quando disponível, fallback para meta global
         const mTri=meta("metaTri");
@@ -3979,7 +4028,9 @@
         if(r.tEspTri!=null){map[k].tri.push(r.tEspTri);map[k].triN++;if(r.tEspTri<=mTri)map[k].triOk++}
         if(r.tEspMed!=null){map[k].med.push(r.tEspMed);map[k].medN++;if(r.tEspMed<=mMed)map[k].medOk++}
         if(r.tTotal!=null)map[k].tot.push(r.tTotal)});
-      return Object.keys(map).map(Number).sort().map(k=>({k,...map[k],vol:map[k].rows.length,triAvg:avg(map[k].rows,r=>r.tEspTri),medAvg:avg(map[k].rows,r=>r.tEspMed),totAvg:avg(map[k].rows,r=>r.tTotal)}));
+      const result=Object.keys(map).map(Number).sort().map(k=>({k,...map[k],vol:map[k].rows.length,triAvg:avg(map[k].rows,r=>r.tEspTri),medAvg:avg(map[k].rows,r=>r.tEspMed),totAvg:avg(map[k].rows,r=>r.tTotal)}));
+      if(isFilt){_msCache=result;_msCacheVer=state._filtVersion;}
+      return result;
     }
     function renderIndicadores(){
       const d=state.filt, m=monthlyStats(d), triN=d.filter(r=>r.tEspTri!=null).length, triOk=d.filter(r=>r.tEspTri!=null&&r.tEspTri<=meta("metaTri")).length;
@@ -4193,7 +4244,9 @@
       // (Comparativo/resumo por dia da semana removidos — redundantes com o heatmap da Visão Geral)
 
     }
+    let _mrCache=null,_mrCacheVer=-1;
     function medRows(){
+      if(_mrCacheVer===state._filtVersion)return _mrCache;
       // FIX: igual ao código base — filtra duração > 60min para contagem de produtividade
       // Atendimentos sem tConsulta (campo TEMPO 4) ou com duração > 60min são excluídos da contagem
       const d=state.filt.filter(r=>r.tConsulta==null||r.tConsulta<=60), map={};
@@ -4211,7 +4264,7 @@
         x.plantaoCount[pKey]=(x.plantaoCount[pKey]||0)+1;
       });
       const MIN_PLT=10;
-      return Object.values(map).sort((a,b)=>b.total-a.total).map((x,i)=>{
+      const result=Object.values(map).sort((a,b)=>b.total-a.total).map((x,i)=>{
         const pltDKeys=Object.keys(x.plantaoCount).filter(k=>k.endsWith("_D")&&x.plantaoCount[k]>MIN_PLT);
         const pltNKeys=Object.keys(x.plantaoCount).filter(k=>k.endsWith("_N")&&x.plantaoCount[k]>MIN_PLT);
         const plantD=pltDKeys.length, plantN=pltNKeys.length, plantTotal=plantD+plantN;
@@ -4230,6 +4283,7 @@
           plantD,plantN,plantTotal,mediaPlantao,mediaD,mediaN,
           pontos:_pontos,le2:_le2,le12:_le12,ge60:_ge60,ge80:_ge80};
       });
+      _mrCacheVer=state._filtVersion;return(_mrCache=result);
     }
     function renderMedicos(){
       const rows=medRows(), total=state.filt.length;
