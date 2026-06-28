@@ -1802,7 +1802,7 @@
   </div>
 
   <!-- Versão: canto inferior direito -->
-  <div class="up-version">v3.3.0</div>
+  <div class="up-version">v3.4.0</div>
 
   <!-- Drag overlay fullscreen -->
   <div id="upDragOverlay" role="status" aria-live="polite">
@@ -3336,7 +3336,7 @@
       function completeness(rows){
         if(!rows.length)return 0;
         const sample=rows.slice(0,200);
-        const criticals={hist:['dh','prof','cor'],tri:['dh','cor'],cid:['dh','cid']}[type]||['dh'];
+        const criticals={'Histórico':['dh','prof','cor'],'Triagem':['dh','cor'],'CID':['dh','cid']}[type]||['dh'];
         const filled=sample.reduce((s,r)=>s+criticals.filter(f=>r[f]!=null&&String(r[f]).trim()).length,0);
         return (filled/(sample.length*criticals.length))*0.7 + (rows.length/Math.max(modern.total,legacy.total,1))*0.3;
       }

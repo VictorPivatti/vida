@@ -1,0 +1,45 @@
+{
+  "_comment": "Valores esperados após parseHistLegacy(hist_min.csv). Gerado manualmente a partir das fixtures v1.0.",
+  "hist_min": {
+    "total_rows": 5,
+    "evadidos": 1,
+    "nightshift_rows": 1,
+    "rows_by_pront": {
+      "1001": {
+        "cor": "AMARELO",
+        "tEspMed": 45,
+        "tEspTri": 5,
+        "tTotal": 120,
+        "dateKey": "2026-01-15",
+        "turno": "D"
+      },
+      "1002": {
+        "cor": "VERMELHO",
+        "tEspMed": 8,
+        "dateKey": "2026-01-15",
+        "turno": "D"
+      },
+      "1003": {
+        "cor": "VERDE",
+        "evadido": true,
+        "tEspMed": 37,
+        "dateKey": "2026-01-15",
+        "turno": "D"
+      },
+      "1004": {
+        "cor": "AMARELO",
+        "tEspMed": 40,
+        "dateKey": "2026-01-15",
+        "turno": "N",
+        "_note": "dh=16/01 02:30 → ajuste noturno → dateKey=15/01"
+      },
+      "1005": {
+        "cor": "LARANJA",
+        "tEspMed": 14,
+        "dateKey": "2026-01-16",
+        "turno": "D",
+        "_note": "p[18] vazio → fallback: (10:20-10:03)/60000 - tDurTri(3min) = 14min"
+      }
+    }
+  }
+}

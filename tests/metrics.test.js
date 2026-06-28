@@ -13,29 +13,17 @@
  *   7. dateKey plantão noturno (00h–06h → dia anterior)
  *   8. prevVal com período anterior com <50% meses → null
  *   9. evasaoDisponivel com/sem tipo_entrada
+ *  10. monthReturnRate — retorno 31/mai→02/jun conta em jun, não em mai
+ *  11. manchesterConformidade — thresholds e split D/N corretos
+ *  12. calcProjecao — mês incompleto projeta, mês completo retorna null
+ *  13. calcularPontos — pontuação por cor e faixa etária correta
  *
  * Uso: node tests/metrics.test.js
  */
-const fs   = require('fs');
-const path = require('path');
+const { buildHtml, report } = require('./helpers');
 const { JSDOM } = require('jsdom');
 
-const FILE = path.join(__dirname, '..', 'index.html');
-if (!fs.existsSync(FILE)) { console.error(`Arquivo não encontrado: ${FILE}`); process.exit(2); }
-let html = fs.readFileSync(FILE, 'utf-8');
-
-const stubs = `<script>
-class Chart{constructor(){this.data={datasets:[]}}destroy(){}update(){}resize(){}}
-Chart.register=()=>{};Chart.defaults={font:{},plugins:{}};
-window.Chart=Chart;
-window.XLSX={
-  read:()=>({SheetNames:[],Sheets:{}}),
-  utils:{sheet_to_json:()=>[]},
-  SSF:{parse_date_code:()=>null}
-};
-HTMLCanvasElement.prototype.getContext=function(){return new Proxy({},{get:()=>()=>({})})};
-</script>`;
-html = html.replace(/<script src="https:[^"]*"><\/script>/g, '').replace('</head>', stubs + '</head>');
+let html = buildHtml();
 
 // ─── Helpers compartilhados com o script de teste ──────────────────────────
 // makeHistRow monta uma linha CSV no formato positional do Vivver (29 campos, sep=;)
@@ -266,6 +254,95 @@ try {
   __ok('evasaoDisponivel — detecta com/sem campo tipo_entrada');
 } catch(e) { __fail('evasaoDisponivel — detecta com/sem campo tipo_entrada', e.message); }
 
+// ─── Caso 10: monthReturnRate — virada de mês ────────────────────────────
+try {
+  // P999: visita 31/mai → retorno 02/jun (38h depois, ≤72h)
+  // monthReturnRate(state.filt, 202605) deve ser 0  — o evento de retorno é em JUNHO
+  // monthReturnRate(state.filt, 202606) deve ser 100% — a única row de junho É o retorno
+  var dh_mai = new Date(2026, 4, 31, 20, 0);
+  var dh_jun = new Date(2026, 5,  2, 10, 0);  // 38h depois
+  state.filt = [
+    {pront:'P999', dh:dh_mai, dateKey:'2026-05-31', anoMes:202605, tEspMed:30, tEspTri:5, tTotal:60, cor:'VERDE',   turno:'N'},
+    {pront:'P999', dh:dh_jun, dateKey:'2026-06-02', anoMes:202606, tEspMed:25, tEspTri:5, tTotal:55, cor:'VERDE',   turno:'D'},
+    {pront:'P001', dh:new Date(2026,4,15,10,0), dateKey:'2026-05-15', anoMes:202605, tEspMed:40, tEspTri:5, tTotal:60, cor:'AMARELO', turno:'D'},
+  ];
+  state._retCache = null; state._retCacheKey = -1; state._filtVersion++;
+  var rMai = monthReturnRate(state.filt, 202605);
+  var rJun = monthReturnRate(state.filt, 202606);
+  if (rMai !== 0) throw new Error('taxa mai esperado 0%, obtido ' + rMai);
+  if (rJun === null || rJun <= 0) throw new Error('taxa jun deveria ser > 0%, obtido ' + rJun);
+  __ok('monthReturnRate — retorno 31/mai→02/jun conta em jun, não em mai');
+} catch(e) { __fail('monthReturnRate — virada de mês', e.message); }
+
+// ─── Caso 11: manchesterConformidade — thresholds e split D/N ────────────
+// MANCHESTER_METAS: VERMELHO=0, LARANJA=15, AMARELO=60
+try {
+  var rows_mc = [
+    {cor:'VERMELHO', tEspMed:1,  turno:'D'},  // meta=0, 1>0 → fora
+    {cor:'VERMELHO', tEspMed:0,  turno:'N'},  // meta=0, 0<=0 → ok
+    {cor:'LARANJA',  tEspMed:10, turno:'N'},  // meta=15, 10<=15 → ok
+    {cor:'LARANJA',  tEspMed:20, turno:'D'},  // meta=15, 20>15 → fora
+    {cor:'AMARELO',  tEspMed:50, turno:'D'},  // meta=60, 50<=60 → ok
+    {cor:'AMARELO',  tEspMed:70, turno:'N'},  // meta=60, 70>60 → fora
+  ];
+  var mc = manchesterConformidade(rows_mc);
+  if (!mc.VERMELHO) throw new Error('VERMELHO ausente');
+  if (mc.VERMELHO.total !== 2) throw new Error('VERMELHO.total esperado 2, obtido ' + mc.VERMELHO.total);
+  if (mc.VERMELHO.ok    !== 1) throw new Error('VERMELHO.ok esperado 1 (tEspMed=0), obtido ' + mc.VERMELHO.ok);
+  if (mc.VERMELHO.D.ok  !== 0) throw new Error('VERMELHO.D.ok esperado 0, obtido ' + mc.VERMELHO.D.ok);
+  if (mc.VERMELHO.N.ok  !== 1) throw new Error('VERMELHO.N.ok esperado 1, obtido ' + mc.VERMELHO.N.ok);
+  if (!mc.LARANJA) throw new Error('LARANJA ausente');
+  if (mc.LARANJA.ok     !== 1) throw new Error('LARANJA.ok esperado 1, obtido ' + mc.LARANJA.ok);
+  if (mc.LARANJA.D.ok   !== 0) throw new Error('LARANJA.D.ok esperado 0 (20>15), obtido ' + mc.LARANJA.D.ok);
+  if (mc.LARANJA.N.ok   !== 1) throw new Error('LARANJA.N.ok esperado 1 (10<=15), obtido ' + mc.LARANJA.N.ok);
+  if (!mc.AMARELO) throw new Error('AMARELO ausente');
+  if (mc.AMARELO.D.ok   !== 1) throw new Error('AMARELO.D.ok esperado 1 (50<=60), obtido ' + mc.AMARELO.D.ok);
+  if (mc.AMARELO.N.ok   !== 0) throw new Error('AMARELO.N.ok esperado 0 (70>60), obtido ' + mc.AMARELO.N.ok);
+  __ok('manchesterConformidade — thresholds (VERMELHO=0,LARANJA=15,AMARELO=60) e split D/N corretos');
+} catch(e) { __fail('manchesterConformidade — thresholds e split D/N', e.message); }
+
+// ─── Caso 12: calcProjecao — mês incompleto vs completo ─────────────────
+try {
+  // Junho 2026 tem 30 dias. 15 dias com dados → projeta.
+  var jun_rows = [];
+  for (var d12 = 1; d12 <= 15; d12++) {
+    jun_rows.push({anoMes:202606, dateKey:'2026-06-'+String(d12).padStart(2,'0'),
+                   tEspTri:5, tEspMed:30, tTotal:60, cor:'AMARELO'});
+  }
+  var proj = calcProjecao(jun_rows);
+  if (!proj) throw new Error('esperava projeção para mês incompleto (15/30 dias), obteve null');
+  if (proj.daysInMonth !== 30) throw new Error('daysInMonth esperado 30, obtido ' + proj.daysInMonth);
+  if (proj.daysPresent !== 15) throw new Error('daysPresent esperado 15, obtido ' + proj.daysPresent);
+  if (proj.projVol <= proj.volCur) throw new Error('projVol deveria ser > volCur (projeção linear)');
+  // Mês completo (30 dias) → null
+  var full_jun = [];
+  for (var d12b = 1; d12b <= 30; d12b++) {
+    full_jun.push({anoMes:202606, dateKey:'2026-06-'+String(d12b).padStart(2,'0'),
+                   tEspTri:5, tEspMed:30, tTotal:60, cor:'AMARELO'});
+  }
+  var projFull = calcProjecao(full_jun);
+  if (projFull !== null) throw new Error('mês completo deveria retornar null, obteve ' + JSON.stringify(projFull));
+  __ok('calcProjecao — mês incompleto projeta, mês completo retorna null');
+} catch(e) { __fail('calcProjecao — mês incompleto vs completo', e.message); }
+
+// ─── Caso 13: calcularPontos — fixture fixo ──────────────────────────────
+// Fórmula: +1/row, +1 se <=12, +1 se <=2, +1 se >=60, +1 se >=80, +2 se AMARELO, +5 se LARANJA/VERMELHO
+try {
+  // AMARELO, idade=5: 1 + 1(<=12) + 0(>2) + 0(<60) + 0(<80) + 2(AMARELO) = 4
+  var pts1 = calcularPontos([{cor:'AMARELO', idade:5}]);
+  if (pts1 !== 4) throw new Error('AMARELO/5anos esperado 4, obtido ' + pts1);
+  // VERMELHO, idade=82: 1 + 0(>12) + 0(>2) + 1(>=60) + 1(>=80) + 5(VERMELHO) = 8
+  var pts2 = calcularPontos([{cor:'VERMELHO', idade:82}]);
+  if (pts2 !== 8) throw new Error('VERMELHO/82anos esperado 8, obtido ' + pts2);
+  // VERDE, idade=30: 1 + 0 + 0 + 0 + 0 + 0 = 1
+  var pts3 = calcularPontos([{cor:'VERDE', idade:30}]);
+  if (pts3 !== 1) throw new Error('VERDE/30anos esperado 1, obtido ' + pts3);
+  // LARANJA, idade=1: 1 + 1(<=12) + 1(<=2) + 0 + 0 + 5(LARANJA) = 8
+  var pts4 = calcularPontos([{cor:'LARANJA', idade:1}]);
+  if (pts4 !== 8) throw new Error('LARANJA/1ano esperado 8, obtido ' + pts4);
+  __ok('calcularPontos — pontuação por cor e faixa etária correta');
+} catch(e) { __fail('calcularPontos — pontuação conhecida', e.message); }
+
 </script>`;
 
 html = html.replace('</body>', TESTS_SCRIPT + '</body>');
@@ -275,18 +352,5 @@ const fatal = [];
 dom.window.addEventListener('error', e => fatal.push(e.message || String(e.error)));
 
 setTimeout(() => {
-  const res  = dom.window.__results || [];
-  let   fail = 0;
-  const realFatal = fatal.filter(m => !/indexedDB/i.test(m));
-  if (realFatal.length) { console.log('✗ CARREGAMENTO — ' + realFatal[0]); fail++; }
-  for (const [name, status] of res) {
-    const ok = status === 'ok';
-    if (!ok) fail++;
-    console.log((ok ? '✓' : '✗') + ' ' + name + (ok ? '' : '\n    ' + status));
-  }
-  const total = res.length;
-  console.log(fail === 0
-    ? `\n${total} testes OK.`
-    : `\n${fail} FALHA(S) de ${total}.`);
-  process.exit(fail === 0 ? 0 : 1);
+  process.exit(report({ results: dom.window.__results || [], fatal }));
 }, 2000);

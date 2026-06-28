@@ -19,29 +19,15 @@
 const fs   = require('fs');
 const path = require('path');
 const { JSDOM } = require('jsdom');
+const { buildHtml, report } = require('./helpers');
 
-const FILE = path.join(__dirname, '..', 'index.html');
-if (!fs.existsSync(FILE)) { console.error(`Arquivo não encontrado: ${FILE}`); process.exit(2); }
-let html = fs.readFileSync(FILE, 'utf-8');
+let html = buildHtml();
 
 // Fixtures anonimizadas — dados fictícios, nomes genéricos, prontuários fake
 const HIST_CSV = fs.readFileSync(path.join(__dirname, '../fixtures/hist_min.csv'), 'utf-8');
 const TRI_CSV  = fs.readFileSync(path.join(__dirname, '../fixtures/tri_min.csv'),  'utf-8');
 const CID_CSV  = fs.readFileSync(path.join(__dirname, '../fixtures/cid_min.csv'),  'utf-8');
 const PROC_TXT = fs.readFileSync(path.join(__dirname, '../fixtures/proc_min.csv'), 'utf-8');
-
-const stubs = `<script>
-class Chart{constructor(){this.data={datasets:[]}}destroy(){}update(){}resize(){}}
-Chart.register=()=>{};Chart.defaults={font:{},plugins:{}};
-window.Chart=Chart;
-window.XLSX={
-  read:()=>({SheetNames:[],Sheets:{}}),
-  utils:{sheet_to_json:()=>[]},
-  SSF:{parse_date_code:()=>null}
-};
-HTMLCanvasElement.prototype.getContext=function(){return new Proxy({},{get:()=>()=>({})})};
-</script>`;
-html = html.replace(/<script src="https:[^"]*"><\/script>/g, '').replace('</head>', stubs + '</head>');
 
 const TESTS_SCRIPT = `<script>
 window.__results = [];
@@ -204,18 +190,5 @@ const fatal = [];
 dom.window.addEventListener('error', e => fatal.push(e.message || String(e.error)));
 
 setTimeout(() => {
-  const res  = dom.window.__results || [];
-  let   fail = 0;
-  const realFatal = fatal.filter(m => !/indexedDB/i.test(m));
-  if (realFatal.length) { console.log('✗ CARREGAMENTO — ' + realFatal[0]); fail++; }
-  for (const [name, status] of res) {
-    const ok = status === 'ok';
-    if (!ok) fail++;
-    console.log((ok ? '✓' : '✗') + ' ' + name + (ok ? '' : '\n    ' + status));
-  }
-  const total = res.length;
-  console.log(fail === 0
-    ? `\n${total} testes OK.`
-    : `\n${fail} FALHA(S) de ${total}.`);
-  process.exit(fail === 0 ? 0 : 1);
+  process.exit(report({ results: dom.window.__results || [], fatal }));
 }, 2000);

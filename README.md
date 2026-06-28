@@ -1,6 +1,8 @@
 # V.I.D.A. — Visualização Integrada de Dados Assistenciais
 
-**v3.3.0** · UPA 24h Tiago Cardoso dos Santos · CNES 7061838 · Mateus Leme – MG
+**v3.4.0** · UPA 24h Tiago Cardoso dos Santos · CNES 7061838 · Mateus Leme – MG
+
+[![CI](https://github.com/VictorPivatti/vida/actions/workflows/test.yml/badge.svg)](https://github.com/VictorPivatti/vida/actions/workflows/test.yml)
 
 > Dashboard assistencial de arquivo único para análise de produção, qualidade e gestão de UPA 24h. Desenvolvido e mantido pelo Coordenador Assistencial / ENF RT Victor Matheus Sanches Pivatti (COREN-MG 708057).
 
@@ -295,6 +297,7 @@ Digite apenas parte do nome (ex: `NINOMIYA`). O filtro usa busca parcial normali
 
 | Versão | Data | Principais mudanças |
 |--------|------|---------------------|
+| **v3.4.0** | Jun 2026 | Suite de 46 testes automatizados (parsers, métricas, smoke), CI GitHub Actions, fix `parseHist` tEspMed (teto 200→720 + campo `triagem_atendimento`), UX pós-upload (chips de fonte, TTL countdown clicável, wizard 3 passos, banner "continuar"), sidebar mobile, PDF CONFIDENCIAL em Notificáveis |
 | **v3.3.0** | Jun 2026 | Correção crítica de `tEspMed` (campo `p[18]` do Vivver), teto 720 min, parser CID (médico/paciente trocados), regras Manchester c01/c02, taxa de retorno ≤72h com virada de mês, filtro de data consistente entre histórico e triagem |
 | **v3.2.1** | Jun 2026 | Identificação nominal nos Notificáveis, horário enriquecido por cruzamento histórico×CID |
 | **v3.2** | Jun 2026 | Expiração automática de dados (TTL 12h, LGPD), correção do cruzamento Histórico↔Triagem, cruzamento entre fontes no painel Qualidade, remoção de 5 painéis redundantes, reordenação por severidade, smoke test (harness.js) |
