@@ -10,6 +10,11 @@ import { parseTriLegacy, parseTri, parseBestTri } from './parsers/tri.js';
 import { parseCidLegacy, parseCidFromText, parseCid } from './parsers/cid.js';
 import { parseProcedimentosText, catOfEsp, procTipoKey, procTipoLabel } from './parsers/proc.js';
 import { _parseExamesLines, parseExamesPdf, grupoExame } from './parsers/exames.js';
+import { returnsFor, returnsWithin, returns72, monthReturnRate } from './metrics/returns.js';
+import { monthlyStats, calcProjecao } from './metrics/monthly.js';
+import { metaManchester, manchesterConformidade } from './metrics/manchester.js';
+import { medRows, evasaoDisponivel } from './metrics/med.js';
+import { calcularPontos } from './metrics/executive.js';
 
 initGlobals();
 console.log('[VIDA] build scaffold OK');
