@@ -5,6 +5,27 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [v3.4.0] — 2026-06-28
+
+### Adicionado
+
+- **TTL countdown na topbar** — badge `⏳ Xh YYm` aparece após o carregamento de dados; muda para âmbar (< 2h) e vermelho (< 30min). Clicável: botão "Renovar TTL" redefine o contador por mais 12h; "Apagar agora" abre confirmação de limpeza imediata
+- **Sidebar mobile** — botão hamburguer visível em telas ≤ 640px converte a sidebar em overlay fixo com backdrop semitransparente; fecha ao tocar em item de menu ou no backdrop
+- **PDF — aba CID / Notificáveis** incluída no export; página marcada com banner `⚠ CONFIDENCIAL — Contém dados nominais de pacientes`
+- **PDF — rodapé de privacidade** em todas as páginas: `V.I.D.A. · Uso interno · Não substitui notificação SINAN · Gerado em …`
+- **Chips de fonte na topbar** — indicadores visuais `Hist`, `Tri`, `CID`, `Proc`, `Exam` mostram quais arquivos estão carregados (`loaded` = verde, `derived` = âmbar)
+- **Wizard de 3 passos** no primeiro carregamento (quando só o histórico está presente): toasts sequenciais sugerindo Triagem → CID → explicando o painel Qualidade
+- **Feedback de qualidade no toast de carregamento** — exibe `(X de Y válidos)` quando há linhas ignoradas pelo parser
+- **"Continuar de onde parou"** — banner separado do carregamento automático; dados só são restaurados após clique explícito do usuário; banner exibe contagem de registros salvos
+- **Testes de parsers** (fase 2) — `tests/parsers.test.js` com 9 casos cobrindo `parseHistLegacy`, `parseTriLegacy`, `parseCidLegacy`, `parseProcedimentosText` e `chooseParsed`; fixtures anonimizadas em `fixtures/`
+- **Testes de métricas** (fase 1) — `tests/metrics.test.js` com 11 casos cobrindo `tEspMed`, `returns72`, `monthlyStats`, `dateKey`, `prevVal`, `evasaoDisponivel`
+
+### Corrigido
+
+- **`parseHist` (parser por cabeçalho) ignorava `triagem_atendimento`** — o campo era calculado como `dhAtend − dhAcol` com teto 200 min, descartando silenciosamente esperas entre 200–719 min. Adicionado `tEspMed` ao `ALIAS.hist` e `FALLBACK.hist[18]`; teto corrigido para `CONFIG.MAX_MINUTES` (720), igual ao `parseHistLegacy`
+
+---
+
 ## [v3.3.0] — 2026-06-13
 
 ### Corrigido — Crítico (afetavam números exibidos)
