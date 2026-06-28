@@ -662,6 +662,7 @@
     .ttl-menu .ttl-del:hover{background:rgba(200,73,62,.1)}
     .ttl-badge.ttl-warn{color:#e8a93b;background:rgba(232,169,59,.08);border-color:rgba(232,169,59,.3)}
     .ttl-badge.ttl-crit{color:#c8493e;background:rgba(200,73,62,.08);border-color:rgba(200,73,62,.3)}
+    .quality-chip{font-size:9px;font-family:'IBM Plex Mono',monospace;padding:1px 7px;border-radius:99px;border:1px solid rgba(232,169,59,.4);color:#e8a93b;background:rgba(232,169,59,.08);white-space:nowrap;cursor:default;flex:none}
     /* Mobile: sidebar overlay ≤640px */
     #sidebarToggle{display:none}
     #sidebarBackdrop{display:none;position:fixed;inset:0;z-index:39;background:rgba(0,0,0,.45)}
@@ -1287,6 +1288,22 @@
       color:var(--mut);font-size:13px;
       border-bottom:none
     }
+    /* Mobile: primeira coluna fixa em tabelas de scroll horizontal */
+    @media(max-width:640px){
+      .table-wrap .table th:first-child,
+      .table-wrap .table td:first-child{position:sticky;left:0;z-index:2}
+      .table-wrap .table th:first-child{background:var(--sur2)}
+      .table-wrap .table tbody td:first-child{background:var(--sur)}
+      .table-wrap .table tbody tr:nth-child(even) td:first-child{background:var(--sur2)}
+      .table-wrap .table tbody tr:hover td:first-child{background:var(--sur3)}
+    }
+    /* Wrapper que exibe hint "← deslize →" em telas estreitas */
+    @media(max-width:640px){
+      .scroll-x-wrap::after{
+        content:"← deslize →";display:block;text-align:center;
+        font-size:9px;color:var(--mut);padding:3px 0 0;pointer-events:none
+      }
+    }
 
     .section-title-inset{
       margin:18px 0 10px;font-size:11px;font-weight:700;
@@ -1367,7 +1384,8 @@
     .heatmap{display:grid;grid-template-columns:42px repeat(24,minmax(16px,1fr));gap:2px;align-items:center}
     @media(max-width:900px){.heatmap{grid-template-columns:36px repeat(24,20px);overflow-x:auto}}
     .hm-cell,.hm-head,.hm-row{min-height:24px;border-radius:4px;font-size:9px;text-align:center;font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
-    .hm-head,.hm-row{color:var(--mut);display:grid;place-items:center}
+    .hm-head,.hm-row,.hm-corner{color:var(--mut);display:grid;place-items:center}
+    @media(max-width:900px){.hm-row,.hm-corner{position:sticky;left:0;z-index:2;background:var(--sur)}}
     .hm-cell{background:var(--sur2);border:1px solid var(--bdr);position:relative;cursor:default}
     .hm-cell:hover::after{
       content:attr(data-tip);position:absolute;left:50%;bottom:120%;
@@ -2019,6 +2037,7 @@
           <span class="tb-source-chip" id="tbChipExam" title="Exames laboratoriais">Exam</span>
         </div>
         <span id="dbStatsBadge" class="badge" style="display:none;background:rgba(34,211,238,.08);border-color:rgba(34,211,238,.25);color:#22d3ee" title=""></span>
+        <span id="qualityChip" class="quality-chip" style="display:none" title="Linhas ignoradas no parse — verifique o formato do arquivo"></span>
         <span id="ttlBadge" class="ttl-badge" style="display:none" onclick="toggleTtlMenu(event)" title="Tempo até os dados expirarem (TTL 12h — proteção LGPD). Clique para opções."></span>
         <span class="badge" id="recordBadge" aria-live="polite">0 registros</span>
       </div>
@@ -2102,7 +2121,7 @@
           <div class="card full"><div class="card-title">Volume mensal</div><div class="chart"><canvas id="chartMensal" role="img" aria-label="Gráfico de barras: volume mensal de atendimentos"></canvas></div></div>
           <div class="card"><div class="card-title">Dia da semana</div><div class="chart" style="height:200px"><canvas id="chartDow" role="img" aria-label="Gráfico de barras: atendimentos por dia da semana"></canvas></div></div>
           <div class="card"><div class="card-title">Pico horário</div><div class="chart small"><canvas id="chartHora" role="img" aria-label="Gráfico de linha: pico horário de atendimentos"></canvas></div></div>
-          <div class="card full"><div class="card-title">Mapa de calor — dia da semana × hora</div><div class="heatmap mono" id="heatmap"></div></div>
+          <div class="card full"><div class="card-title">Mapa de calor — dia da semana × hora</div><div class="scroll-x-wrap"><div class="heatmap mono" id="heatmap"></div></div></div>
         </div>
       </section>
 
@@ -2113,7 +2132,7 @@
           <div class="card"><div class="card-title">Triagem dentro da meta (%)</div><div class="chart small"><canvas id="chartIndTri" role="img" aria-label="Gráfico de barras: triagem dentro da meta por mês"></canvas></div></div>
           <div class="card"><div class="card-title">Tempo médio por mês</div><div class="chart small"><canvas id="chartIndTempo" role="img" aria-label="Gráfico de linha: tempo médio de espera por mês"></canvas></div></div>
           <div class="card full"><div class="card-title">Tabela mensal de conformidade</div><div class="table-wrap"><table class="table" id="tableInd"></table></div></div>
-          <div class="card full"><div class="card-title">Conformidade Manchester por classificação de risco</div><div class="table-wrap"><table class="table" id="tableManchester"></table></div></div>
+          <div class="card full"><div class="card-title">Conformidade Manchester por classificação de risco</div><div class="scroll-x-wrap"><div class="table-wrap"><table class="table" id="tableManchester"></table></div></div></div>
           <div class="card full"><div class="card-title">Dispersão de espera médica — percentis</div><div id="cardDispersao" style="padding:0 4px"></div></div>
         </div>
       </section>
@@ -2197,7 +2216,7 @@
             <div class="chart-grid">
               <div class="card"><div class="card-title">Ranking BPA — Médicos</div><div class="chart tall"><canvas id="chartMedTotal" role="img" aria-label="Gráfico de barras: ranking de médicos por volume BPA"></canvas></div></div>
               <div class="card"><div class="card-title">Perfil por tipo de procedimento</div><div class="chart tall"><canvas id="chartMedPerfil" role="img" aria-label="Gráfico de barras: perfil de procedimentos médicos"></canvas></div></div>
-              <div class="card full"><div class="card-title">Detalhamento por médico</div><div class="table-wrap"><table class="table" id="tableProcMedicos"></table></div></div>
+              <div class="card full"><div class="card-title">Detalhamento por médico</div><div class="scroll-x-wrap"><div class="table-wrap"><table class="table" id="tableProcMedicos"></table></div></div></div>
             </div>
           </div>
 
@@ -2210,7 +2229,7 @@
             <div class="chart-grid">
               <div class="card"><div class="card-title">Ranking BPA — Enfermagem</div><div class="chart tall"><canvas id="chartEnfTotal" role="img" aria-label="Gráfico de barras: ranking de enfermeiros por volume BPA"></canvas></div></div>
               <div class="card"><div class="card-title">Triagens × outros procedimentos</div><div class="chart tall"><canvas id="chartEnfPerfil" role="img" aria-label="Gráfico de barras: perfil de procedimentos dos enfermeiros"></canvas></div></div>
-              <div class="card full"><div class="card-title">Detalhamento por enfermeiro(a)</div><div class="table-wrap"><table class="table" id="tableProcEnfermeiros"></table></div></div>
+              <div class="card full"><div class="card-title">Detalhamento por enfermeiro(a)</div><div class="scroll-x-wrap"><div class="table-wrap"><table class="table" id="tableProcEnfermeiros"></table></div></div></div>
             </div>
           </div>
 
@@ -2223,7 +2242,7 @@
             <div class="chart-grid">
               <div class="card"><div class="card-title">Ranking BPA — Técnicos</div><div class="chart tall"><canvas id="chartTecTotal" role="img" aria-label="Gráfico de barras: ranking de técnicos por volume BPA"></canvas></div></div>
               <div class="card"><div class="card-title">Vias de administração — top procedimentos</div><div class="chart tall"><canvas id="chartTecPerfil" role="img" aria-label="Gráfico de barras: perfil de procedimentos dos técnicos"></canvas></div></div>
-              <div class="card full"><div class="card-title">Detalhamento por técnico(a)</div><div class="table-wrap"><table class="table" id="tableProcTecnicos"></table></div></div>
+              <div class="card full"><div class="card-title">Detalhamento por técnico(a)</div><div class="scroll-x-wrap"><div class="table-wrap"><table class="table" id="tableProcTecnicos"></table></div></div></div>
             </div>
           </div>
 
@@ -3482,7 +3501,7 @@
         const _qh=state.quality.find(x=>x.type==="Histórico");
         const _qMsg=_qh&&_qh.invalid>0?` (${fmt(state.filt.length)} de ${fmt(_qh.total)} válidos)`:'';
         showToast(`Histórico carregado: ${fmt(state.filt.length)} atendimentos${_qMsg}.`,"ok");
-        updateSourceChips();
+        updateSourceChips();updateQualityChip();
         updateTtlCountdown();
         // Alertas proativos de qualidade logo após o carregamento
         setTimeout(()=>{
@@ -3942,7 +3961,7 @@
       const map={};
       rows.forEach(r=>{const k=r.diaSem+"-"+r.hora;map[k]=(map[k]||0)+1});
       const max=Object.values(map).reduce((m,v)=>v>m?v:m,1);
-      let html=`<div></div>${Array.from({length:24},(_,h)=>`<div class="hm-head">${h}</div>`).join("")}`;
+      let html=`<div class="hm-corner"></div>${Array.from({length:24},(_,h)=>`<div class="hm-head">${h}</div>`).join("")}`;
       DOWO.forEach(dow=>{
         html+=`<div class="hm-row">${DOW[dow]}</div>`;
         for(let h=0;h<24;h++){
@@ -7502,7 +7521,7 @@
         const appEl = $('app');
         if(appEl) appEl.classList.add('visible');
         setHistFileName(state.files.hist);
-        updateSourceChips();
+        updateSourceChips();updateQualityChip();
         updateTtlCountdown();
 
         const minDt = rows[0]?.dh?.toLocaleDateString('pt-BR') || '-';
@@ -7878,7 +7897,7 @@
       const loaded=[state.triSource==='file',state.cidRaw.length>0,state.procRaw.length>0,state.examesRaw.length>0].filter(Boolean).length;
       const badge=document.getElementById('uploadBadge');
       if(badge){badge.textContent=loaded+'/4';badge.style.display=loaded>0?'inline':'none';}
-      updateSourceChips();
+      updateSourceChips();updateQualityChip();
     }
     function updateSourceChips(){
       const wrap=document.getElementById('tbSourceChips');
@@ -7896,6 +7915,21 @@
       _chip('tbChipCid', 'loaded', state.cidRaw.length>0);
       _chip('tbChipProc','loaded', state.procRaw.length>0);
       _chip('tbChipExam','loaded', state.examesRaw.length>0);
+    }
+    function updateQualityChip(){
+      const el=document.getElementById('qualityChip');
+      if(!el)return;
+      if(!state.quality.length){el.style.display='none';return;}
+      const worst=state.quality
+        .filter(q=>q.total>0)
+        .map(q=>({...q,rate:q.invalid/q.total}))
+        .filter(q=>q.rate>0.05)
+        .sort((a,b)=>b.rate-a.rate)[0];
+      if(!worst){el.style.display='none';return;}
+      const pct=Math.round(worst.rate*100);
+      el.textContent=`⚠ ${worst.type}: ${pct}% ignoradas`;
+      el.title=`${worst.invalid} de ${worst.total} linhas de ${worst.type} foram ignoradas (>${5}%). Verifique o formato do arquivo.`;
+      el.style.display='';
     }
     // Chamar updateUploadStatuses sempre que dados forem carregados
     // (hook nos eventos existentes — chamada no final de loadTri, loadCid, etc.)
