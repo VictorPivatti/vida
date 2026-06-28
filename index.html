@@ -650,9 +650,11 @@
     }
     .up-source-chip.loaded{color:var(--ok);background:rgba(47,158,126,.08);border-color:rgba(47,158,126,.25)}
     .up-source-sep{font-size:10px;color:var(--mut);flex:none}
-    .tb-source-chip{font-size:9px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;padding:1px 6px;border-radius:99px;border:1px solid var(--bdr2);white-space:nowrap;transition:opacity .2s}
+    .tb-source-chip{font-size:9px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;padding:1px 6px;border-radius:99px;border:1px solid var(--bdr2);white-space:nowrap;transition:opacity .2s,border-color .15s;cursor:pointer}
     .tb-source-chip.loaded{color:var(--ok);background:rgba(47,158,126,.08);border-color:rgba(47,158,126,.25)}
     .tb-source-chip.derived{color:#e8a93b;background:rgba(232,169,59,.08);border-color:rgba(232,169,59,.25)}
+    .tb-source-chip.missing{color:var(--mut);background:transparent;border-style:dashed;border-color:var(--bdr);opacity:.65}
+    .tb-source-chip.missing:hover{opacity:1;border-color:var(--bdr2)}
     /* TTL countdown badge */
     .ttl-badge{font-size:9px;font-family:'IBM Plex Mono',monospace;padding:1px 7px;border-radius:99px;border:1px solid var(--bdr2);color:var(--mut);background:transparent;white-space:nowrap;cursor:pointer;user-select:none}
     .ttl-menu{position:fixed;z-index:999;background:var(--bg2);border:1px solid var(--bdr2);border-radius:8px;padding:4px;display:flex;flex-direction:column;gap:2px;box-shadow:0 4px 16px rgba(0,0,0,.25);min-width:158px}
@@ -2805,6 +2807,21 @@
       _histWorkerUrl=URL.createObjectURL(new Blob([code],{type:'text/javascript'}));
       return _histWorkerUrl;
     }
+    function _checkLayoutFingerprint(type,csv,name){
+      if(typeof localStorage==='undefined')return;
+      try{
+        const key='_fp_'+type;
+        const headerLine=(csv||'').split(/\r?\n/)[0].trim();
+        if(!headerLine)return;
+        const stored=localStorage.getItem(key);
+        if(!stored){localStorage.setItem(key,headerLine);return;}
+        if(stored!==headerLine){
+          console.warn('[fingerprint] Layout de '+type+' mudou em "'+name+'". Esperado:\n'+stored+'\nRecebido:\n'+headerLine);
+          showToast('⚠ Layout de '+type+' diferente do esperado em "'+name+'". Verifique se o arquivo é do formato correto.','wn');
+          localStorage.setItem(key,headerLine);
+        }
+      }catch(e){}
+    }
     async function workerRun(type, payload){
       if(type==='parseHist'){
         // Fase A (main thread): buffer → CSV string; precisa da lib XLSX para .xls/.xlsx
@@ -2826,6 +2843,7 @@
             }catch(xlsErr){console.warn('[workerRun] XLSX.read falhou:',xlsErr.message);}
           }
           if(!csv)csv=smartDecode(buf);
+          _checkLayoutFingerprint('hist',csv,name);
           csvs.push(csv); names.push(name);
         }
         setProgress(50,'Parseando...');
@@ -2861,7 +2879,9 @@
         for(let i=0;i<payload.buffers.length;i++){
           setProgress(10+Math.round(i/payload.buffers.length*80),'Lendo '+payload.names[i]+'...');
           await new Promise(r=>setTimeout(r,0));
-          all=all.concat(parseCidFromText(smartDecode(payload.buffers[i])));
+          const cidCsv=smartDecode(payload.buffers[i]);
+          _checkLayoutFingerprint('cid',cidCsv,payload.names[i]);
+          all=all.concat(parseCidFromText(cidCsv));
         }
         all.sort((a,b)=>a.dh-b.dh);
         return {rows:all};
@@ -3578,7 +3598,7 @@
     async function loadTri(file){
       if(!file)return;showLoading("Lendo triagem...");setProgress(30,"Lendo triagem...");
       try{
-        state.triRaw=parseBestTri(await sheetData(file));state.files.tri=file.name;
+        const triData=await sheetData(file);_checkLayoutFingerprint('tri',triData.csv,file.name);state.triRaw=parseBestTri(triData);state.files.tri=file.name;
         state.triSource="file";
         (async()=>{ try { await VidaDB.clear('triagem'); await VidaDB.bulkPut('triagem', state.triRaw); refreshDbStats(); } catch(e){ console.warn('[VidaDB] Tri:', e); } })();
         updateTriBtn();
@@ -3704,6 +3724,7 @@
       showLoading('Lendo procedimentos...');
       try{
         const text=smartDecode(await file.arrayBuffer());
+        _checkLayoutFingerprint('proc',text,file.name);
         const rows=parseProcedimentosText(text);
         if(!rows.length)throw new Error('Nenhum procedimento válido encontrado.');
         state.procRaw=rows;
@@ -5314,34 +5335,7 @@
       }
     }
 
-    async function parseExamesPdf(lib,buf){
-      const pdf=await lib.getDocument({data:buf}).promise;
-      const allLines=[];
-      let periodo="",prestador="";
-      for(let p=1;p<=pdf.numPages;p++){
-        const page=await pdf.getPage(p);
-        const tc=await page.getTextContent();
-        const byY={};
-        for(const item of tc.items){
-          if(!item.str||!item.str.trim())continue;
-          const y=Math.round(item.transform[5]/3)*3;
-          (byY[y]=byY[y]||[]).push({x:Math.round(item.transform[4]),s:item.str.trim()});
-        }
-        Object.keys(byY).map(Number).sort((a,b)=>b-a).forEach(y=>{
-          const items=byY[y].sort((a,b)=>a.x-b.x);
-          const text=items.map(i=>i.s).join(" ");
-          allLines.push({text,x0:items[0].x});
-          // Capturar período e prestador do cabeçalho
-          if(!periodo&&text.includes("Período:")){
-            const m=text.match(/Período:\s*([\d\/: à]+)/);
-            if(m)periodo=m[1].trim();
-          }
-          if(!prestador&&text.includes("Prestador:")){
-            prestador=text.replace("Prestador:","").trim();
-          }
-        });
-      }
-      // Parser
+    function _parseExamesLines(allLines){
       const records=[];
       let cur=null;
       for(const {text,x0} of allLines){
@@ -5369,7 +5363,35 @@
           cur.doctor=text.split("Solicitante Responsável:")[1].trim()||null;
         }
       }
-      // Guardar meta
+      return records;
+    }
+    async function parseExamesPdf(lib,buf){
+      const pdf=await lib.getDocument({data:buf}).promise;
+      const allLines=[];
+      let periodo="",prestador="";
+      for(let p=1;p<=pdf.numPages;p++){
+        const page=await pdf.getPage(p);
+        const tc=await page.getTextContent();
+        const byY={};
+        for(const item of tc.items){
+          if(!item.str||!item.str.trim())continue;
+          const y=Math.round(item.transform[5]/3)*3;
+          (byY[y]=byY[y]||[]).push({x:Math.round(item.transform[4]),s:item.str.trim()});
+        }
+        Object.keys(byY).map(Number).sort((a,b)=>b-a).forEach(y=>{
+          const items=byY[y].sort((a,b)=>a.x-b.x);
+          const text=items.map(i=>i.s).join(" ");
+          allLines.push({text,x0:items[0].x});
+          if(!periodo&&text.includes("Período:")){
+            const m=text.match(/Período:\s*([\d\/: à]+)/);
+            if(m)periodo=m[1].trim();
+          }
+          if(!prestador&&text.includes("Prestador:")){
+            prestador=text.replace("Prestador:","").trim();
+          }
+        });
+      }
+      const records=_parseExamesLines(allLines);
       state.examesMeta={periodo,prestador,
         validacao:{guias:records.length,exames:records.reduce((s,r)=>s+r.n_exames,0),
           valor:records.reduce((s,r)=>s+r.valor,0)}};
@@ -5862,6 +5884,33 @@
         (fat==='all'||r.faturavelFlag===fat)
       );
     }
+    function catOfEsp(esp){
+      const e=(esp||'').toLowerCase();
+      if(e.includes('médico')||e.includes('medico'))return'med';
+      if(e.includes('enfermeiro'))return'enf';
+      if(e.includes('técnico')||e.includes('tecnico'))return'tec';
+      return'out';
+    }
+    function procTipoKey(proc,codProc){
+      const n=(proc||'').toUpperCase();
+      if(n.includes('ACOLHIMENTO')&&n.includes('RISCO'))return'triagem';
+      if(n.includes('ATENDIMENTO MEDICO')||n.includes('ATENDIMENTO DE URGENCIA')||n.includes('URGENCIA COM OBSERVACAO'))return'consulta';
+      if(n.includes('ELETROCARDIOGRAMA'))return'ecg';
+      if(n.includes('RADIOLOGIA')||n.includes('RAIO')||n.includes('RADIOGR'))return'radio';
+      if(n.includes('ENDOVENOSA')||n.includes('INTRAVENOSA'))return'ev';
+      if(n.includes('INTRAMUSCULAR'))return'im';
+      if(n.includes('VIA ORAL')&&n.includes('MEDICAMENTO'))return'vo';
+      if(n.includes('SUBCUTAN'))return'sc';
+      if(n.includes('NEBULIZ')||n.includes('INALAC'))return'neb';
+      if(n.includes('GLICEMIA'))return'glicemia';
+      if(n.includes('CURATIVO'))return'curativo';
+      if(n.includes('SONDAGEM'))return'sondagem';
+      if(n.includes('SUTURA'))return'sutura';
+      return'outro';
+    }
+    function procTipoLabel(proc){
+      return{triagem:'Triagem',ev:'EV',im:'IM',vo:'VO',sc:'SC',neb:'Neb',curativo:'Curativo',sondagem:'Sondagem',sutura:'Sutura',consulta:'Consulta',ecg:'ECG',radio:'Radio',glicemia:'Glicemia'}[procTipoKey(proc)]||'Outros';
+    }
     function renderEnfermagem(){
       const enfEmpty=$('enfEmpty'), enfContent=$('enfContent');
       const hasProc=state.procRaw.length>0, hasTri=state.triRaw.length>0;
@@ -5873,36 +5922,17 @@
       if(enfEmpty)enfEmpty.classList.add('hidden');
       if(enfContent)enfContent.classList.remove('hidden');
 
-      const catOf=esp=>{
-        const e=(esp||'').toLowerCase();
-        if(e.includes('enfermeiro'))return'enf';
-        if(e.includes('técnico')||e.includes('tecnico'))return'tec';
-        return'out';
-      };
-      const procTipoSimple=proc=>{
-        const n=(proc||'').toUpperCase();
-        if(n.includes('ACOLHIMENTO')&&n.includes('RISCO'))return'Triagem';
-        if(n.includes('ENDOVENOSA')||n.includes('INTRAVENOSA'))return'EV';
-        if(n.includes('INTRAMUSCULAR'))return'IM';
-        if(n.includes('VIA ORAL')&&n.includes('MEDICAMENTO'))return'VO';
-        if(n.includes('SUBCUTAN'))return'SC';
-        if(n.includes('NEBULIZ')||n.includes('INALAC'))return'Neb';
-        if(n.includes('CURATIVO'))return'Curativo';
-        if(n.includes('SONDAGEM'))return'Sondagem';
-        return'Outros';
-      };
-
       // FIX v3.0: usar procFilt quando disponível (respeita filtros ativos), fallback para procRaw
       const procBase=state.procFilt.length?state.procFilt:state.procRaw;
-      const enfRows=procBase.filter(r=>catOf(r.esp)==='enf');
-      const tecRows=procBase.filter(r=>catOf(r.esp)==='tec');
+      const enfRows=procBase.filter(r=>catOfEsp(r.esp)==='enf');
+      const tecRows=procBase.filter(r=>catOfEsp(r.esp)==='tec');
 
       // ── KPIs gerais ───────────────────────────────────────
       const enfProfs=new Set(enfRows.map(r=>r.prof)).size;
       const tecProfs=new Set(tecRows.map(r=>r.prof)).size;
       const enfTotal=enfRows.reduce((s,r)=>s+r.qde,0);
       const tecTotal=tecRows.reduce((s,r)=>s+r.qde,0);
-      const triagensEnf=enfRows.filter(r=>procTipoSimple(r.proc)==='Triagem').reduce((s,r)=>s+r.qde,0);
+      const triagensEnf=enfRows.filter(r=>procTipoLabel(r.proc)==='Triagem').reduce((s,r)=>s+r.qde,0);
       $('kpisEnf').innerHTML=[
         kpi('Enfermeiros ativos',fmt(enfProfs),'no período','#7b61c4'),
         kpi('Técnicos ativos',fmt(tecProfs),'no período','#1357a6'),
@@ -5915,7 +5945,7 @@
       enfRows.forEach(r=>{
         enfByProf[r.prof]=enfByProf[r.prof]||{prof:r.prof,total:0,tipos:{}};
         enfByProf[r.prof].total+=r.qde;
-        const t=procTipoSimple(r.proc);
+        const t=procTipoLabel(r.proc);
         enfByProf[r.prof].tipos[t]=(enfByProf[r.prof].tipos[t]||0)+r.qde;
       });
       const enfList=Object.values(enfByProf).sort((a,b)=>b.total-a.total);
@@ -5927,7 +5957,7 @@
       },options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true}}},scales:{x:{stacked:true,...axes().x},y:{stacked:true,...axes().y}}}});
 
       const tiposEnf={};
-      enfRows.forEach(r=>{const t=procTipoSimple(r.proc);tiposEnf[t]=(tiposEnf[t]||0)+r.qde;});
+      enfRows.forEach(r=>{const t=procTipoLabel(r.proc);tiposEnf[t]=(tiposEnf[t]||0)+r.qde;});
       const tiposEnfArr=Object.entries(tiposEnf).sort((a,b)=>b[1]-a[1]);
       chart('chartEnfProcPerfil',{type:'doughnut',data:{
         labels:tiposEnfArr.map(x=>x[0]),
@@ -5952,7 +5982,7 @@
       tecRows.forEach(r=>{
         tecByProf[r.prof]=tecByProf[r.prof]||{prof:r.prof,total:0,tipos:{}};
         tecByProf[r.prof].total+=r.qde;
-        const t=procTipoSimple(r.proc);
+        const t=procTipoLabel(r.proc);
         tecByProf[r.prof].tipos[t]=(tecByProf[r.prof].tipos[t]||0)+r.qde;
       });
       const tecList=Object.values(tecByProf).sort((a,b)=>b.total-a.total);
@@ -5965,7 +5995,7 @@
 
       const viasLabels=['EV','IM','VO','SC','Neb','Curativo','Sondagem','Outros'];
       const viasCores=['#4480c2','#e8a93b','#38ac8b','#7b61c4','#4aa3c9','#e8a93b','#ec4899','#64748b'];
-      const viasData=viasLabels.map(v=>tecRows.filter(r=>procTipoSimple(r.proc)===v).reduce((s,r)=>s+r.qde,0));
+      const viasData=viasLabels.map(v=>tecRows.filter(r=>procTipoLabel(r.proc)===v).reduce((s,r)=>s+r.qde,0));
       chart('chartTecVias',{type:'doughnut',data:{
         labels:viasLabels,datasets:[{data:viasData,backgroundColor:viasCores,borderWidth:0}]
       },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:tickColor(),usePointStyle:true,font:{size:10}}}}}});
@@ -6000,38 +6030,11 @@
       const rows=procFilteredRows();
       state.procFilt=rows;
 
-      // ── Classificar categoria profissional ────────────────────────
-      const catOf=esp=>{
-        const e=(esp||'').toLowerCase();
-        if(e.includes('médico')||e.includes('medico'))return'med';
-        if(e.includes('enfermeiro'))return'enf';
-        if(e.includes('técnico')||e.includes('tecnico'))return'tec';
-        return'out';
-      };
-
-      // ── Classificar tipo de procedimento ─────────────────────────
-      const procTipo=r=>{
-        const n=r.proc.toUpperCase(), c=r.codProc.replace(/^0+/,'');
-        if(n.includes('ACOLHIMENTO')&&n.includes('RISCO'))return'triagem';
-        if(n.includes('ATENDIMENTO MEDICO')||n.includes('ATENDIMENTO DE URGENCIA')||n.includes('URGENCIA COM OBSERVACAO'))return'consulta';
-        if(n.includes('ELETROCARDIOGRAMA'))return'ecg';
-        if(n.includes('RADIOLOGIA')||n.includes('RAIO')||n.includes('RADIOGRAFICO')||n.includes('RADIOGR'))return'radio';
-        if(n.includes('ENDOVENOSA')||n.includes('INTRAVENOSA'))return'ev';
-        if(n.includes('INTRAMUSCULAR'))return'im';
-        if(n.includes('VIA ORAL')&&n.includes('MEDICAMENTO'))return'vo';
-        if(n.includes('SUBCUTANEA')||n.includes('SUBCUTÂNEA'))return'sc';
-        if(n.includes('NEBULIZACAO')||n.includes('NEBULIZAÇÃO')||n.includes('INALACAO'))return'neb';
-        if(n.includes('GLICEMIA'))return'glicemia';
-        if(n.includes('CURATIVO'))return'curativo';
-        if(n.includes('SUTURAS')||n.includes('SUTURA'))return'sutura';
-        return'outro';
-      };
-
       // ── Agrupamento geral ─────────────────────────────────────────
       const total=sum(rows,r=>r.qde);
       const fat=sum(rows.filter(r=>r.faturavelFlag==='S'),r=>r.qde);
       const byCategoria={med:[],enf:[],tec:[],out:[]};
-      rows.forEach(r=>byCategoria[catOf(r.esp)].push(r));
+      rows.forEach(r=>byCategoria[catOfEsp(r.esp)].push(r));
 
       // ── KPIs executivos ───────────────────────────────────────────
       const profs=new Set(rows.map(r=>norm(r.prof))).size;
@@ -6094,7 +6097,7 @@
           const k=norm(r.prof);
           m[k]??={prof:r.prof,total:0,tipos:{}};
           m[k].total+=r.qde;
-          const t=procTipo(r);
+          const t=procTipoKey(r.proc,r.codProc);
           m[k].tipos[t]=(m[k].tipos[t]||0)+r.qde;
           return m;
         },{})).sort((a,b)=>b.total-a.total);
@@ -6130,7 +6133,7 @@
       // Gráfico empilhado por tipo: consulta / ECG / radio / outros
       const medProcTypes=[['consulta','Consulta/Urgência','#7b61c4'],['ecg','ECG','#1357a6'],['radio','Radiologia','#4aa3c9'],['outro','Outros','#94a3b8']];
       const topMed15=medByProf.slice(0,15);
-      const medProfMap=medRows.reduce((m,r)=>{const k=norm(r.prof);(m[k]=m[k]||{})[procTipo(r)]=(m[k][procTipo(r)]||0)+r.qde;return m},{});
+      const medProfMap=medRows.reduce((m,r)=>{const k=norm(r.prof);(m[k]=m[k]||{})[procTipoKey(r.proc,r.codProc)]=(m[k][procTipoKey(r.proc,r.codProc)]||0)+r.qde;return m},{});
       chart('chartMedPerfil',{type:'bar',data:{labels:topMed15.map(r=>shortName(r.prof)),datasets:medProcTypes.map(([t,l,c])=>({label:l,data:topMed15.map(r=>medProfMap[norm(r.prof)]?.[t]||0),backgroundColor:c,borderRadius:2}))},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true,font:{size:10}}}},scales:{...axes(),x:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}},y:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor(),font:{size:9}}}}}});
 
       buildProcTable(medRows,[
@@ -6140,7 +6143,7 @@
       const medByProfDetail=Object.values(medRows.reduce((m,r)=>{
         const k=norm(r.prof);
         m[k]??={prof:r.prof,total:0,tipos:{}};m[k].total+=r.qde;
-        const t=procTipo(r);m[k].tipos[t]=(m[k].tipos[t]||0)+r.qde;return m;
+        const t=procTipoKey(r.proc,r.codProc);m[k].tipos[t]=(m[k].tipos[t]||0)+r.qde;return m;
       },{})).sort((a,b)=>b.total-a.total);
       const medMax=medByProfDetail[0]?.total||1;
       if($('tableProcMedicos')){
@@ -6171,13 +6174,13 @@
       chart('chartEnfTotal',{type:'bar',data:{labels:topEnf.map(r=>shortName(r.prof)),datasets:[{data:topEnf.map(r=>r.total),backgroundColor:'#38ac8b',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
 
       const enfProcTypes=[['triagem','Triagens','#38ac8b'],['ev','Med. EV','#1357a6'],['im','Med. IM','#e8a93b'],['vo','Med. VO','#e8a93b'],['outro','Outros','#94a3b8']];
-      const enfProfMap=enfRows.reduce((m,r)=>{const k=norm(r.prof);(m[k]=m[k]||{})[procTipo(r)]=(m[k][procTipo(r)]||0)+r.qde;return m},{});
+      const enfProfMap=enfRows.reduce((m,r)=>{const k=norm(r.prof);(m[k]=m[k]||{})[procTipoKey(r.proc,r.codProc)]=(m[k][procTipoKey(r.proc,r.codProc)]||0)+r.qde;return m},{});
       const topEnf14=enfByProf.slice(0,14);
       chart('chartEnfPerfil',{type:'bar',data:{labels:topEnf14.map(r=>shortName(r.prof)),datasets:enfProcTypes.map(([t,l,c])=>({label:l,data:topEnf14.map(r=>enfProfMap[norm(r.prof)]?.[t]||0),backgroundColor:c,borderRadius:2}))},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true,font:{size:10}}}},scales:{...axes(),x:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}},y:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor(),font:{size:9}}}}}});
 
       const enfByProfDetail=Object.values(enfRows.reduce((m,r)=>{
         const k=norm(r.prof);m[k]??={prof:r.prof,total:0,tipos:{}};m[k].total+=r.qde;
-        const t=procTipo(r);m[k].tipos[t]=(m[k].tipos[t]||0)+r.qde;return m;
+        const t=procTipoKey(r.proc,r.codProc);m[k].tipos[t]=(m[k].tipos[t]||0)+r.qde;return m;
       },{})).sort((a,b)=>b.total-a.total);
       const enfMax=enfByProfDetail[0]?.total||1;
       if($('tableProcEnfermeiros')){
@@ -6209,13 +6212,13 @@
       chart('chartTecTotal',{type:'bar',data:{labels:topTec.map(r=>shortName(r.prof)),datasets:[{data:topTec.map(r=>r.total),backgroundColor:'#e8a93b',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:axes()}});
 
       const tecProcTypes=[['ev','Med. EV','#e8a93b'],['im','Med. IM','#e8a93b'],['vo','Med. VO','#38ac8b'],['sc','Med. SC','#1357a6'],['neb','Nebulização','#7b61c4'],['outro','Outros','#94a3b8']];
-      const tecProfMap=tecRows.reduce((m,r)=>{const k=norm(r.prof);(m[k]=m[k]||{})[procTipo(r)]=(m[k][procTipo(r)]||0)+r.qde;return m},{});
+      const tecProfMap=tecRows.reduce((m,r)=>{const k=norm(r.prof);(m[k]=m[k]||{})[procTipoKey(r.proc,r.codProc)]=(m[k][procTipoKey(r.proc,r.codProc)]||0)+r.qde;return m},{});
       const topTec15=tecByProf.slice(0,15);
       chart('chartTecPerfil',{type:'bar',data:{labels:topTec15.map(r=>shortName(r.prof)),datasets:tecProcTypes.map(([t,l,c])=>({label:l,data:topTec15.map(r=>tecProfMap[norm(r.prof)]?.[t]||0),backgroundColor:c,borderRadius:2}))},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:tickColor(),usePointStyle:true,font:{size:10}}}},scales:{...axes(),x:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor()}},y:{stacked:true,grid:{color:gridColor()},ticks:{color:tickColor(),font:{size:9}}}}}});
 
       const tecByProfDetail=Object.values(tecRows.reduce((m,r)=>{
         const k=norm(r.prof);m[k]??={prof:r.prof,total:0,tipos:{}};m[k].total+=r.qde;
-        const t=procTipo(r);m[k].tipos[t]=(m[k].tipos[t]||0)+r.qde;return m;
+        const t=procTipoKey(r.proc,r.codProc);m[k].tipos[t]=(m[k].tipos[t]||0)+r.qde;return m;
       },{})).sort((a,b)=>b.total-a.total);
       const tecMax=tecByProfDetail[0]?.total||1;
       if($('tableProcTecnicos')){
@@ -7958,17 +7961,33 @@
       if(!wrap)return;
       const hasHist=state.raw.length>0;
       wrap.style.display=hasHist?'flex':'none';
-      function _chip(id,cls,show){
+      function _chip(id,cls,loaded,label,titleLoaded,titleMissing,action){
         const el=document.getElementById(id);
         if(!el)return;
-        el.className='tb-source-chip'+(show?' '+cls:'');
-        el.style.display=show?'':'none';
+        el.style.display='';
+        el.className='tb-source-chip '+(loaded?cls:'missing');
+        el.textContent=loaded?label:'+'+label;
+        el.title=loaded?titleLoaded:titleMissing;
+        el.onclick=action;
       }
-      _chip('tbChipHist','loaded',hasHist);
-      _chip('tbChipTri', state.triSource==='file'?'loaded':'derived', state.triRaw.length>0);
-      _chip('tbChipCid', 'loaded', state.cidRaw.length>0);
-      _chip('tbChipProc','loaded', state.procRaw.length>0);
-      _chip('tbChipExam','loaded', state.examesRaw.length>0);
+      _chip('tbChipHist','loaded',hasHist,
+        'Hist','Histórico carregado — clique para substituir','',
+        ()=>document.getElementById('histFileSwitch').click());
+      const triLoaded=state.triRaw.length>0, triCls=state.triSource==='file'?'loaded':'derived';
+      _chip('tbChipTri',triCls,triLoaded,
+        'Tri',
+        state.triSource==='file'?'Triagem (planilha) — clique para substituir':'Triagem derivada do histórico — clique para carregar planilha',
+        'Adicionar planilha de Triagem — clique para carregar',
+        ()=>document.getElementById('triFile').click());
+      _chip('tbChipCid','loaded',state.cidRaw.length>0,
+        'CID','CID carregado — clique para substituir','Adicionar CID / Diagnósticos — clique para carregar',
+        ()=>document.getElementById('cidFile').click());
+      _chip('tbChipProc','loaded',state.procRaw.length>0,
+        'Proc','Procedimentos carregados — clique para substituir','Adicionar Procedimentos (BPA) — clique para carregar',
+        ()=>document.getElementById('procFile').click());
+      _chip('tbChipExam','loaded',state.examesRaw.length>0,
+        'Exam','Exames carregados — clique para substituir','Adicionar Exames Laboratoriais — clique para carregar',
+        ()=>document.getElementById('examesFile').click());
     }
     function updateQualityChip(){
       const el=document.getElementById('qualityChip');

@@ -3,7 +3,7 @@
  * V.I.D.A. — Testes de parsers
  * Valida a lógica de parsing de dados do Vivver com fixtures anonimizadas.
  *
- * Cobre 9 casos:
+ * Cobre 10 casos:
  *   1. parseHistLegacy — cor, pront, prof, tEspMed=p[18], tEspTri, tTotal
  *   2. parseHistLegacy — tipo=EVASAO → evadido=true
  *   3. parseHistLegacy — plantão noturno (02:30) → dateKey=dia anterior, turno=N
@@ -13,6 +13,7 @@
  *   7. parseProcedimentosText — offset auto-detectado (dados +1 col vs cabeçalho)
  *   8. chooseParsed    — prefere header quando completeness ≥ legacy, e vice-versa
  *   9. parseHist — tEspMed usa triagem_atendimento (campo direto) com teto=720 (fix bug teto=200)
+ *  10. _parseExamesLines — guias, valores, exames e médicos parseados de allLines do PDF
  *
  * Uso: node tests/parsers.test.js
  */
@@ -160,6 +161,31 @@ try {
   if (chosen8b[0].prof !== 'DR COSTA B') throw new Error('legacy data incorreta: ' + JSON.stringify(chosen8b[0]));
   __ok('chooseParsed — modern vence com completeness ≥ legacy; legacy vence quando maior');
 } catch(e) { __fail('chooseParsed — modern vence com completeness ≥ legacy; legacy vence quando maior', e.message); }
+
+// ─── Caso 10: _parseExamesLines — guia + exames + médico ─────────────────
+try {
+  var lines10 = [
+    {text:'06-12345 1 15/01/2026 3 3 1.500,00 450,00', x0:10},
+    {text:'HEMOGRAMA COMPLETO 15,00 15,00', x0:50},
+    {text:'PCR QUANTITATIVO 45,00 45,00', x0:50},
+    {text:'Solicitante Responsável: DR SILVA A', x0:10},
+    {text:'06-12346 2 15/01/2026 1 1 200,00 200,00', x0:10},
+    {text:'TROPONINA I 200,00 200,00', x0:50},
+    {text:'Solicitante Responsável: DR COSTA B', x0:10},
+  ];
+  var recs10 = _parseExamesLines(lines10);
+  if(recs10.length !== 2) throw new Error('esperado 2 guias, obtido ' + recs10.length);
+  var g0 = recs10[0];
+  if(g0.guia !== '06-12345') throw new Error('guia[0] errado: ' + g0.guia);
+  if(g0.n_exames !== 3) throw new Error('n_exames[0] esperado 3, obtido ' + g0.n_exames);
+  if(Math.abs(g0.valor - 450) > 0.01) throw new Error('valor[0] esperado 450, obtido ' + g0.valor);
+  if(g0.doctor !== 'DR SILVA A') throw new Error('doctor[0] errado: ' + g0.doctor);
+  if(g0.exames.length < 2) throw new Error('exames[0] esperado ≥2, obtido ' + g0.exames.length);
+  var g1 = recs10[1];
+  if(g1.guia !== '06-12346') throw new Error('guia[1] errado: ' + g1.guia);
+  if(g1.doctor !== 'DR COSTA B') throw new Error('doctor[1] errado: ' + g1.doctor);
+  __ok('_parseExamesLines — 2 guias, valores, exames e médicos parseados corretamente');
+} catch(e) { __fail('_parseExamesLines — guia + exames + médico', e.message); }
 
 // ─── Caso 9: parseHist — tEspMed usa triagem_atendimento (campo direto, teto=720) ─
 // Bug corrigido em v3.4.0: parseHist agora lê triagem_atendimento via ALIAS/FALLBACK
