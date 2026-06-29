@@ -84,18 +84,18 @@ async function readViaStream(file) {
 
 async function readFileAb(file) {
   const strategies = [
-    ['fetch', () => readViaFetch(file)],
-    ['slices', () => readViaSlices(file)],
-    ['stream', () => readViaStream(file)],
-    ['arrayBuffer', () => file.arrayBuffer()],
+    ['slices',      () => readViaSlices(file),    120000],
+    ['stream',      () => readViaStream(file),    120000],
+    ['fetch',       () => readViaFetch(file),       8000],
+    ['arrayBuffer', () => file.arrayBuffer(),      8000],
   ];
   let lastErr;
-  for (const [name, fn] of strategies) {
+  for (const [name, fn, timeout] of strategies) {
     try {
       self.postMessage({ type: 'read', phase: 'lendo-' + name, name: file.name });
       const ab = await Promise.race([
         fn(),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout 90s (' + name + ')')), 90000)),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout ' + timeout / 1000 + 's (' + name + ')')), timeout)),
       ]);
       if (!ab || !ab.byteLength) throw new Error('buffer vazio');
       self.postMessage({ type: 'read', phase: 'ok-' + name, name: file.name, bytes: ab.byteLength });
