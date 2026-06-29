@@ -46,12 +46,14 @@
   <!-- Bloco central -->
   <div class="up-center">
 
-    <div class="up-eyebrow">sistema de análise</div>
+    <p class="up-brand-tag">
+      <span class="up-brand-acronym">V.I.D.A.</span>
+      <span class="up-brand-sep" aria-hidden="true">·</span>
+      <span class="up-brand-expansion">Visualização Integrada de Dados Assistenciais</span>
+    </p>
 
-    <h1 class="up-title">V.I.D.A.</h1>
-
-    <!-- Nome completo por extenso -->
-    <p class="up-fullname">Visualização Integrada<br>de Dados Assistenciais</p>
+    <h1 class="up-headline">Analise atendimentos e indicadores assistenciais em segundos</h1>
+    <p class="up-lead">Importe a base exportada do Vivver e gere uma leitura assistencial clara — <strong>processamento local</strong>, sem expor dados do paciente.</p>
 
     <!-- Banner dados salvos (visível via JS quando IDB tem dados) -->
     <div class="up-saved-banner" id="upSavedBanner" style="display:none">
@@ -60,53 +62,71 @@
       <button type="button" class="up-saved-btn" id="upSavedBtn">Carregar</button>
     </div>
 
-    <!-- Drop zone único -->
-    <label class="up-dropzone" id="histDrop">
-      <input id="histFile" type="file" accept=".xlsx,.xls,.csv" multiple>
-      <div class="up-drop-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/>
-          <line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
+    <!-- Sessão expirada — orienta reimportação (TTL 12h) -->
+    <div class="up-expired-banner" id="upExpiredBanner" style="display:none" role="alert">
+      <div class="up-expired-icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       </div>
-      <div class="up-drop-label-wrap">
-        <div class="up-drop-label">Histórico de atendimentos</div>
-        <div class="up-drop-sub">Arraste o arquivo aqui &nbsp;·&nbsp; .xlsx &nbsp;·&nbsp; .xls &nbsp;·&nbsp; .csv</div>
-        <div class="up-drop-select-btn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Selecionar arquivo
+      <div class="up-expired-body">
+        <strong class="up-expired-title">Sessão anterior expirou por segurança</strong>
+        <p>Os dados de pacientes foram removidos automaticamente após 12 horas (LGPD). Importe novamente o histórico do Vivver para retomar a análise.</p>
+      </div>
+      <button type="button" class="btn up-expired-dismiss" id="upExpiredDismiss">Entendi</button>
+    </div>
+
+    <!-- Zona principal de importação -->
+    <div class="up-upload-primary">
+      <label class="up-dropzone" id="histDrop">
+        <input id="histFile" type="file" accept=".xlsx,.xls,.csv" multiple>
+        <div class="up-drop-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
         </div>
-      </div>
-      <div class="up-drop-filename" id="histFileName"></div>
-      <div class="up-drop-progress-row">
-        <div class="up-drop-spinner"></div>
-        <div class="up-drop-progress-text" id="upDropProgressText">processando…</div>
-      </div>
-    </label>
-
-    <!-- Rodapé: descrição + privacidade + trilha de fontes -->
-    <div class="up-footer-row">
-      <p class="up-desc">Carregue a base de atendimentos para iniciar a análise. Aceita múltiplos arquivos e anos.</p>
+        <div class="up-drop-label-wrap">
+          <div class="up-drop-label">Importar histórico de atendimentos</div>
+          <div class="up-drop-sub">Arraste aqui ou selecione · Vivver: Relatórios → Histórico de Atendimentos</div>
+          <div class="up-drop-formats mono">.xlsx · .xls · .csv — múltiplos arquivos e anos</div>
+          <div class="up-drop-select-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Selecionar arquivo do Vivver
+          </div>
+        </div>
+        <div class="up-drop-filename" id="histFileName"></div>
+        <div class="up-drop-progress-row">
+          <div class="up-drop-spinner"></div>
+          <div class="up-drop-progress-text" id="upDropProgressText">processando…</div>
+        </div>
+      </label>
+      <p class="up-after-upload">Após a importação: dashboards de volume, tempos, gargalos e produção são gerados automaticamente neste navegador.</p>
     </div>
 
-    <!-- Linha de privacidade -->
-    <div class="up-privacy" aria-label="Privacidade dos dados">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      Processado 100% no seu navegador — nenhum dado sai do dispositivo
+    <div class="up-trust-strip" role="note" aria-label="Privacidade e segurança dos dados">
+      <div class="up-trust-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>Dados processados e armazenados <strong>somente neste dispositivo</strong> — nenhum envio a servidores</span>
+      </div>
+      <div class="up-trust-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>Expiração automática em 12 h · exclusão imediata em Configurações</span>
+      </div>
     </div>
 
-    <!-- Trilha de fontes -->
-    <div class="up-source-trail" aria-label="Fontes de dados suportadas">
-      <span class="up-source-chip">Histórico</span>
-      <span class="up-source-sep">→</span>
-      <span class="up-source-chip">Triagem</span>
-      <span class="up-source-sep">→</span>
-      <span class="up-source-chip">CID</span>
-      <span class="up-source-sep">→</span>
-      <span class="up-source-chip">Procedimentos</span>
-      <span class="up-source-sep">→</span>
-      <span class="up-source-chip">Exames</span>
+    <div class="up-source-section">
+      <p class="up-source-label">Complementos opcionais após o histórico</p>
+      <div class="up-source-trail" aria-label="Fontes de dados suportadas">
+        <span class="up-source-chip up-source-chip-primary">Histórico</span>
+        <span class="up-source-sep">→</span>
+        <span class="up-source-chip">Triagem</span>
+        <span class="up-source-sep">→</span>
+        <span class="up-source-chip">CID</span>
+        <span class="up-source-sep">→</span>
+        <span class="up-source-chip">Procedimentos</span>
+        <span class="up-source-sep">→</span>
+        <span class="up-source-chip">Exames</span>
+      </div>
     </div>
 
     <!-- Progress -->
@@ -417,7 +437,8 @@
           <div class="print-cover" id="printCover"></div>
 
       <section class="pane active" id="pane-geral" aria-labelledby="pane-geral-title">
-        <div class="page-header"><h1 id="pane-geral-title" class="page-title">Visão geral</h1><p class="page-desc">Panorama assistencial do período</p></div>
+        <div class="page-header"><h1 id="pane-geral-title" class="page-title">Visão geral</h1><p class="page-desc">Indicadores-chave de demanda, ritmo e pressão assistencial no período selecionado</p></div>
+        <div class="dash-insight">Leitura executiva do período: volume, distribuição temporal e prioridades operacionais consolidadas abaixo.</div>
         <div class="executive">
           <div class="card" id="execSituation"></div>
           <div class="card"><div class="card-title">Prioridades do período</div><div class="exec-list" id="execAlerts"></div></div>
@@ -425,38 +446,41 @@
         <div class="grid" id="kpisGeral"></div>
         <div id="projGeralNotice" style="margin-bottom:12px"></div>
         <div class="chart-grid">
-          <div class="card full"><div class="card-title">Volume mensal</div><div class="chart"><canvas id="chartMensal" role="img" aria-label="Gráfico de barras: volume mensal de atendimentos"></canvas></div></div>
-          <div class="card"><div class="card-title">Dia da semana</div><div class="chart" style="height:200px"><canvas id="chartDow" role="img" aria-label="Gráfico de barras: atendimentos por dia da semana"></canvas></div></div>
-          <div class="card"><div class="card-title">Pico horário</div><div class="chart small"><canvas id="chartHora" role="img" aria-label="Gráfico de linha: pico horário de atendimentos"></canvas></div></div>
-          <div class="card full"><div class="card-title">Mapa de calor — dia da semana × hora</div><div class="scroll-x-wrap"><div class="heatmap mono" id="heatmap"></div></div></div>
+          <div class="card full"><div class="card-title">Volume mensal</div><p class="card-desc">Atendimentos concluídos por mês no filtro ativo</p><div class="chart"><canvas id="chartMensal" role="img" aria-label="Gráfico de barras: volume mensal de atendimentos"></canvas></div></div>
+          <div class="card"><div class="card-title">Dia da semana</div><p class="card-desc">Distribuição da demanda ao longo da semana</p><div class="chart" style="height:200px"><canvas id="chartDow" role="img" aria-label="Gráfico de barras: atendimentos por dia da semana"></canvas></div></div>
+          <div class="card"><div class="card-title">Pico horário</div><p class="card-desc">Concentração de atendimentos por hora do dia</p><div class="chart small"><canvas id="chartHora" role="img" aria-label="Gráfico de linha: pico horário de atendimentos"></canvas></div></div>
+          <div class="card full"><div class="card-title">Mapa de calor — dia da semana × hora</div><p class="card-desc">Pressão simultânea por dia e faixa horária</p><div class="scroll-x-wrap"><div class="heatmap mono" id="heatmap"></div></div></div>
         </div>
       </section>
 
       <section class="pane" id="pane-indicadores">
-        <div class="page-header"><h1 class="page-title">Indicadores</h1><p class="page-desc">Tempos de espera e atendimento por categoria</p></div>
+        <div class="page-header"><h1 class="page-title">Indicadores</h1><p class="page-desc">Conformidade de tempos de espera, triagem e protocolo Manchester</p></div>
+        <div class="dash-insight">Avalie se a unidade cumpre metas de triagem e consulta médica, com detalhamento por classificação de risco.</div>
         <div class="grid" id="kpisInd"></div>
         <div class="chart-grid">
-          <div class="card"><div class="card-title">Triagem dentro da meta (%)</div><div class="chart small"><canvas id="chartIndTri" role="img" aria-label="Gráfico de barras: triagem dentro da meta por mês"></canvas></div></div>
-          <div class="card"><div class="card-title">Tempo médio por mês</div><div class="chart small"><canvas id="chartIndTempo" role="img" aria-label="Gráfico de linha: tempo médio de espera por mês"></canvas></div></div>
-          <div class="card full"><div class="card-title">Tabela mensal de conformidade</div><div class="table-wrap"><table class="table" id="tableInd"></table></div></div>
-          <div class="card full"><div class="card-title">Conformidade Manchester por classificação de risco</div><div class="scroll-x-wrap"><div class="table-wrap"><table class="table" id="tableManchester"></table></div></div></div>
-          <div class="card full"><div class="card-title">Dispersão de espera médica — percentis</div><div id="cardDispersao" style="padding:0 4px"></div></div>
+          <div class="card"><div class="card-title">Triagem dentro da meta (%)</div><p class="card-desc">Percentual de triagens concluídas dentro do tempo meta, por mês</p><div class="chart small"><canvas id="chartIndTri" role="img" aria-label="Gráfico de barras: triagem dentro da meta por mês"></canvas></div></div>
+          <div class="card"><div class="card-title">Tempo médio por mês</div><p class="card-desc">Espera médica e de triagem — tendência mensal</p><div class="chart small"><canvas id="chartIndTempo" role="img" aria-label="Gráfico de linha: tempo médio de espera por mês"></canvas></div></div>
+          <div class="card full"><div class="card-title">Tabela mensal de conformidade</div><p class="card-desc">Metas de triagem, consulta e tempo total mês a mês</p><div class="table-wrap"><table class="table" id="tableInd"></table></div></div>
+          <div class="card full"><div class="card-title">Conformidade Manchester por classificação de risco</div><p class="card-desc">Atendimentos dentro do protocolo por cor e turno</p><div class="scroll-x-wrap"><div class="table-wrap"><table class="table" id="tableManchester"></table></div></div></div>
+          <div class="card full"><div class="card-title">Dispersão de espera médica — percentis</div><p class="card-desc">Distribuição da espera: mediana, P90 e outliers</p><div id="cardDispersao" style="padding:0 4px"></div></div>
         </div>
       </section>
 
       <section class="pane" id="pane-fluxo">
-        <div class="page-header"><h1 class="page-title">Fluxo de atendimento</h1><p class="page-desc">Distribuição e ritmo dos atendimentos</p></div>
+        <div class="page-header"><h1 class="page-title">Fluxo de atendimento</h1><p class="page-desc">Ritmo operacional, classificação de risco e permanência prolongada</p></div>
+        <div class="dash-insight">Entenda como os pacientes percorrem a UPA: tempos médios, perfil de risco e casos em observação estendida.</div>
         <div class="grid" id="kpisFluxo"></div>
         <div class="chart-grid">
-          <div class="card full"><div class="card-title">Evolução dos tempos médios</div><div class="chart"><canvas id="chartTempos" role="img" aria-label="Gráfico de linha: evolução dos tempos médios"></canvas></div></div>
-          <div class="card"><div class="card-title">Classificação de risco</div><div class="chart small"><canvas id="chartRisco" role="img" aria-label="Gráfico de barras: distribuição por classificação de risco"></canvas></div></div>
-          <div class="card"><div class="card-title">Turno</div><div class="chart small"><canvas id="chartTurno" role="img" aria-label="Gráfico de barras: distribuição por turno"></canvas></div></div>
-          <div class="card full"><div class="card-title">Permanência prolongada — pacientes em observação</div><div id="cardPermanencia" style="padding:4px 0"></div><div class="chart small" style="margin-top:8px"><canvas id="chartPermanenciaMes" role="img" aria-label="Gráfico de barras: permanência prolongada por mês"></canvas></div></div>
+          <div class="card full"><div class="card-title">Evolução dos tempos médios</div><p class="card-desc">Triagem, consulta médica e permanência total — série mensal</p><div class="chart"><canvas id="chartTempos" role="img" aria-label="Gráfico de linha: evolução dos tempos médios"></canvas></div></div>
+          <div class="card"><div class="card-title">Classificação de risco</div><p class="card-desc">Mix de cores Manchester no período filtrado</p><div class="chart small"><canvas id="chartRisco" role="img" aria-label="Gráfico de barras: distribuição por classificação de risco"></canvas></div></div>
+          <div class="card"><div class="card-title">Turno</div><p class="card-desc">Volume diurno (07–19h) versus noturno</p><div class="chart small"><canvas id="chartTurno" role="img" aria-label="Gráfico de barras: distribuição por turno"></canvas></div></div>
+          <div class="card full"><div class="card-title">Permanência prolongada — pacientes em observação</div><p class="card-desc">Casos acima do tempo esperado de permanência na UPA</p><div id="cardPermanencia" style="padding:4px 0"></div><div class="chart small" style="margin-top:8px"><canvas id="chartPermanenciaMes" role="img" aria-label="Gráfico de barras: permanência prolongada por mês"></canvas></div></div>
         </div>
       </section>
 
       <section class="pane" id="pane-gargalos">
-        <div class="page-header"><h1 class="page-title">Gargalos</h1><p class="page-desc">Horários e pontos críticos de pressão</p></div>
+        <div class="page-header"><h1 class="page-title">Gargalos</h1><p class="page-desc">Horários críticos, filas e desvios de protocolo</p></div>
+        <div class="dash-insight">Identifique janelas de maior pressão assistencial e oportunidades de redistribuição de equipe.</div>
         <div class="grid" id="kpisGargalos"></div>
         <div id="alertaVermelho" style="margin-bottom:16px"></div>
         <div class="chart-grid">
@@ -468,7 +492,8 @@
       </section>
 
       <section class="pane" id="pane-medicos">
-        <div class="page-header"><h1 class="page-title">Médicos</h1><p class="page-desc">Produção individual e comparativo de equipe</p></div>
+        <div class="page-header"><h1 class="page-title">Médicos</h1><p class="page-desc">Produção individual, perfil de risco e desempenho por plantão</p></div>
+        <div class="dash-insight">Compare volume, mix de classificação e produtividade por médico para apoiar gestão de escala e feedback assistencial.</div>
         <div class="grid" id="kpisMed"></div>
         <div class="chart-grid">
           <div class="card"><div class="card-title">Top médicos</div><div class="chart tall"><canvas id="chartMed" role="img" aria-label="Gráfico de barras: top médicos por volume"></canvas></div></div>
@@ -481,14 +506,19 @@
 
       <section class="pane" id="pane-procedimentos">
         <div class="page-header"><h1 class="page-title">Produtividade assistencial</h1><p class="page-desc">Procedimentos realizados por profissional — BPA individualizado</p></div>
-        <div id="procEmpty" class="card" style="padding:34px;text-align:center;margin-bottom:12px">
-          <div style="margin:0 auto 16px;width:44px;height:44px;border-radius:12px;background:var(--sur2);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--ac)">
+        <div id="procEmpty" class="card empty-state">
+          <div class="empty-state-icon" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V2"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
-          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Relatório de procedimentos não carregado</div>
-          <div class="mono muted" style="font-size:12px;margin-bottom:6px;line-height:1.6">Carregue o arquivo "Procedimentos realizados por profissional" exportado pelo Vivver.</div>
-          <div class="mono muted" style="font-size:11px;margin-bottom:16px;line-height:1.6;color:var(--ac)">No Vivver: <strong>Relatórios → BPA Individualizado → Procedimentos por Profissional → exportar CSV</strong></div>
-          <button type="button" class="btn primary" onclick="$('procFile').click()" style="margin:0 auto">+ Carregar procedimentos</button>
+          <h2 class="empty-state-title">Produtividade assistencial aguardando importação</h2>
+          <p class="empty-state-desc">Após carregar o BPA individualizado, você verá ranking por profissional, resumo por categoria e perfil de procedimentos da equipe.</p>
+          <ul class="empty-state-benefits">
+            <li>Volume e mix de procedimentos por médico, enfermeiro e técnico</li>
+            <li>Resumo executivo por categoria assistencial</li>
+            <li>Comparativo de produção entre especialidades</li>
+          </ul>
+          <p class="empty-state-hint mono">Vivver: <strong>Relatórios → BPA Individualizado → Procedimentos por Profissional → exportar CSV</strong></p>
+          <button type="button" class="btn primary" onclick="$('procFile').click()">Importar procedimentos</button>
         </div>
         <div id="procContent" class="hidden">
           <!-- Filtros -->
@@ -565,7 +595,8 @@
       </section>
 
       <section class="pane" id="pane-retornos">
-        <div class="page-header"><h1 class="page-title">Retornos ≤72h</h1><p class="page-desc">Pacientes que retornaram em menos de 72 horas</p></div>
+        <div class="page-header"><h1 class="page-title">Retornos ≤72h</h1><p class="page-desc">Reincidência precoce e casos críticos potencialmente evitáveis</p></div>
+        <div class="dash-insight">Monitore taxa de retorno e identifique padrões que indicam falha de resolutividade ou continuidade do cuidado.</div>
         <div class="grid" id="kpisRet"></div>
         <div class="grid" id="kpisRetAdv"></div>
         <div class="chart-grid">
@@ -584,22 +615,17 @@
           <h1 class="page-title">Enfermagem</h1>
           <p class="page-desc">Triagens por enfermeiro, produção de técnicos e conformidade assistencial</p>
         </div>
-        <div id="enfEmpty" class="card" style="padding:34px;text-align:center;margin-bottom:12px">
-          <div style="margin:0 auto 16px;width:44px;height:44px;border-radius:12px;background:var(--sur2);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--ac)">
+        <div id="enfEmpty" class="card empty-state">
+          <div class="empty-state-icon" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2a2 2 0 0 0-2 2v5H4a2 2 0 0 0-2 2v2c0 1.1.9 2 2 2h5v5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-5h5a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-5V4a2 2 0 0 0-2-2z"/></svg>
           </div>
-          <div style="font-weight:700;font-size:15px;margin-bottom:12px">Painel de Enfermagem requer 2 arquivos</div>
-          <div style="display:inline-flex;flex-direction:column;gap:8px;margin-bottom:16px;text-align:left">
-            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt2)">
-              <span style="width:18px;height:18px;border-radius:50%;background:var(--ac-glow);border:1px solid var(--ac);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--ac);flex-shrink:0">1</span>
-              <span><strong style="color:var(--txt)">Procedimentos</strong> — Vivver: BPA Individualizado → Procedimentos por Profissional</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt2)">
-              <span style="width:18px;height:18px;border-radius:50%;background:var(--ac-glow);border:1px solid var(--ac);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--ac);flex-shrink:0">2</span>
-              <span><strong style="color:var(--txt)">Triagem</strong> — Vivver: Relatórios → Triagem (opcional, para nome do triador)</span>
-            </div>
-          </div>
-          <button type="button" class="btn primary" onclick="$('procFile').click()" style="margin:0 auto;display:block">+ Carregar Procedimentos</button>
+          <h2 class="empty-state-title">Painel de enfermagem — dois complementos</h2>
+          <p class="empty-state-desc">Combine procedimentos BPA e triagem para visualizar produção de enfermeiros e técnicos, perfil de procedimentos e conformidade assistencial.</p>
+          <ol class="empty-state-steps">
+            <li><strong>Procedimentos</strong> — Vivver: BPA Individualizado → Procedimentos por Profissional</li>
+            <li><strong>Triagem</strong> — Vivver: Relatórios → Triagem (opcional, para nome do triador)</li>
+          </ol>
+          <button type="button" class="btn primary" onclick="$('procFile').click()">Importar procedimentos</button>
         </div>
         <div id="enfContent" class="hidden">
           <!-- KPIs gerais da equipe -->
@@ -625,14 +651,19 @@
 
       <section class="pane" id="pane-exames">
         <div class="page-header"><h1 class="page-title">Exames laboratoriais</h1><p class="page-desc">Autolac — Lista de Conferência por Convênio</p></div>
-        <div id="examesEmpty" class="card" style="padding:34px;text-align:center;margin-bottom:12px">
-          <div style="margin:0 auto 16px;width:44px;height:44px;border-radius:12px;background:var(--sur2);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--ac)">
+        <div id="examesEmpty" class="card empty-state">
+          <div class="empty-state-icon" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v5l7 7 7-7V5a2 2 0 0 0-2-2h-4"/><path d="M9 3V1"/><path d="M15 3V1"/><path d="m14 14-2.5 2.5"/><path d="m16.5 11.5-2 2"/></svg>
           </div>
-          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Relatório de exames não carregado</div>
-          <div class="mono muted" style="font-size:12px;margin-bottom:6px;line-height:1.6">Carregue o PDF "Lista de Conferência por Convênio" gerado pelo Autolac.</div>
-          <div class="mono muted" style="font-size:11px;margin-bottom:16px;line-height:1.6;color:var(--ac)">No Autolac: <strong>Conferência → Lista de Conferência por Convênio → Imprimir/Exportar PDF</strong></div>
-          <button type="button" class="btn primary" onclick="$('examesFile').click()" style="margin:0 auto">+ Carregar PDF de exames</button>
+          <h2 class="empty-state-title">Exames laboratoriais aguardando importação</h2>
+          <p class="empty-state-desc">Importe o PDF do Autolac para cruzar solicitações por médico, grupos clínicos e volume de exames no período.</p>
+          <ul class="empty-state-benefits">
+            <li>Top exames solicitados e distribuição por grupo clínico</li>
+            <li>Ranking por médico solicitante</li>
+            <li>Cruzamento com histórico de atendimentos, quando disponível</li>
+          </ul>
+          <p class="empty-state-hint mono">Autolac: <strong>Conferência → Lista de Conferência por Convênio → Imprimir/Exportar PDF</strong></p>
+          <button type="button" class="btn primary" onclick="$('examesFile').click()">Importar PDF de exames</button>
         </div>
         <div id="examesContent" class="hidden">
           <div class="grid" id="kpisExames"></div>
@@ -680,14 +711,19 @@
 
       <section class="pane" id="pane-triagem">
         <div class="page-header"><h1 class="page-title">Triagem</h1><p class="page-desc">Desempenho da classificação de risco</p></div>
-        <div id="triEmpty" class="card" style="padding:40px;text-align:center">
-          <div style="margin:0 auto 16px;width:44px;height:44px;border-radius:12px;background:var(--sur2);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--ac)">
+        <div id="triEmpty" class="card empty-state">
+          <div class="empty-state-icon" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h6"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/><path d="m9 12 2 2 4-4"/></svg>
           </div>
-          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Planilha de triagem não carregada</div>
-          <div class="mono muted" style="font-size:12px;margin-bottom:6px;line-height:1.6">O histórico já fornece dados derivados de triagem — classificação e tempos funcionam sem este arquivo.</div>
-          <div class="mono muted" style="font-size:11px;margin-bottom:16px;line-height:1.6;color:var(--ac)">Para incluir nome do triador: exporte a planilha de triagem pelo Vivver em <strong>Relatórios → Triagem → exportar XLS</strong></div>
-          <button type="button" class="btn primary" onclick="document.getElementById('triFile').click()" style="margin:0 auto">+ Carregar planilha de triagem</button>
+          <h2 class="empty-state-title">Triagem detalhada — complemento opcional</h2>
+          <p class="empty-state-desc">O histórico já alimenta classificação de risco e tempos de triagem. Com a planilha dedicada, você desbloqueia produtividade por triador e análises mais granulares.</p>
+          <ul class="empty-state-benefits">
+            <li>Triagens por hora e espera média por turno</li>
+            <li>Ranking de produtividade por enfermeiro triador</li>
+            <li>Notificação compulsória e evasão na recepção</li>
+          </ul>
+          <p class="empty-state-hint mono">Vivver: <strong>Relatórios → Triagem → exportar XLS</strong></p>
+          <button type="button" class="btn primary" onclick="document.getElementById('triFile').click()">Importar planilha de triagem</button>
         </div>
         <div id="triContent" class="hidden">
           <div id="triSourceBanner" style="margin-bottom:12px"></div>
@@ -815,14 +851,19 @@
 
       <section class="pane" id="pane-cid">
         <div class="page-header"><h1 class="page-title">CID / Diagnósticos</h1><p class="page-desc">Análise por diagnóstico e CID-10</p></div>
-        <div id="cidEmpty" class="card" style="padding:40px;text-align:center">
-          <div style="margin:0 auto 16px;width:44px;height:44px;border-radius:12px;background:var(--sur2);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--ac)">
+        <div id="cidEmpty" class="card empty-state">
+          <div class="empty-state-icon" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
           </div>
-          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Planilha de CID não carregada</div>
-          <div class="mono muted" style="font-size:12px;margin-bottom:6px;line-height:1.6">Carregue a planilha para visualizar diagnósticos, capítulos CID-10 e ranking de patologias.</div>
-          <div class="mono muted" style="font-size:11px;margin-bottom:16px;line-height:1.6;color:var(--ac)">No Vivver: <strong>Relatórios → Atendimentos por CID → exportar XLS</strong></div>
-          <button type="button" class="btn primary" onclick="document.getElementById('cidFile').click()" style="margin:0 auto">+ Carregar planilha de CID</button>
+          <h2 class="empty-state-title">Diagnósticos CID aguardando importação</h2>
+          <p class="empty-state-desc">Com a planilha de CID, você desbloqueia ranking de patologias, capítulos CID-10, diagnósticos sentinela e cobertura diagnóstica da base.</p>
+          <ul class="empty-state-benefits">
+            <li>Capítulos CID por mês e top diagnósticos</li>
+            <li>Monitoramento de sentinela: dor torácica, sepse e AVE/AVC</li>
+            <li>Cobertura CID × histórico de atendimentos</li>
+          </ul>
+          <p class="empty-state-hint mono">Vivver: <strong>Relatórios → Atendimentos por CID → exportar XLS</strong></p>
+          <button type="button" class="btn primary" onclick="document.getElementById('cidFile').click()">Importar planilha de CID</button>
         </div>
         <div id="cidContent" class="hidden">
           <div class="grid" id="kpisCid"></div>

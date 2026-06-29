@@ -9,6 +9,7 @@ import { state, UC_KEY, RECEP_KEY, RECEP_OVERRIDE_KEY } from './state.js';
 import { VidaDB } from './storage/vidadb.js';
 import { $ } from './utils/dom.js';
 import { showToast } from './ui/toast.js';
+import { showExpiredHomeNotice, hideExpiredHomeNotice, initExpiredHomeNotice, bindExpiredHomeNotice } from './ui/home-notice.js';
 import { showLoading, hideLoading } from './ui/progress.js';
 import { setupDates, populateMedicoFilter, applyFilters } from './filters.js';
 import { refreshDbStats } from './storage/dbstats.js';
@@ -44,6 +45,7 @@ export async function autoLoadFromDB() {
     if (VidaDB.dataExpired()) {
       try { await VidaDB.clearAll(); } catch (e) { console.warn('[VIDA] TTL clear:', e); }
       VidaDB.clearTimestamp();
+      showExpiredHomeNotice();
       showToast(
         'Dados de pacientes expiraram (12h) e foram removidos automaticamente por segurança. Recarregue os relatórios.',
         'inf',
@@ -69,6 +71,7 @@ export async function autoLoadFromDB() {
           try { await VidaDB.clearAll(); } catch (e) { console.warn('[VIDA] TTL clear on resume:', e); }
           VidaDB.clearTimestamp();
           banner.style.display = 'none';
+          showExpiredHomeNotice();
           showToast('Dados de pacientes expiraram (12h) e foram removidos por segurança. Recarregue os relatórios.', 'warn', 9000);
           try { window.refreshDbStats?.(); } catch (e) {}
           return;
@@ -307,6 +310,8 @@ export function bindEvents() {
 
   // ── Recepcionados (bootstrap only — persists across page loads) ───────────
   loadRecepcionados();
+  initExpiredHomeNotice();
+  bindExpiredHomeNotice();
 }
 
 // ── _execLoadFromDB ────────────────────────────────────────────────────────────
@@ -355,6 +360,7 @@ export async function _execLoadFromDB(s) {
     applyFilters();
 
     if (uploadEl) uploadEl.style.display = 'none';
+    hideExpiredHomeNotice();
     const appEl = $('app');
     if (appEl) appEl.classList.add('visible');
     if (typeof window.setHistFileName === 'function') window.setHistFileName(state.files.hist);
@@ -391,25 +397,30 @@ export function checkDeps() {
 }
 
 // ── showPrivacyNotice ─────────────────────────────────────────────────────────
-// Shows the LGPD privacy banner once, acknowledged via localStorage.
+// Banner contextual não bloqueante — reconhecido via localStorage.
 export function showPrivacyNotice() {
   const KEY = 'vida_priv_ack_v1';
   try { if (localStorage.getItem(KEY)) return; } catch (e) { return; }
-  const ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px';
-  ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-labelledby', 'privTitle');
-  ov.innerHTML = '<div style="background:var(--sur,#16191f);border:1px solid var(--bdr2,rgba(255,255,255,.09));border-radius:10px;max-width:480px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.5)">'
-    + '<div id="privTitle" style="font:700 16px &quot;Plus Jakarta Sans&quot;,system-ui,sans-serif;color:var(--txt,#e8eaf0);margin-bottom:12px">Proteção de dados de pacientes</div>'
-    + '<div style="font:400 13px/1.6 &quot;Plus Jakarta Sans&quot;,system-ui,sans-serif;color:var(--txt2,#8b90a0)">'
-    + '<p style="margin:0 0 10px">Os relatórios carregados contêm dados pessoais sensíveis (prontuário, nome, idade), armazenados <strong style="color:var(--txt,#e8eaf0)">apenas neste navegador</strong>, sem envio a servidores.</p>'
-    + '<p style="margin:0 0 10px">Por segurança, os dados <strong style="color:var(--txt,#e8eaf0)">expiram automaticamente após 12 horas</strong> e são apagados na próxima abertura.</p>'
-    + '<p style="margin:0">Use esta ferramenta somente em computador de acesso restrito. Para apagar tudo imediatamente, use Configurações → Limpar banco de dados.</p>'
+  const bar = document.createElement('div');
+  bar.className = 'priv-banner';
+  bar.setAttribute('role', 'status');
+  bar.setAttribute('aria-live', 'polite');
+  bar.innerHTML = '<div class="priv-banner-inner">'
+    + '<div class="priv-banner-icon" aria-hidden="true">'
+    + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'
     + '</div>'
-    + '<div style="display:flex;justify-content:flex-end;margin-top:18px">'
-    + '<button type="button" id="privAckBtn" style="background:var(--ac,#1357a6);border:0;color:#fff;padding:9px 22px;border-radius:7px;cursor:pointer;font:600 13px &quot;Plus Jakarta Sans&quot;,system-ui,sans-serif">Entendi</button>'
-    + '</div></div>';
-  document.body.appendChild(ov);
-  const btn = ov.querySelector('#privAckBtn');
-  btn.focus();
-  btn.onclick = () => { try { localStorage.setItem(KEY, '1'); } catch (e) {} ov.remove(); };
+    + '<div class="priv-banner-body">'
+    + '<strong class="priv-banner-title">Dados de pacientes protegidos</strong>'
+    + '<p>Relatórios com prontuário e identificação ficam <strong>apenas neste navegador</strong>, sem envio a servidores. Expiração automática em 12 h — exclusão imediata em Configurações.</p>'
+    + '</div>'
+    + '<button type="button" class="btn primary priv-banner-btn" id="privAckBtn">Entendi</button>'
+    + '</div>';
+  document.body.appendChild(bar);
+  requestAnimationFrame(() => bar.classList.add('visible'));
+  const btn = bar.querySelector('#privAckBtn');
+  btn.onclick = () => {
+    try { localStorage.setItem(KEY, '1'); } catch (e) {}
+    bar.classList.remove('visible');
+    setTimeout(() => bar.remove(), 280);
+  };
 }

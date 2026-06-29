@@ -14,6 +14,7 @@ import { VidaDB } from '../storage/vidadb.js';
 import { ymd, monthKey } from '../utils/dates.js';
 import { fmt } from '../utils/dom.js';
 import { populateMedicoFilter } from '../filters.js';
+import { hideExpiredHomeNotice } from '../ui/home-notice.js';
 
 // ── Layout fingerprint check ──────────────────────────────────────────────────
 function _checkLayoutFingerprint(type, csv, name) {
@@ -339,6 +340,7 @@ export async function loadHist(fileOrFiles) {
     if (typeof window.setHistFileName === 'function') window.setHistFileName(state.files.hist);
     const upload = document.getElementById('upload');
     if (upload) upload.style.display = 'none';
+    hideExpiredHomeNotice();
     const app = document.getElementById('app');
     if (app) app.classList.add('visible');
     setProgress(100, 'Histórico carregado.');
