@@ -1,5 +1,6 @@
 // render/auditoria.js — Auditoria pane rendering
 import { state } from '../state.js';
+import { showToast } from '../ui/toast.js';
 import { $, esc, fmt, pct, shortName, kpi } from '../utils/dom.js';
 import { chart, gridColor, tickColor } from '../ui/charts.js';
 import { CONFIG } from '../constants.js';
@@ -187,7 +188,7 @@ function renderAuditLog(issues) {
 }
 
 function exportAuditLog(issues) {
-  if (!issues.length) { if (typeof window !== 'undefined' && window.showToast) window.showToast('Nenhuma inconsistência para exportar.', 'warn'); return; }
+  if (!issues.length) { showToast('Nenhuma inconsistência para exportar.', 'warn'); return; }
   const rows = issues.map(i => ({
     'Linha fonte': i.row?.sourceLine ?? '',
     'Data/hora': i.row?.dh ? i.row.dh.toLocaleString('pt-BR') : '',
@@ -206,7 +207,7 @@ function exportAuditLog(issues) {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Log Auditoria');
       XLSX.writeFile(wb, `VIDA_auditoria_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.xlsx`);
-      if (typeof window !== 'undefined' && window.showToast) window.showToast(`Log exportado: ${fmt(rows.length)} inconsistências.`, 'ok');
+      showToast(`Log exportado: ${fmt(rows.length)} inconsistências.`, 'ok');
     }
-  } catch (e) { if (typeof window !== 'undefined' && window.showToast) window.showToast('Erro ao exportar: ' + e.message, 'err'); }
+  } catch (e) { showToast('Erro ao exportar: ' + e.message, 'err'); }
 }
