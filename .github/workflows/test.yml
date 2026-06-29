@@ -17,3 +17,6 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm test
+      - run: npm run build
+      - name: Verify index.html is committed
+        run: git diff --exit-code index.html || (echo "index.html out of date — run npm run build" && exit 1)

@@ -1,6 +1,6 @@
 # V.I.D.A. — Visualização Integrada de Dados Assistenciais
 
-**v3.4.0** · UPA 24h Tiago Cardoso dos Santos · CNES 7061838 · Mateus Leme – MG
+**v3.5.0** · UPA 24h Tiago Cardoso dos Santos · CNES 7061838 · Mateus Leme – MG
 
 [![CI](https://github.com/VictorPivatti/vida/actions/workflows/test.yml/badge.svg)](https://github.com/VictorPivatti/vida/actions/workflows/test.yml)
 
@@ -311,21 +311,20 @@ Digite apenas parte do nome (ex: `NINOMIYA`). O filtro usa busca parcial normali
 
 ## Desenvolvimento
 
-Após qualquer alteração no `index.html`, rode a suite completa:
+**Setup e workflow:**
 
-```bash
-npm install        # uma vez
-npm test           # smoke + métricas + parsers
-npm run smoke      # só o smoke test (mais rápido)
-```
+- `npm install` — instala dependências do projeto
+- `npm run dev` — modo watch com esbuild serve (atualiza no navegador ao editar)
+- `npm run build` — gera `index.html` a partir do template + CSS + JS injetados
+- `npm test` — executa suite completa (smoke + parsers + métricas + unit)
 
-A suite tem três camadas:
+**Estrutura de código:**
 
-| Script | O que valida |
-|--------|-------------|
-| `harness.js` | Crash por painel — executa todas as funções de render com dados sintéticos |
-| `tests/metrics.test.js` | Valores calculados — `tEspMed`, `returns72`, `monthlyStats`, Manchester |
-| `tests/parsers.test.js` | Parsing Vivver — campos críticos com fixtures CSV anonimizados |
+- `src/js/app.js` — entry point, módulos ES6
+- `src/styles/` — CSS extraído (injetado em tempo de build)
+- `src/index.template.html` — template HTML (pontos de injeção `<!-- BUILD:CSS -->` e `<!-- BUILD:JS -->`)
+
+A suite tem três camadas: `harness.js` (crash por painel), `tests/metrics.test.js` (valores calculados), `tests/parsers.test.js` (parsing Vivver).
 
 O CI no GitHub Actions executa `npm test` em todo push. O histórico de mudanças está no [CHANGELOG.md](CHANGELOG.md).
 
