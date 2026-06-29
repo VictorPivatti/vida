@@ -7,7 +7,7 @@ import { state } from '../state.js';
 import { showToast } from '../ui/toast.js';
 import { showLoading, hideLoading, setProgress } from '../ui/progress.js';
 import { VidaDB } from '../storage/vidadb.js';
-import { workerRun } from './hist.js';
+import { workerRun, fileToBuffer } from './hist.js';
 
 // ── loadCid ───────────────────────────────────────────────────────────────────
 export async function loadCid(files) {
@@ -16,7 +16,7 @@ export async function loadCid(files) {
   setProgress(5, 'Lendo CID...');
   try {
     const fileArr = [...files];
-    const buffers = await Promise.all(fileArr.map(f => f.arrayBuffer()));
+    const buffers = await Promise.all(fileArr.map(fileToBuffer));
     const result = await workerRun('parseCid', { buffers, names: fileArr.map(f => f.name) });
     if (result.total != null) {
       state.quality.push({ type: 'CID', total: result.total, invalid: result.invalid ?? 0 });

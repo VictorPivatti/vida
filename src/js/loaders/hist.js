@@ -160,6 +160,16 @@ export function deriveTriFromHist(histRows) {
     });
 }
 
+// ── fileToBuffer — FileReader em vez de File.arrayBuffer() (mais compativel) ──
+export function fileToBuffer(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = e => resolve(e.target.result);
+    r.onerror = () => reject(r.error);
+    r.readAsArrayBuffer(file);
+  });
+}
+
 // ── loadHist ──────────────────────────────────────────────────────────────────
 export async function loadHist(fileOrFiles) {
   const files = fileOrFiles instanceof FileList ? [...fileOrFiles] : Array.isArray(fileOrFiles) ? fileOrFiles : fileOrFiles ? [fileOrFiles] : [];
@@ -169,10 +179,10 @@ export async function loadHist(fileOrFiles) {
   try {
     state.quality = [];
     const _isFirstLoad = state.raw.length === 0;
-    console.log('[VIDA:hist] Promise.all(arrayBuffer) -- inicio | arquivos:', files.map(f => f.name + ' (' + f.size + 'B)'));
-    console.time('[VIDA:hist] Promise.all(arrayBuffer)');
-    const buffers = await Promise.all(files.map(f => f.arrayBuffer()));
-    console.timeEnd('[VIDA:hist] Promise.all(arrayBuffer)');
+    console.log('[VIDA:hist] fileToBuffer -- inicio | arquivos:', files.map(f => f.name + ' (' + f.size + 'B)'));
+    console.time('[VIDA:hist] fileToBuffer');
+    const buffers = await Promise.all(files.map(fileToBuffer));
+    console.timeEnd('[VIDA:hist] fileToBuffer');
     console.log('[VIDA:hist] buffers lidos | tamanhos:', buffers.map(b => b.byteLength + 'B'));
     const result = await workerRun('parseHist', { buffers, names: files.map(f => f.name) });
     setProgress(90, 'Finalizando...');
