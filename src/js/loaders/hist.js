@@ -20,11 +20,11 @@ function _checkLayoutFingerprint(type, csv, name) {
   if (typeof localStorage === 'undefined') return;
   try {
     const key = '_fp_' + type;
-    const headerLine = (csv || '').split(/\r?\n/)[0].trim();
+    const headerLine = (csv || '').split(/\r?\n/)[0].trim().replace(/;+$/, '');
     if (!headerLine) return;
     const stored = localStorage.getItem(key);
     if (!stored) { localStorage.setItem(key, headerLine); return; }
-    if (stored !== headerLine) {
+    if (stored.replace(/;+$/, '') !== headerLine) {
       console.warn('[fingerprint] Layout de ' + type + ' mudou em "' + name + '". Esperado:\n' + stored + '\nRecebido:\n' + headerLine);
       showToast('⚠ Layout de ' + type + ' diferente do esperado em "' + name + '". Verifique se o arquivo é do formato correto.', 'warn');
       localStorage.setItem(key, headerLine);
