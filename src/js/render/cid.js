@@ -53,7 +53,7 @@ export function renderCid() {
   renderCidNotificaveisInternal();
 }
 
-function renderCidTable() {
+export function renderCidTable() {
   const q = norm($('searchCid')?.value || ''), rows = state.cidFilt, count = {};
   rows.forEach(r => { const k = r.cid + '|' + r.desc; count[k] = (count[k] || 0) + 1; });
   const top = Object.entries(count).sort((a, b) => b[1] - a[1]).slice(0, 150).map(([k, n], i) => { const [cid, desc] = k.split('|'); return { i: i + 1, cid, desc, n, cap: cid[0] }; }).filter(r => !q || norm(r.cid + ' ' + r.desc).includes(q));

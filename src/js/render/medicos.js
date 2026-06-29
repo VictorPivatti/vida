@@ -80,7 +80,7 @@ export function renderMedicos() {
   }
 }
 
-function renderMedTable(rows) {
+export function renderMedTable(rows) {
   const q = norm($('searchMed')?.value || '');
   const data = q ? rows.filter(r => norm(r.prof).includes(q)).slice() : rows.slice();
   const pp = (n, tot) => `<span style="font-weight:600">${fmt(n)}</span><br><span style="font-size:10px;opacity:.75">${tot > 0 ? (n / tot * 100).toFixed(1) + '%' : '--'}</span>`;

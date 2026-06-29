@@ -40,8 +40,10 @@ async function build() {
   });
 
   let html = fs.readFileSync(TEMPLATE, 'utf8');
-  html = html.replace('<!-- BUILD:CSS -->', `<style>${cssResult.code}</style>`);
-  html = html.replace('<!-- BUILD:JS -->', `<script>${jsResult.outputFiles[0].text}</script>`);
+  // Use function callbacks so $& / $' / $` special sequences in the
+  // minified output are never interpreted as replacement patterns.
+  html = html.replace('<!-- BUILD:CSS -->', () => `<style>${cssResult.code}</style>`);
+  html = html.replace('<!-- BUILD:JS -->', () => `<script>${jsResult.outputFiles[0].text}</script>`);
 
   fs.writeFileSync(OUT, html);
   console.log(`Built ${OUT} (${(html.length / 1024).toFixed(0)} KB)`);

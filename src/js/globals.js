@@ -10,7 +10,11 @@
 // module implementations in Task 9.
 
 import { toggleLayoutEdit, resetLayout, applyDensity } from './ui/layout.js';
-import { toggleTheme } from './ui/theme.js';
+import {
+  setHistFileName, resetApp, savePrefs, setTheme,
+  showKpiSkeletons, updateUploadStatuses, updateSourceChips, updateQualityChip,
+  updateTriBtn, shortcut, copyReport, downloadReport, exportarPDF,
+} from './ui/actions.js';
 import {
   renderAll, renderActivePane, markDirty, renderNotificaveis,
   renderGeral, renderExecutive, renderHeatmap,
@@ -21,7 +25,8 @@ import {
   renderAuditoria, renderPacientes, renderEscala, renderAnotacoes,
 } from './render/index.js';
 import { renderEvasao, renderRecepTable } from './render/triagem.js';
-import { renderCidTrend, renderCidTrendAlerts, setTrendFilter } from './render/cid.js';
+import { renderCidTrend, renderCidTrendAlerts, renderCidTable, setTrendFilter } from './render/cid.js';
+import { renderMedTable } from './render/medicos.js';
 import { renderNotifGrid, setNotifGrupo } from './render/notificaveis.js';
 import { deletarAnotacao } from './render/anotacoes.js';
 import { buscaProntuario } from './render/pacientes.js';
@@ -33,6 +38,7 @@ import { metaManchester, manchesterConformidade } from './metrics/manchester.js'
 import { monthReturnRate } from './metrics/returns.js';
 import { evasaoDisponivel } from './metrics/med.js';
 import { calcularPontos } from './metrics/executive.js';
+import { medRows } from './metrics/med.js';
 import { parseHistLegacy, safeMinutes, parseHist, chooseParsed } from './parsers/hist.js';
 import { parseTriLegacy } from './parsers/tri.js';
 import { parseCidLegacy } from './parsers/cid.js';
@@ -249,26 +255,8 @@ function toggleUploadMenu() {
         document.removeEventListener('click', closeMenu);
       });
     }, 0);
-    _updateUploadStatuses();
+    updateUploadStatuses();
   }
-}
-
-function _updateUploadStatuses() {
-  const statuses = {
-    triStatus: state.triSource === 'file' ? `${state.triRaw.length.toLocaleString('pt-BR')} reg.` : (state.triSource === 'hist' ? 'derivado' : ''),
-    cidStatus: state.cidRaw.length ? `${state.cidRaw.length.toLocaleString('pt-BR')} reg.` : '',
-    procStatus: state.procRaw.length ? `${state.procRaw.length.toLocaleString('pt-BR')} proc.` : '',
-    examesStatus: state.examesRaw.length ? `${state.examesRaw.length.toLocaleString('pt-BR')} guias` : '',
-  };
-  Object.entries(statuses).forEach(([id, text]) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = text;
-    el.className = 'upload-menu-status' + (text ? ' loaded' : '');
-  });
-  const loaded = [state.triSource === 'file', state.cidRaw.length > 0, state.procRaw.length > 0, state.examesRaw.length > 0].filter(Boolean).length;
-  const badge = document.getElementById('uploadBadge');
-  if (badge) { badge.textContent = loaded || ''; badge.style.display = loaded ? '' : 'none'; }
 }
 
 // ── TTL menu ──────────────────────────────────────────────────────────────────
@@ -369,7 +357,8 @@ export function initGlobals() {
     resetLayout,
 
     // ── UI: theme
-    toggleTheme,
+    toggleTheme: () => setTheme(state.theme === 'dark' ? 'light' : 'dark'),
+    setTheme,
 
     // ── Render: orchestration
     renderAll,
@@ -429,11 +418,30 @@ export function initGlobals() {
     // ── CID
     filterCidTrend,
     renderCidTrend,
+    renderCidTable,
     renderCidNotificaveis,
+
+    // ── Medicos
+    renderMedTable,
+    medRows,
 
     // ── Notificáveis
     filterNotifGrupo,
     exportNotifChecklist,
+
+    // ── Actions (restored ghost functions)
+    setHistFileName,
+    resetApp,
+    savePrefs,
+    showKpiSkeletons,
+    updateUploadStatuses,
+    updateSourceChips,
+    updateQualityChip,
+    updateTriBtn,
+    shortcut,
+    copyReport,
+    downloadReport,
+    exportarPDF,
 
     // ── Recepcionados (used in onchange / onclick inline code)
     saveRecepcionados,
