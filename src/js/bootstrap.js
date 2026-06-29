@@ -9,6 +9,10 @@ import { state, UC_KEY, RECEP_KEY, RECEP_OVERRIDE_KEY } from './state.js';
 import { VidaDB } from './storage/vidadb.js';
 import { $ } from './utils/dom.js';
 import { showToast } from './ui/toast.js';
+import { showLoading, hideLoading } from './ui/progress.js';
+import { setupDates, populateMedicoFilter, applyFilters } from './filters.js';
+import { refreshDbStats } from './storage/dbstats.js';
+import { updateTtlCountdown } from './ui/ttl.js';
 
 // ── loadUnitConfig ─────────────────────────────────────────────────────────────
 // Mirrors the script-block function of the same name.
@@ -60,10 +64,7 @@ export async function autoLoadFromDB() {
       savedBtn.dataset.bound = '1';
       savedBtn.onclick = async () => {
         banner.style.display = 'none';
-        // Delegate to the full _execLoadFromDB that lives in the script block
-        if (typeof window._execLoadFromDB === 'function') {
-          await window._execLoadFromDB(s);
-        }
+        await _execLoadFromDB(s);
       };
     }
   } catch (e) {
@@ -296,4 +297,111 @@ export function bindEvents() {
 
   // ── Recepcionados (bootstrap only — persists across page loads) ───────────
   loadRecepcionados();
+}
+
+// ── _execLoadFromDB ────────────────────────────────────────────────────────────
+// Loads all data from IndexedDB into state and renders the dashboard.
+export async function _execLoadFromDB(s) {
+  try {
+    if (typeof window.showKpiSkeletons === 'function') window.showKpiSkeletons('kpisGeral', 4);
+    const statusEl = $('status'), uploadEl = $('upload');
+
+    // Lê em paralelo para economizar tempo
+    const [rows, cidRows, triRows] = await Promise.all([
+      VidaDB.getAll('atendimentos'),
+      s.cid > 0 ? VidaDB.getAll('cid') : Promise.resolve([]),
+      s.triagem > 0 ? VidaDB.getAll('triagem') : Promise.resolve([]),
+    ]);
+
+    if (!rows.length) return;
+
+    rows.sort((a, b) => (a.dh?.getTime() || 0) - (b.dh?.getTime() || 0));
+
+    state.raw = rows;
+    state.files.hist = `banco local (${s.atendimentos.toLocaleString('pt-BR')} registros)`;
+
+    if (triRows.length) {
+      state.triRaw = triRows;
+      state.triSource = 'db';
+    } else {
+      state.triRaw = typeof window.deriveTriFromHist === 'function'
+        ? window.deriveTriFromHist(state.raw)
+        : [];
+      state.triSource = 'hist';
+    }
+    state.files.tri = '';
+    if (typeof window.updateTriBtn === 'function') window.updateTriBtn();
+
+    if (cidRows.length) {
+      state.cidRaw = cidRows;
+      const _cAS = document.getElementById('cidStatus');
+      if (_cAS) {
+        _cAS.textContent = cidRows.length.toLocaleString('pt-BR') + ' reg.';
+        _cAS.className = 'upload-menu-status loaded';
+      }
+      try { if (typeof window.updateUploadStatuses === 'function') window.updateUploadStatuses(); } catch (e) {}
+    }
+
+    setupDates();
+    populateMedicoFilter();
+    applyFilters();
+
+    if (uploadEl) uploadEl.style.display = 'none';
+    const appEl = $('app');
+    if (appEl) appEl.classList.add('visible');
+    if (typeof window.setHistFileName === 'function') window.setHistFileName(state.files.hist);
+    if (typeof window.updateSourceChips === 'function') window.updateSourceChips();
+    if (typeof window.updateQualityChip === 'function') window.updateQualityChip();
+    updateTtlCountdown();
+
+    const minDt = rows[0]?.dh?.toLocaleDateString('pt-BR') || '-';
+    const maxDt = rows[rows.length - 1]?.dh?.toLocaleDateString('pt-BR') || '-';
+    if (statusEl) {
+      statusEl.textContent = `Carregado do banco local — ${s.atendimentos.toLocaleString('pt-BR')} atendimentos (${minDt} a ${maxDt})`;
+      statusEl.className = 'status mono';
+    }
+    showToast(`Dados carregados: ${s.atendimentos.toLocaleString('pt-BR')} atendimentos (${minDt} a ${maxDt}).`, 'ok', 6000);
+    refreshDbStats();
+  } catch (e) {
+    console.warn('[VIDA] _execLoadFromDB falhou:', e);
+  }
+}
+
+// ── checkDeps ─────────────────────────────────────────────────────────────────
+// Checks if CDN libraries (XLSX, Chart) loaded; shows warning bar if not.
+export function checkDeps() {
+  const missing = [];
+  if (typeof XLSX === 'undefined') missing.push('leitura de planilhas (XLSX.js)');
+  if (typeof Chart === 'undefined') missing.push('gráficos (Chart.js)');
+  if (!missing.length) return;
+  const bar = document.createElement('div');
+  bar.id = 'depWarnBar';
+  bar.setAttribute('role', 'alert');
+  bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:var(--er,#a83a31);color:#fff;padding:10px 16px;font:600 13px "Plus Jakarta Sans",system-ui,sans-serif;display:flex;align-items:center;gap:10px;justify-content:center;text-align:center';
+  bar.innerHTML = '<span>⚠ Sem conexão com a internet: ' + missing.join(' e ') + ' indisponíveis. Conecte-se e recarregue a página (F5). O parser interno de .xlsx continua funcionando parcialmente.</span><button type="button" style="background:rgba(255,255,255,.2);border:0;color:#fff;padding:4px 12px;border-radius:6px;cursor:pointer;font:inherit" onclick="location.reload()">Recarregar</button>';
+  document.body.prepend(bar);
+}
+
+// ── showPrivacyNotice ─────────────────────────────────────────────────────────
+// Shows the LGPD privacy banner once, acknowledged via localStorage.
+export function showPrivacyNotice() {
+  const KEY = 'vida_priv_ack_v1';
+  try { if (localStorage.getItem(KEY)) return; } catch (e) { return; }
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-labelledby', 'privTitle');
+  ov.innerHTML = '<div style="background:var(--sur,#16191f);border:1px solid var(--bdr2,rgba(255,255,255,.09));border-radius:10px;max-width:480px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.5)">'
+    + '<div id="privTitle" style="font:700 16px &quot;Plus Jakarta Sans&quot;,system-ui,sans-serif;color:var(--txt,#e8eaf0);margin-bottom:12px">Proteção de dados de pacientes</div>'
+    + '<div style="font:400 13px/1.6 &quot;Plus Jakarta Sans&quot;,system-ui,sans-serif;color:var(--txt2,#8b90a0)">'
+    + '<p style="margin:0 0 10px">Os relatórios carregados contêm dados pessoais sensíveis (prontuário, nome, idade), armazenados <strong style="color:var(--txt,#e8eaf0)">apenas neste navegador</strong>, sem envio a servidores.</p>'
+    + '<p style="margin:0 0 10px">Por segurança, os dados <strong style="color:var(--txt,#e8eaf0)">expiram automaticamente após 12 horas</strong> e são apagados na próxima abertura.</p>'
+    + '<p style="margin:0">Use esta ferramenta somente em computador de acesso restrito. Para apagar tudo imediatamente, use Configurações → Limpar banco de dados.</p>'
+    + '</div>'
+    + '<div style="display:flex;justify-content:flex-end;margin-top:18px">'
+    + '<button type="button" id="privAckBtn" style="background:var(--ac,#1357a6);border:0;color:#fff;padding:9px 22px;border-radius:7px;cursor:pointer;font:600 13px &quot;Plus Jakarta Sans&quot;,system-ui,sans-serif">Entendi</button>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  const btn = ov.querySelector('#privAckBtn');
+  btn.focus();
+  btn.onclick = () => { try { localStorage.setItem(KEY, '1'); } catch (e) {} ov.remove(); };
 }

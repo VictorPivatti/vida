@@ -9,7 +9,7 @@
 // available, or provide a minimal safe fallback. They will be replaced by real
 // module implementations in Task 9.
 
-import { toggleLayoutEdit, resetLayout } from './ui/layout.js';
+import { toggleLayoutEdit, resetLayout, applyDensity } from './ui/layout.js';
 import { toggleTheme } from './ui/theme.js';
 import { renderAll, renderActivePane, markDirty, renderNotificaveis } from './render/index.js';
 import { renderEvasao, renderRecepTable } from './render/triagem.js';
@@ -28,6 +28,9 @@ import { loadCid } from './loaders/cid.js';
 import { loadProcedimentos } from './loaders/proc.js';
 import { loadExamesPdf } from './loaders/exames.js';
 import { applyFilters, setupDates, populateMedicoFilter } from './filters.js';
+import { refreshDbStats } from './storage/dbstats.js';
+import { updateTtlCountdown } from './ui/ttl.js';
+import { exportXLSX, exportMedXlsx } from './ui/export.js';
 
 // ── Helpers that some stubs need ─────────────────────────────────────────────
 const esc = v => String(v ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
@@ -38,7 +41,6 @@ const esc = v => String(v ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': 
 // the script-block copies when present, and provide safe fallbacks otherwise.
 
 function openUnitConfig() {
-  if (typeof window._openUnitConfig === 'function') { window._openUnitConfig(); return; }
   const UC = _getUC();
   const set = (id, val) => { const el = $(id); if (el) el.value = val || ''; };
   set('ucNome', UC.nome); set('ucTipo', UC.tipo || 'UPA'); set('ucCnes', UC.cnes);
@@ -59,7 +61,6 @@ function closeUnitConfig() {
 }
 
 function saveUnitConfig() {
-  if (typeof window._saveUnitConfig === 'function') { window._saveUnitConfig(); return; }
   const get = id => { const el = $(id); return el ? el.value.trim() : ''; };
   const UC = {
     nome: get('ucNome'), tipo: get('ucTipo'), cnes: get('ucCnes'),
@@ -302,7 +303,6 @@ function renderCidNotificaveis() {
 
 // ── Notif checklist export ────────────────────────────────────────────────────
 function exportNotifChecklist() {
-  if (typeof window._exportNotifChecklist === 'function') { window._exportNotifChecklist(); return; }
   const resultados = (window._lastNotifResultados || []).filter(r => r.count > 0)
     .sort((a, b) => b.count - a.count);
   if (!resultados.length) { showToast('Nenhum caso notificável encontrado para gerar checklist.', 'warn'); return; }
@@ -409,6 +409,19 @@ export function initGlobals() {
     applyFilters,
     setupDates,
     populateMedicoFilter,
+
+    // ── DB stats (A.3)
+    refreshDbStats,
+
+    // ── TTL countdown (A.3)
+    updateTtlCountdown,
+
+    // ── Export (A.3)
+    exportXLSX,
+    exportMedXlsx,
+
+    // ── Density (A.3)
+    applyDensity,
 
     // ── Build flag
     VIDA_BUILD: 'modular',

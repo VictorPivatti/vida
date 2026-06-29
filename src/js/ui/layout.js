@@ -158,3 +158,19 @@ export function resetLayout() {
   try { localStorage.removeItem(LAYOUT_KEY); } catch(e) {}
   location.reload();
 }
+
+// ── Density ────────────────────────────────────────────────────────────────────
+const DENSITY = {
+  compact: { kpi: '160px', gap: '8px' },
+  normal:  { kpi: '190px', gap: '16px' },
+  wide:    { kpi: '260px', gap: '24px' },
+};
+
+export function applyDensity(d) {
+  const v = DENSITY[d] || DENSITY.normal;
+  const r = document.documentElement.style;
+  r.setProperty('--kpi-min', v.kpi);
+  r.setProperty('--card-gap', v.gap);
+  document.querySelectorAll('.density-btn').forEach(b => b.classList.toggle('active-pill', b.dataset.density === d));
+  try { localStorage.setItem('upa_density', d); } catch (e) {}
+}
