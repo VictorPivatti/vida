@@ -169,8 +169,11 @@ export async function fileToBuffer(file, onProgress) {
 
   const report = (loaded, total) => onProgress?.(loaded, total);
 
-  // Arquivos >2 MB: stream com yield entre chunks (FileReader/arrayBuffer travam em alguns XLSX Vivver)
-  if (typeof file.stream === 'function' && size > 2 * 1024 * 1024) {
+  const isSpreadsheet = /\.xlsx?$/i.test(file.name || '');
+  // Stream sempre que disponível para planilhas (FileReader trava em XLSX Vivver ~1–3 MB)
+  const useStream = typeof file.stream === 'function' && (isSpreadsheet || size > 256 * 1024);
+
+  if (useStream) {
     console.log('[VIDA:hist] fileToBuffer | stream |', file.name, size + 'B');
     const reader = file.stream().getReader();
     const chunks = [];
@@ -191,7 +194,7 @@ export async function fileToBuffer(file, onProgress) {
   }
 
   return new Promise((resolve, reject) => {
-    console.log('[VIDA:hist] fileToBuffer | FileReader |', file.name, size + 'B');
+    console.log('[VIDA:hist] fileToBuffer | FileReader (fallback) |', file.name, size + 'B');
     const r = new FileReader();
     let lastTick = Date.now();
     const watchdog = setInterval(() => {
