@@ -367,11 +367,6 @@ export async function _execLoadFromDB(s) {
 
     if (cidRows.length) {
       state.cidRaw = cidRows;
-      const _cAS = document.getElementById('cidStatus');
-      if (_cAS) {
-        _cAS.textContent = cidRows.length.toLocaleString('pt-BR') + ' reg.';
-        _cAS.className = 'upload-menu-status loaded';
-      }
       try { if (typeof window.updateUploadStatuses === 'function') window.updateUploadStatuses(); } catch (e) {}
     }
 

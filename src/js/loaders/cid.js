@@ -32,11 +32,7 @@ export async function loadCid(files) {
         if (typeof window.refreshDbStats === 'function') window.refreshDbStats();
       } catch (e) { console.warn('[VidaDB] CID:', e); }
     })();
-    const cidBtn = document.getElementById('cidBtn');
-    if (cidBtn) {
-      cidBtn.textContent = 'CID: ' + state.cidRaw.length.toLocaleString('pt-BR');
-      cidBtn.classList.add('ok');
-    }
+    if (typeof window.updateUploadStatuses === 'function') window.updateUploadStatuses();
     if (typeof window.applyFilters === 'function') window.applyFilters();
     setProgress(100, 'CID carregado.');
     hideLoading();

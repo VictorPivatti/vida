@@ -130,17 +130,28 @@ export function updateSourceChips() {
 }
 
 export function updateUploadStatuses() {
+  const procTotal = state.procRaw.reduce((s, r) => s + (r.qde || 0), 0);
   const statuses = {
     triStatus: state.triSource === 'file' ? `${state.triRaw.length.toLocaleString('pt-BR')} reg.` : (state.triSource === 'hist' ? 'derivado' : ''),
     cidStatus: state.cidRaw.length ? `${state.cidRaw.length.toLocaleString('pt-BR')} reg.` : '',
-    procStatus: state.procRaw.length ? `${state.procRaw.length.toLocaleString('pt-BR')} proc.` : '',
+    procStatus: procTotal ? `${procTotal.toLocaleString('pt-BR')} proc.` : '',
     examesStatus: state.examesRaw.length ? `${state.examesRaw.length.toLocaleString('pt-BR')} guias` : '',
   };
+  const itemIds = { triStatus: 'triBtn', cidStatus: 'cidBtn', procStatus: 'procBtn', examesStatus: 'examesBtn' };
   Object.entries(statuses).forEach(([id, text]) => {
     const el = document.getElementById(id);
     if (!el) return;
     el.textContent = text;
     el.className = 'upload-menu-status' + (text ? ' loaded' : '');
+    if (id === 'triStatus' && text === 'derivado') {
+      el.style.background = 'rgba(232,169,59,.12)';
+      el.style.color = 'var(--wn)';
+    } else if (el) {
+      el.style.background = '';
+      el.style.color = '';
+    }
+    const item = document.getElementById(itemIds[id]);
+    if (item) item.classList.toggle('loaded', !!text);
   });
   const loaded = [state.triSource === 'file', state.cidRaw.length > 0, state.procRaw.length > 0, state.examesRaw.length > 0].filter(Boolean).length;
   const badge = document.getElementById('uploadBadge');
@@ -150,26 +161,7 @@ export function updateUploadStatuses() {
 }
 
 export function updateTriBtn() {
-  const statusEl = document.getElementById('triStatus');
-  if (statusEl) {
-    if (state.triSource === 'file') {
-      statusEl.textContent = state.triRaw.length.toLocaleString('pt-BR') + ' reg.';
-      statusEl.className = 'upload-menu-status loaded';
-      statusEl.style.background = '';
-      statusEl.style.color = '';
-    } else if (state.triSource === 'hist') {
-      statusEl.textContent = 'derivado';
-      statusEl.className = 'upload-menu-status loaded';
-      statusEl.style.background = 'rgba(232,169,59,.12)';
-      statusEl.style.color = 'var(--wn)';
-    } else {
-      statusEl.textContent = '';
-      statusEl.className = 'upload-menu-status';
-      statusEl.style.background = '';
-      statusEl.style.color = '';
-    }
-  }
-  try { updateUploadStatuses(); } catch (e) {}
+  updateUploadStatuses();
 }
 
 export function shortcut(k) {

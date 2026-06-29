@@ -44,8 +44,6 @@ export async function loadProcedimentos(file) {
     if (!rows.length) throw new Error('Nenhum procedimento válido encontrado.');
     state.procRaw = rows;
     state.files.proc = file.name;
-    const _pS = document.getElementById('procStatus');
-    if (_pS) { _pS.textContent = fmt(sum(rows, r => r.qde)) + ' proc.'; _pS.className = 'upload-menu-status loaded'; }
     try { if (typeof window.updateUploadStatuses === 'function') window.updateUploadStatuses(); } catch (e) {}
     showToast('Procedimentos carregados: ' + fmt(sum(rows, r => r.qde)) + ' registros de produção.', 'ok');
     hideLoading();

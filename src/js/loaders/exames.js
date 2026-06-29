@@ -32,8 +32,6 @@ export async function loadExamesPdf(file) {
     const records = await parseExamesPdf(lib, buf);
     if (!records || !records.length) { showToast('Nenhuma guia encontrada no PDF', 'err'); return; }
     state.examesRaw = records;
-    const _eS = document.getElementById('examesStatus');
-    if (_eS) { _eS.textContent = fmt(records.length) + ' guias'; _eS.className = 'upload-menu-status loaded'; }
     try { if (typeof window.updateUploadStatuses === 'function') window.updateUploadStatuses(); } catch (e) {}
     showToast('Exames carregados: ' + fmt(records.length) + ' guias', 'ok', 3000);
     const activePane = document.querySelector('.nav-item.active')?.dataset?.pane;

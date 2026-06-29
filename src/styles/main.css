@@ -1713,6 +1713,8 @@
     .upload-menu-item:hover{background:var(--sur2)}
     .upload-menu-item:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
     .upload-menu-item svg{color:var(--ac);flex-shrink:0}
+    .upload-menu-item > div:first-of-type{flex:1;min-width:0}
+    .upload-menu-item.loaded svg{color:var(--ok)}
     .upload-menu-label{font-size:12px;font-weight:600;color:var(--txt);line-height:1.2}
     .upload-menu-sub{font-size:10px;color:var(--mut);margin-top:1px}
     .upload-menu-status{
