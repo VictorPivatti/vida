@@ -62,7 +62,7 @@ export async function autoLoadFromDB() {
     const savedBtn = $('upSavedBtn');
     if (banner && savedText) {
       savedText.innerHTML =
-        `Continuar de onde parou <span style="font-weight:400;opacity:.7">· ${s.atendimentos.toLocaleString('pt-BR')} registros</span>`;
+        `Continuar de onde parou <span>· ${s.atendimentos.toLocaleString('pt-BR')} registros</span>`;
       banner.style.display = 'flex';
     }
     if (savedBtn && !savedBtn.dataset.bound) {

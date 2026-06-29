@@ -316,8 +316,8 @@
       line-height:1
     }
     .up-wordmark-sub{
-      font-size:8.5px;color:var(--mut);
-      letter-spacing:.06em;line-height:1
+      font-size:9px;color:var(--mut);
+      letter-spacing:.01em;line-height:1.3;max-width:180px
     }
 
     /* ── Bloco central ── */
@@ -325,75 +325,73 @@
       position:relative;z-index:1;
       display:flex;flex-direction:column;
       align-items:center;text-align:center;
-      width:min(560px, 92vw);
+      width:min(480px, 92vw);
       animation:upFadeUp .8s cubic-bezier(.16,1,.3,1) .1s both
     }
     @keyframes upFadeUp{from{opacity:0}to{opacity:1}}
 
-    /* Branding secundário */
-    .up-brand-tag{
-      display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;
-      margin-bottom:18px;font-size:11px;color:var(--mut);letter-spacing:.04em
-    }
-    .up-brand-acronym{
-      font-family:'IBM Plex Mono',monospace;font-weight:700;
-      letter-spacing:.18em;color:var(--txt2)
-    }
-    .up-brand-sep{opacity:.45}
-    .up-brand-expansion{font-weight:500}
-
-    /* Headline orientada a benefício */
     .up-headline{
       font-family:'Plus Jakarta Sans',sans-serif;
-      font-size:clamp(26px,5.2vw,38px);
-      font-weight:800;letter-spacing:-.03em;line-height:1.12;
-      color:var(--txt);margin:0 0 14px;max-width:36ch
+      font-size:clamp(24px,4.8vw,34px);
+      font-weight:800;letter-spacing:-.03em;line-height:1.14;
+      color:var(--txt);margin:0 0 12px;max-width:34ch
     }
     .up-lead{
-      font-size:14px;line-height:1.65;color:var(--txt2);
-      margin:0 0 28px;max-width:46ch
+      font-size:14px;line-height:1.6;color:var(--txt2);
+      margin:0 0 24px;max-width:40ch
     }
     .up-lead strong{color:var(--txt);font-weight:600}
 
-    /* Bloco principal de upload */
-    .up-upload-primary{width:100%;margin-bottom:8px}
+    /* Card único: retomar + upload */
+    .up-hero-card{
+      width:100%;
+      background:var(--sur);
+      border:1px solid var(--bdr2);
+      border-radius:20px;
+      overflow:hidden;
+      box-shadow:var(--shadow-md);
+    }
+
+    .up-upload-primary{width:100%}
     .up-upload-primary .up-dropzone{
-      border-width:2px;padding:36px 28px 32px;
-      box-shadow:var(--shadow-md),0 0 0 1px rgba(19,87,166,.06)
+      border:none;border-radius:0;
+      padding:32px 24px 28px;
+      box-shadow:none;background:transparent
     }
     .up-upload-primary .up-dropzone:hover,.up-upload-primary .up-dropzone.drag{
-      box-shadow:0 0 0 4px rgba(19,87,166,.1),var(--shadow-md);
-      transform:translateY(-3px)
+      box-shadow:none;transform:none;
+      background:rgba(19,87,166,.03)
     }
-    .up-drop-formats{
-      font-size:11px;color:var(--mut);margin-top:8px;letter-spacing:.02em
+    .up-drop-path{
+      font-size:10px;color:var(--mut);margin-top:6px;letter-spacing:.01em
     }
     .up-after-upload{
       font-size:12px;color:var(--mut);line-height:1.55;
-      margin:14px 0 0;text-align:center;max-width:42ch;margin-inline:auto
+      margin:16px 0 0;max-width:38ch
     }
 
-    /* Faixa de confiança */
+    .up-footer-meta{
+      width:100%;margin-top:28px;padding-top:20px;
+      border-top:1px solid var(--bdr)
+    }
     .up-trust-strip{
-      width:100%;display:flex;flex-direction:column;gap:8px;
-      margin:22px 0 0;padding:14px 16px;
-      background:var(--sur2);border:1px solid var(--bdr);
-      border-radius:var(--radius-lg);text-align:left
+      width:100%;display:flex;flex-wrap:wrap;
+      justify-content:center;gap:10px 20px;
+      margin:0;padding:0;
+      background:transparent;border:none;border-radius:0;text-align:center
     }
     .up-trust-item{
-      display:flex;align-items:flex-start;gap:10px;
-      font-size:12px;line-height:1.5;color:var(--txt2)
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:11px;line-height:1.4;color:var(--mut)
     }
-    .up-trust-item svg{flex:none;margin-top:1px;color:var(--ok)}
-    .up-trust-item strong{color:var(--txt);font-weight:600}
-
-    .up-source-section{margin-top:20px;width:100%}
-    .up-source-label{
-      font-size:10px;font-weight:700;text-transform:uppercase;
-      letter-spacing:.08em;color:var(--mut);margin:0 0 10px
+    .up-trust-item svg{flex:none;color:var(--ok);opacity:.85}
+    .up-source-note{
+      font-size:11px;color:var(--mut);line-height:1.5;
+      margin:14px 0 0
     }
-    .up-source-chip-primary{
-      color:var(--ac);background:var(--ac-glow);border-color:rgba(19,87,166,.28)
+    .up-source-flow{
+      font-family:'IBM Plex Mono',monospace;
+      font-size:10px;letter-spacing:.02em;color:var(--txt2)
     }
 
     /* Legado — oculto se ainda referenciado */
@@ -435,9 +433,9 @@
       transform:translateY(-2px)
     }
     .up-dropzone.ready{
-      border-color:var(--ok);border-style:solid;
-      background:rgba(47,158,126,.05);
-      box-shadow:0 0 0 4px rgba(47,158,126,.1)
+      border-color:transparent;
+      background:rgba(47,158,126,.04);
+      box-shadow:none
     }
 
     /* Ícone dentro do drop */
@@ -523,21 +521,22 @@
     }
     .up-config-btn:hover{color:var(--txt);border-color:var(--bdr3);background:var(--sur3)}
 
-    /* ── Banner de dados salvos — card primary-subtle ── */
+    /* ── Banner de dados salvos — faixa do card ── */
     .up-saved-banner{
       width:100%;display:flex;align-items:center;gap:12px;
-      background:var(--ac-glow);
-      border:1px solid rgba(19,87,166,.22);
-      border-radius:var(--radius-lg);padding:12px 16px;
-      margin-bottom:14px;
+      background:rgba(19,87,166,.07);
+      border:none;border-bottom:1px solid var(--bdr);
+      border-radius:0;padding:11px 16px;
+      margin:0;
       animation:upFadeUp .5s cubic-bezier(.16,1,.3,1) both
     }
-    .up-saved-dot{width:7px;height:7px;border-radius:50%;background:var(--ac);flex-shrink:0;box-shadow:0 0 6px var(--ac)}
-    .up-saved-text{font-size:12px;color:var(--ac);flex:1;line-height:1.4;font-weight:500}
+    .up-saved-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);flex-shrink:0}
+    .up-saved-text{font-size:12px;color:var(--txt);flex:1;line-height:1.4;font-weight:500;text-align:left}
+    .up-saved-text span{font-weight:400;color:var(--mut)}
     .up-saved-btn{
       font-size:11px;font-weight:600;
       color:#fff;border:none;
-      border-radius:var(--radius);padding:5px 14px;background:var(--ac2);
+      border-radius:8px;padding:6px 14px;background:var(--ac2);
       cursor:pointer;white-space:nowrap;flex-shrink:0;
       transition:background var(--t-fast)
     }
@@ -547,9 +546,9 @@
     .up-expired-banner{
       width:100%;display:flex;align-items:flex-start;gap:12px;
       background:rgba(232,169,59,.08);
-      border:1px solid rgba(232,169,59,.28);
-      border-radius:var(--radius-lg);padding:14px 16px;
-      margin-bottom:14px;text-align:left;
+      border:none;border-bottom:1px solid rgba(232,169,59,.25);
+      border-radius:0;padding:14px 16px;
+      margin:0;text-align:left;
       animation:upFadeUp .5s cubic-bezier(.16,1,.3,1) both
     }
     .up-expired-icon{
@@ -638,10 +637,10 @@
     .up-drop-select-btn{
       display:inline-flex;align-items:center;gap:6px;
       background:var(--ac2);color:#fff;
-      font-size:14px;font-weight:600;
-      border-radius:var(--radius);padding:11px 24px;
-      margin-top:18px;pointer-events:none;
-      box-shadow:0 3px 12px rgba(19,87,166,.28)
+      font-size:13px;font-weight:600;
+      border-radius:10px;padding:10px 20px;
+      margin-top:16px;pointer-events:none;
+      box-shadow:0 2px 8px rgba(19,87,166,.22)
     }
     .up-dropzone:hover .up-drop-select-btn,.up-dropzone.drag .up-drop-select-btn{
       background:#0d396d
@@ -707,9 +706,8 @@
       .up-headline{max-width:none;font-size:clamp(22px,6.5vw,30px)}
       .up-lead{font-size:13px;margin-bottom:22px}
       .up-upload-primary .up-dropzone{padding:28px 18px 24px}
-      .up-trust-strip{padding:12px 14px}
-      .up-source-trail{gap:4px}
-      .up-source-chip{font-size:9px;padding:2px 8px}
+      .up-footer-meta{margin-top:22px;padding-top:16px}
+      .up-trust-strip{flex-direction:column;gap:8px}
       .up-version{bottom:max(14px,env(safe-area-inset-bottom));right:14px}
       body:has(.priv-banner.visible) .up-version{bottom:calc(88px + env(safe-area-inset-bottom,0))}
       body:has(.priv-banner.visible) #upload{padding-bottom:96px}

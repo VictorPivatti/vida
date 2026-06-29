@@ -39,94 +39,80 @@
     </div>
     <div class="up-wordmark-text">
       <div class="up-wordmark-name">V.I.D.A.</div>
-      <div class="up-wordmark-sub">DADOS ASSISTENCIAIS</div>
+      <div class="up-wordmark-sub">Visualização Integrada de Dados Assistenciais</div>
     </div>
   </div>
 
   <!-- Bloco central -->
   <div class="up-center">
 
-    <p class="up-brand-tag">
-      <span class="up-brand-acronym">V.I.D.A.</span>
-      <span class="up-brand-sep" aria-hidden="true">·</span>
-      <span class="up-brand-expansion">Visualização Integrada de Dados Assistenciais</span>
-    </p>
-
     <h1 class="up-headline">Analise atendimentos e indicadores assistenciais em segundos</h1>
-    <p class="up-lead">Importe a base exportada do Vivver e gere uma leitura assistencial clara — <strong>processamento local</strong>, sem expor dados do paciente.</p>
+    <p class="up-lead">Importe a exportação do Vivver — <strong>processamento local</strong>, sem enviar dados do paciente a servidores.</p>
 
-    <!-- Banner dados salvos (visível via JS quando IDB tem dados) -->
-    <div class="up-saved-banner" id="upSavedBanner" style="display:none">
-      <div class="up-saved-dot"></div>
-      <div class="up-saved-text" id="upSavedText">Continuar de onde parou</div>
-      <button type="button" class="up-saved-btn" id="upSavedBtn">Carregar</button>
-    </div>
-
-    <!-- Sessão expirada — orienta reimportação (TTL 12h) -->
-    <div class="up-expired-banner" id="upExpiredBanner" style="display:none" role="alert">
-      <div class="up-expired-icon" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <div class="up-hero-card">
+      <!-- Banner dados salvos (visível via JS quando IDB tem dados) -->
+      <div class="up-saved-banner" id="upSavedBanner" style="display:none">
+        <div class="up-saved-dot"></div>
+        <div class="up-saved-text" id="upSavedText">Continuar de onde parou</div>
+        <button type="button" class="up-saved-btn" id="upSavedBtn">Carregar</button>
       </div>
-      <div class="up-expired-body">
-        <strong class="up-expired-title">Sessão anterior expirou por segurança</strong>
-        <p>Os dados de pacientes foram removidos automaticamente após 12 horas (LGPD). Importe novamente o histórico do Vivver para retomar a análise.</p>
-      </div>
-      <button type="button" class="btn up-expired-dismiss" id="upExpiredDismiss">Entendi</button>
-    </div>
 
-    <!-- Zona principal de importação -->
-    <div class="up-upload-primary">
-      <input id="histFile" class="hidden" type="file" accept=".xlsx,.xls,.csv" multiple>
-      <div class="up-dropzone" id="histDrop" role="button" tabindex="0" aria-label="Importar histórico de atendimentos do Vivver">
-        <div class="up-drop-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
+      <!-- Sessão expirada — orienta reimportação (TTL 12h) -->
+      <div class="up-expired-banner" id="upExpiredBanner" style="display:none" role="alert">
+        <div class="up-expired-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
-        <div class="up-drop-label-wrap">
-          <div class="up-drop-label">Importar histórico de atendimentos</div>
-          <div class="up-drop-sub">Arraste aqui ou selecione · Vivver: Relatórios → Histórico de Atendimentos</div>
-          <div class="up-drop-formats mono">.xlsx · .xls · .csv — múltiplos arquivos e anos</div>
-          <div class="up-drop-select-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Selecionar arquivo do Vivver
+        <div class="up-expired-body">
+          <strong class="up-expired-title">Sessão anterior expirou por segurança</strong>
+          <p>Os dados foram removidos após 12 horas (LGPD). Importe novamente o histórico do Vivver.</p>
+        </div>
+        <button type="button" class="btn up-expired-dismiss" id="upExpiredDismiss">Entendi</button>
+      </div>
+
+      <!-- Zona principal de importação -->
+      <div class="up-upload-primary">
+        <input id="histFile" class="hidden" type="file" accept=".xlsx,.xls,.csv" multiple>
+        <div class="up-dropzone" id="histDrop" role="button" tabindex="0" aria-label="Importar histórico de atendimentos do Vivver">
+          <div class="up-drop-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <div class="up-drop-label-wrap">
+            <div class="up-drop-label">Importar histórico de atendimentos</div>
+            <div class="up-drop-sub">Arraste aqui ou clique para selecionar</div>
+            <div class="up-drop-path mono">Vivver → Relatórios → Histórico de Atendimentos</div>
+            <div class="up-drop-formats mono">.xlsx · .xls · .csv</div>
+            <div class="up-drop-select-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Selecionar arquivo
+            </div>
+          </div>
+          <div class="up-drop-filename" id="histFileName"></div>
+          <div class="up-drop-progress-row">
+            <div class="up-drop-spinner"></div>
+            <div class="up-drop-progress-text" id="upDropProgressText">processando…</div>
           </div>
         </div>
-        <div class="up-drop-filename" id="histFileName"></div>
-        <div class="up-drop-progress-row">
-          <div class="up-drop-spinner"></div>
-          <div class="up-drop-progress-text" id="upDropProgressText">processando…</div>
+      </div>
+    </div>
+
+    <p class="up-after-upload">Dashboards de volume, tempos, gargalos e produção gerados automaticamente neste navegador.</p>
+
+    <div class="up-footer-meta">
+      <div class="up-trust-strip" role="note" aria-label="Privacidade e segurança dos dados">
+        <div class="up-trust-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Somente neste dispositivo</span>
+        </div>
+        <div class="up-trust-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>Expira em 12 h (LGPD)</span>
         </div>
       </div>
-      <p class="up-after-upload">Após a importação: dashboards de volume, tempos, gargalos e produção são gerados automaticamente neste navegador.</p>
-    </div>
-
-    <div class="up-trust-strip" role="note" aria-label="Privacidade e segurança dos dados">
-      <div class="up-trust-item">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>Dados processados e armazenados <strong>somente neste dispositivo</strong> — nenhum envio a servidores</span>
-      </div>
-      <div class="up-trust-item">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span>Expiração automática em 12 h · exclusão imediata em Configurações</span>
-      </div>
-    </div>
-
-    <div class="up-source-section">
-      <p class="up-source-label">Complementos opcionais após o histórico</p>
-      <div class="up-source-trail" aria-label="Fontes de dados suportadas">
-        <span class="up-source-chip up-source-chip-primary">Histórico</span>
-        <span class="up-source-sep">→</span>
-        <span class="up-source-chip">Triagem</span>
-        <span class="up-source-sep">→</span>
-        <span class="up-source-chip">CID</span>
-        <span class="up-source-sep">→</span>
-        <span class="up-source-chip">Procedimentos</span>
-        <span class="up-source-sep">→</span>
-        <span class="up-source-chip">Exames</span>
-      </div>
+      <p class="up-source-note">Complementos opcionais: <span class="up-source-flow">Triagem · CID · Procedimentos · Exames</span></p>
     </div>
 
     <!-- Progress -->
