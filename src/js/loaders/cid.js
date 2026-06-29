@@ -18,6 +18,9 @@ export async function loadCid(files) {
     const fileArr = [...files];
     const buffers = await Promise.all(fileArr.map(f => f.arrayBuffer()));
     const result = await workerRun('parseCid', { buffers, names: fileArr.map(f => f.name) });
+    if (result.total != null) {
+      state.quality.push({ type: 'CID', total: result.total, invalid: result.invalid ?? 0 });
+    }
     state.cidRaw = result.rows;
     state.files.cid = fileArr.length + ' arquivo(s)';
     (async () => {

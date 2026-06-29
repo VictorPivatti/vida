@@ -513,6 +513,9 @@ export function initGlobals() {
     CONFIG,
     AUDIT_RULES,
 
+    // ── DOM helpers (needed by inline onclick/onchange handlers)
+    $,
+
     // ── Build flag
     VIDA_BUILD: 'modular',
   });

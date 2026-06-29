@@ -26,7 +26,7 @@ function _checkLayoutFingerprint(type, csv, name) {
     if (!stored) { localStorage.setItem(key, headerLine); return; }
     if (stored !== headerLine) {
       console.warn('[fingerprint] Layout de ' + type + ' mudou em "' + name + '". Esperado:\n' + stored + '\nRecebido:\n' + headerLine);
-      showToast('⚠ Layout de ' + type + ' diferente do esperado em "' + name + '". Verifique se o arquivo é do formato correto.', 'wn');
+      showToast('⚠ Layout de ' + type + ' diferente do esperado em "' + name + '". Verifique se o arquivo é do formato correto.', 'warn');
       localStorage.setItem(key, headerLine);
     }
   } catch (e) {}
@@ -80,40 +80,46 @@ export async function workerRun(type, payload) {
       try {
         const url = _getHistWorkerUrl();
         if (!url) throw new Error('Worker code not available');
-        const rows = await new Promise((res, rej) => {
+        const result = await new Promise((res, rej) => {
           const w = new Worker(url);
           w.onmessage = e => {
             if (e.data.type === 'progress') {
               setProgress(50 + Math.round(e.data.i / e.data.n * 45), e.data.name + ': ' + e.data.count.toLocaleString('pt-BR') + ' registros');
-            } else { w.terminate(); res(e.data.rows); }
+            } else { w.terminate(); res({ rows: e.data.rows, total: e.data.total, invalid: e.data.invalid }); }
           };
           w.onerror = e => { w.terminate(); rej(new Error(e.message || 'Worker parse error')); };
           w.postMessage({ csvs, names });
         });
-        return { rows };
+        return result;
       } catch (workerErr) { console.warn('[workerRun] Worker falhou, fallback main thread:', workerErr.message); }
     }
     // Fallback main thread
+    let totTotal = 0, totInvalid = 0;
     const all = [], seen = new Set();
     for (let i = 0; i < csvs.length; i++) {
-      const { data: rows } = parseHistLegacy(csvs[i]);
+      const { data: rows, total, invalid } = parseHistLegacy(csvs[i]);
+      totTotal += total; totInvalid += invalid;
       for (const r of rows) { const k = r.pront + '|' + r.dateKey + '|' + r.hora; if (!seen.has(k)) { seen.add(k); all.push(r); } }
       setProgress(50 + Math.round((i + 1) / csvs.length * 45), names[i] + ': ' + rows.length.toLocaleString('pt-BR') + ' registros');
       await new Promise(r => setTimeout(r, 0));
     }
     all.sort((a, b) => a.dh - b.dh);
-    return { rows: all };
+    return { rows: all, total: totTotal, invalid: totInvalid };
   } else if (type === 'parseCid') {
-    let all = [];
+    let all = [], cidTotal = 0, cidInvalid = 0;
     for (let i = 0; i < payload.buffers.length; i++) {
       setProgress(10 + Math.round(i / payload.buffers.length * 80), 'Lendo ' + payload.names[i] + '...');
       await new Promise(r => setTimeout(r, 0));
       const cidCsv = smartDecode(payload.buffers[i]);
       _checkLayoutFingerprint('cid', cidCsv, payload.names[i]);
-      all = all.concat(parseCidFromText(cidCsv));
+      const parsed = parseCidFromText(cidCsv);
+      const lineCount = Math.max(0, cidCsv.split(/\r?\n/).filter(l => l.trim()).length - 1);
+      cidTotal += lineCount;
+      cidInvalid += Math.max(0, lineCount - parsed.length);
+      all = all.concat(parsed);
     }
     all.sort((a, b) => a.dh - b.dh);
-    return { rows: all };
+    return { rows: all, total: cidTotal, invalid: cidInvalid };
   } else { throw new Error('Unknown type: ' + type); }
 }
 
@@ -157,6 +163,9 @@ export async function loadHist(fileOrFiles) {
     const result = await workerRun('parseHist', { buffers, names: files.map(f => f.name) });
     setProgress(90, 'Finalizando...');
     if (!result.rows.length) throw new Error('Nenhum atendimento válido encontrado.');
+    if (result.total != null) {
+      state.quality.push({ type: 'Histórico', total: result.total, invalid: result.invalid ?? 0 });
+    }
     state.raw = result.rows;
     state.files.hist = files.length === 1 ? files[0].name : files.length + ' arquivos';
     try { await VidaDB.clear('atendimentos'); } catch (e) { console.warn('[VidaDB] clear err:', e); }

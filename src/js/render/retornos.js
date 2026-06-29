@@ -2,11 +2,29 @@
 import { state } from '../state.js';
 import { $, esc, fmt, fmtN, pct, norm, shortName, kpi } from '../utils/dom.js';
 import { avg } from '../utils/stats.js';
-import { monthLabel } from '../utils/dates.js';
+import { monthLabel, ymd } from '../utils/dates.js';
 import { chart, gridColor, tickColor, axes } from '../ui/charts.js';
 import { returnsFor, returnsWithin, returns72, monthReturnRate } from '../metrics/returns.js';
 
 function meta(id) { return Number(document.getElementById(id)?.value) || 0; }
+
+function previousRows() {
+  const sEl = document.getElementById('dateStart');
+  const eEl = document.getElementById('dateEnd');
+  if (!sEl?.value || !eEl?.value) return [];
+  const s = new Date(sEl.value + 'T00:00:00');
+  const e = new Date(eEl.value + 'T23:59:59');
+  if (isNaN(s) || isNaN(e)) return [];
+  const span = e - s;
+  const prevEnd = new Date(s.getTime() - 1);
+  const prevStart = new Date(prevEnd.getTime() - span);
+  const t = document.getElementById('turno')?.value || 'all';
+  const sKey = ymd(prevStart), eKey = ymd(prevEnd);
+  return state.raw.filter(r =>
+    (r.dateKey || '') >= sKey && (r.dateKey || '') <= eKey && (t === 'all' || r.turno === t)
+  );
+}
+
 function group(arr, fn) { return arr.reduce((m, r) => { const k = fn(r); m[k] = (m[k] || 0) + 1; return m; }, {}); }
 function riskWeight(c) { return ({ BRANCO: 0, AZUL: 1, VERDE: 2, AMARELO: 3, LARANJA: 4, VERMELHO: 5 }[c] ?? 1); }
 
@@ -20,7 +38,7 @@ function metricDelta(cur, prev, unit = '', inverse = false) {
 export function renderRetornos() {
   const { byP, ret } = returns72(), d = state.filt;
   const patients = Object.keys(byP).length, multi = Object.values(byP).filter(v => v.length > 1).length;
-  const prev = [], prevRet = returnsFor(prev).ret;
+  const prev = previousRows(), prevRet = returnsFor(prev).ret;
   const retRate = d.length ? ret.length / d.length * 100 : null;
   const prevRate = prev.length ? prevRet.length / prev.length * 100 : null;
   $('kpisRet').innerHTML = [

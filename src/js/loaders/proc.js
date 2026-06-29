@@ -22,7 +22,7 @@ function _checkLayoutFingerprint(type, csv, name) {
     if (!stored) { localStorage.setItem(key, headerLine); return; }
     if (stored !== headerLine) {
       console.warn('[fingerprint] Layout de ' + type + ' mudou em "' + name + '". Esperado:\n' + stored + '\nRecebido:\n' + headerLine);
-      showToast('⚠ Layout de ' + type + ' diferente do esperado em "' + name + '". Verifique se o arquivo é do formato correto.', 'wn');
+      showToast('⚠ Layout de ' + type + ' diferente do esperado em "' + name + '". Verifique se o arquivo é do formato correto.', 'warn');
       localStorage.setItem(key, headerLine);
     }
   } catch (e) {}

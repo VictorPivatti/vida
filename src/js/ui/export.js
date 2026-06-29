@@ -36,8 +36,8 @@ export function exportMedXlsx() {
         'Plantões noturnos': r.plantN,
         'Plantões total': r.plantTotal,
         'Atend./plantão': r.mediaPlantao ?? '',
-        'Atend./plantão D': r.mediaPlantaoD ?? '',
-        'Atend./plantão N': r.mediaPlantaoN ?? '',
+        'Atend./plantão D': r.mediaD ?? '',
+        'Atend./plantão N': r.mediaN ?? '',
         'Espera médico (min)': r.medAvg != null ? Math.round(r.medAvg) : '',
         'Espera triagem (min)': r.triAvg != null ? Math.round(r.triAvg) : '',
         'Tempo total (min)': r.totAvg != null ? Math.round(r.totAvg) : '',
@@ -57,9 +57,9 @@ export function exportXLSX() {
   if (!state.filt.length) { showToast('Nenhum dado filtrado para exportar.', 'warn'); return; }
   const _expBtn = document.getElementById('exportBtn');
   if (_expBtn) { _expBtn.disabled = true; _expBtn.style.opacity = '.5'; _expBtn.style.cursor = 'wait'; }
-  try {
-    showLoading('Gerando planilha...');
-    setTimeout(() => {
+  showLoading('Gerando planilha...');
+  setTimeout(() => {
+    try {
       const wb = XLSX.utils.book_new();
 
       // Sheet 1: Atendimentos filtrados
@@ -109,10 +109,10 @@ export function exportXLSX() {
       hideLoading();
       if (_expBtn) { _expBtn.disabled = false; _expBtn.style.opacity = ''; _expBtn.style.cursor = ''; }
       showToast(`Planilha exportada com ${state.filt.length.toLocaleString('pt-BR')} atendimentos.`, 'ok');
-    }, 50);
-  } catch (err) {
-    hideLoading();
-    if (_expBtn) { _expBtn.disabled = false; _expBtn.style.opacity = ''; _expBtn.style.cursor = ''; }
-    showToast('Erro ao exportar: ' + err.message, 'err');
-  }
+    } catch (err) {
+      hideLoading();
+      if (_expBtn) { _expBtn.disabled = false; _expBtn.style.opacity = ''; _expBtn.style.cursor = ''; }
+      showToast('Erro ao exportar: ' + err.message, 'err');
+    }
+  }, 50);
 }

@@ -29,7 +29,7 @@ export function tickColor(){return state.theme==="dark"?"#7a8da3":"#66758a"}
 export function axes(){return{x:{grid:{color:gridColor()},ticks:{color:tickColor()}},y:{grid:{color:gridColor()},ticks:{color:tickColor()}}}}
 
 export function chart(id,cfg){
-  if(state.charts[id])state.charts[id].destroy();
+  if(state.charts[id]){ state.charts[id].destroy(); delete state.charts[id]; }
   const el=$(id);if(!el)return;
   // Verificar se todos os datasets estão vazios
   const allEmpty=cfg.data&&cfg.data.datasets&&cfg.data.datasets.length>0&&

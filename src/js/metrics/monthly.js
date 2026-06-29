@@ -19,6 +19,7 @@ let _msCacheVer = -1;
 export function monthlyStats(d) {
   const isFilt = d === state.filt;
   if (isFilt && _msCacheVer === state._filtVersion) return _msCache;
+  const metaTri = typeof document !== 'undefined' ? (Number(document.getElementById('metaTri')?.value) || 0) : 0;
   const map = {};
   d.forEach(r => {
     const k = r.anoMes;
@@ -26,7 +27,7 @@ export function monthlyStats(d) {
     map[k].rows.push(r);
     // Use Manchester threshold per colour, fallback to global meta
     const mMed = metaManchester(r.cor);
-    if (r.tEspTri != null) { map[k].tri.push(r.tEspTri); map[k].triN++; /* metaTri not available in this module */ }
+    if (r.tEspTri != null) { map[k].tri.push(r.tEspTri); map[k].triN++; if (r.tEspTri <= metaTri) map[k].triOk++; }
     if (r.tEspMed != null) { map[k].med.push(r.tEspMed); map[k].medN++; if (r.tEspMed <= mMed) map[k].medOk++; }
     if (r.tTotal != null) map[k].tot.push(r.tTotal);
   });

@@ -38,7 +38,7 @@ function renderAnotLista() {
 }
 
 export function deletarAnotacao(i) {
-  const anots = loadAnotacoes();
+  const anots = loadAnotacoes().sort((a, b) => b.k - a.k);
   anots.splice(i, 1);
   saveAnotacoes(anots);
   renderAnotLista();

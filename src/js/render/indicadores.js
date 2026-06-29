@@ -2,13 +2,30 @@
 import { state } from '../state.js';
 import { $, fmt, fmtN, pct, kpi } from '../utils/dom.js';
 import { percentile } from '../utils/stats.js';
-import { monthLabel } from '../utils/dates.js';
+import { monthLabel, ymd } from '../utils/dates.js';
 import { chart, gridColor, tickColor, axes } from '../ui/charts.js';
 import { monthlyStats } from '../metrics/monthly.js';
 import { metaManchester, manchesterConformidade } from '../metrics/manchester.js';
 import { RISK_COLOR } from '../constants.js';
 
 function meta(id) { return Number(document.getElementById(id)?.value) || 0; }
+
+function previousRows() {
+  const sEl = document.getElementById('dateStart');
+  const eEl = document.getElementById('dateEnd');
+  if (!sEl?.value || !eEl?.value) return [];
+  const s = new Date(sEl.value + 'T00:00:00');
+  const e = new Date(eEl.value + 'T23:59:59');
+  if (isNaN(s) || isNaN(e)) return [];
+  const span = e - s;
+  const prevEnd = new Date(s.getTime() - 1);
+  const prevStart = new Date(prevEnd.getTime() - span);
+  const t = document.getElementById('turno')?.value || 'all';
+  const sKey = ymd(prevStart), eKey = ymd(prevEnd);
+  return state.raw.filter(r =>
+    (r.dateKey || '') >= sKey && (r.dateKey || '') <= eKey && (t === 'all' || r.turno === t)
+  );
+}
 
 function group(arr, fn) {
   return arr.reduce((m, r) => { const k = fn(r); m[k] = (m[k] || 0) + 1; return m; }, {});
@@ -35,8 +52,7 @@ export function renderIndicadores() {
   const totalN = d.filter(r => r.tTotal != null).length, totalOk = d.filter(r => r.tTotal != null && r.tTotal <= meta('metaTotal')).length;
   const monthAvg = m.length ? Math.round(d.length / m.length) : 0;
 
-  // Previous period — delegate to a simple filtered version
-  const prev = [];
+  const prev = previousRows();
   const pTriN = prev.filter(r => r.tEspTri != null).length, pTriOk = prev.filter(r => r.tEspTri != null && r.tEspTri <= meta('metaTri')).length;
   const pMedN = prev.filter(r => r.tEspMed != null).length, pMedOk = prev.filter(r => r.tEspMed != null && r.tEspMed <= metaManchester(r.cor)).length;
   const pTotalN = prev.filter(r => r.tTotal != null).length, pTotalOk = prev.filter(r => r.tTotal != null && r.tTotal <= meta('metaTotal')).length;
