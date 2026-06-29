@@ -19,7 +19,7 @@ ok('returnsFor: B no return', !r.ret.some(x => x.pront === 'B'));
 ok('meta VERMELHO', metaManchester('VERMELHO') === 0);
 ok('meta LARANJA', metaManchester('LARANJA') === 15);
 ok('meta AMARELO', metaManchester('AMARELO') === 60);
-ok('meta VERDE', metaManchester('VERDE') === 240);
+ok('meta VERDE', metaManchester('VERDE') === 120);
 ok('meta unknown', metaManchester('UNKNOWN') > 0);
 
 if (failed > 0) { console.error(failed + ' failed'); process.exit(1); }

@@ -4,7 +4,7 @@
 // Default Manchester time thresholds (minutes) per triage colour.
 // These match the values stored in the DOM input elements; when running
 // outside the browser the constants below are used as fallbacks.
-const MANCHESTER_METAS = { VERMELHO: 0, LARANJA: 15, AMARELO: 60, VERDE: 240, AZUL: 240, BRANCO: 240 };
+const MANCHESTER_METAS = { VERMELHO: 0, LARANJA: 15, AMARELO: 60, VERDE: 120, AZUL: 240, BRANCO: 240 };
 
 /**
  * Return the Manchester time threshold (minutes) for a given triage colour.
