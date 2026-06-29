@@ -75,20 +75,35 @@ export function smartDecode(buf) {
  * Browser-only.
  */
 export async function readZipEntry(arrayBuf, targetName) {
+  console.log('[VIDA:zip] readZipEntry | alvo:', targetName, '| buf:', arrayBuf.byteLength, 'bytes');
+  console.time('[VIDA:zip] readZipEntry ' + targetName);
   const buf = new Uint8Array(arrayBuf);
   const dv = new DataView(arrayBuf);
-  let off = 0;
+  let off = 0, idx = 0;
   while (off < buf.length - 30) {
     if (dv.getUint32(off, true) !== 0x04034B50) break;
+    const gpFlag = dv.getUint16(off + 6, true);
     const method = dv.getUint16(off + 8, true);
     const cSize = dv.getUint32(off + 18, true);
     const nameLen = dv.getUint16(off + 26, true);
     const extraLen = dv.getUint16(off + 28, true);
     const name = new TextDecoder().decode(buf.slice(off + 30, off + 30 + nameLen));
+    console.log('[VIDA:zip] entrada #' + idx + ' | nome:', name, '| cSize:', cSize,
+      '| gpFlag: 0x' + gpFlag.toString(16), '| bit3(data-descriptor):', !!(gpFlag & 8),
+      '| method:', method);
+    if (cSize === 0 && (gpFlag & 8)) console.warn('[VIDA:zip] ATENCAO: cSize=0 + bit3 set (ZIP streaming) -- DecompressionStream pode travar');
+    if (cSize === 0xFFFFFFFF) console.warn('[VIDA:zip] ATENCAO: cSize=0xFFFFFFFF (ZIP64) -- loop ira travar');
+    idx++;
     const dataOff = off + 30 + nameLen + extraLen;
     if (name === targetName) {
+      console.log('[VIDA:zip] alvo encontrado | descomprimindo | cSize efetivo:', cSize);
       const compressed = arrayBuf.slice(dataOff, dataOff + cSize);
-      if (method === 0) return new TextDecoder('utf-8').decode(compressed);
+      if (method === 0) {
+        const result = new TextDecoder('utf-8').decode(compressed);
+        console.log('[VIDA:zip] method=stored | tamanho:', result.length, 'chars');
+        console.timeEnd('[VIDA:zip] readZipEntry ' + targetName);
+        return result;
+      }
       const ds = new DecompressionStream('deflate-raw');
       const writer = ds.writable.getWriter();
       const reader = ds.readable.getReader();
@@ -98,10 +113,15 @@ export async function readZipEntry(arrayBuf, targetName) {
       while (true) { const { done, value } = await reader.read(); if (done) break; parts.push(value); }
       const out = new Uint8Array(parts.reduce((s, p) => s + p.length, 0));
       let pos = 0; for (const p of parts) { out.set(p, pos); pos += p.length; }
-      return new TextDecoder('utf-8').decode(out);
+      const result = new TextDecoder('utf-8').decode(out);
+      console.log('[VIDA:zip] descomprimido | tamanho:', result.length, 'chars');
+      console.timeEnd('[VIDA:zip] readZipEntry ' + targetName);
+      return result;
     }
     off = dataOff + cSize;
   }
+  console.log('[VIDA:zip] alvo nao encontrado:', targetName, '| entradas lidas:', idx);
+  console.timeEnd('[VIDA:zip] readZipEntry ' + targetName);
   return null;
 }
 
@@ -110,8 +130,15 @@ export async function readZipEntry(arrayBuf, targetName) {
  * Browser-only.
  */
 export async function xlsxExtract(ab) {
+  console.log('[VIDA:xlsx] xlsxExtract | buf:', ab.byteLength, 'bytes');
+  console.time('[VIDA:xlsx] xlsxExtract');
   const xml = await readZipEntry(ab, 'xl/sharedStrings.xml');
-  if (!xml) return null;
+  if (!xml) {
+    console.log('[VIDA:xlsx] xlsxExtract | sharedStrings.xml ausente -- retornando null');
+    console.timeEnd('[VIDA:xlsx] xlsxExtract');
+    return null;
+  }
+  console.log('[VIDA:xlsx] sharedStrings.xml | tamanho:', xml.length, 'chars');
   const strings = [];
   const siRe = /<si>([\s\S]*?)<\/si>/g;
   const tRe = /<t[^>]*>([^<]*)<\/t>/g;
@@ -122,6 +149,8 @@ export async function xlsxExtract(ab) {
     while ((t = tRe.exec(block)) !== null) seg += t[1];
     strings.push(fixMojibake(decodeXmlEntities(seg)).normalize('NFC'));
   }
+  console.log('[VIDA:xlsx] <si> processados:', strings.length);
+  console.timeEnd('[VIDA:xlsx] xlsxExtract');
   return strings.length > 1 ? strings.join('\n') : null;
 }
 

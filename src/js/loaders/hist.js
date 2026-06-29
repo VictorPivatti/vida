@@ -55,7 +55,10 @@ export async function workerRun(type, payload) {
       await new Promise(r => setTimeout(r, 0));
       const hdr = new Uint8Array(buf, 0, 4);
       const isBin = (hdr[0] === 0xD0 && hdr[1] === 0xCF) || (hdr[0] === 0x50 && hdr[1] === 0x4B);
+      console.log('[VIDA:hist] arquivo:', name, '| isBin:', isBin, '| magic: 0x' +
+        hdr[0].toString(16).padStart(2,'0') + hdr[1].toString(16).padStart(2,'0'));
       let csv = isBin ? (await xlsxExtract(buf)) : null;
+      console.log('[VIDA:hist] xlsxExtract result | arquivo:', name, '| csv:', csv ? ('string[' + csv.length + '] temPontoVirgula=' + csv.includes(';')) : null);
       if (csv && !csv.includes(';')) csv = null;
       if (!csv && isBin) {
         try {
@@ -85,9 +88,16 @@ export async function workerRun(type, payload) {
           w.onmessage = e => {
             if (e.data.type === 'progress') {
               setProgress(50 + Math.round(e.data.i / e.data.n * 45), e.data.name + ': ' + e.data.count.toLocaleString('pt-BR') + ' registros');
-            } else { w.terminate(); res({ rows: e.data.rows, total: e.data.total, invalid: e.data.invalid }); }
+            } else {
+              console.log('[VIDA:worker] onmessage | type:', e.data.type, '| rows:', e.data.rows?.length, '| total:', e.data.total, '| invalid:', e.data.invalid);
+              w.terminate(); res({ rows: e.data.rows, total: e.data.total, invalid: e.data.invalid });
+            }
           };
-          w.onerror = e => { w.terminate(); rej(new Error(e.message || 'Worker parse error')); };
+          w.onerror = e => {
+            console.error('[VIDA:worker] onerror | message:', e.message, '| filename:', e.filename, '| lineno:', e.lineno);
+            w.terminate(); rej(new Error(e.message || 'Worker parse error'));
+          };
+          console.log('[VIDA:worker] postMessage | csvs:', csvs.length, '| names:', names);
           w.postMessage({ csvs, names });
         });
         return result;
@@ -159,7 +169,11 @@ export async function loadHist(fileOrFiles) {
   try {
     state.quality = [];
     const _isFirstLoad = state.raw.length === 0;
+    console.log('[VIDA:hist] Promise.all(arrayBuffer) -- inicio | arquivos:', files.map(f => f.name + ' (' + f.size + 'B)'));
+    console.time('[VIDA:hist] Promise.all(arrayBuffer)');
     const buffers = await Promise.all(files.map(f => f.arrayBuffer()));
+    console.timeEnd('[VIDA:hist] Promise.all(arrayBuffer)');
+    console.log('[VIDA:hist] buffers lidos | tamanhos:', buffers.map(b => b.byteLength + 'B'));
     const result = await workerRun('parseHist', { buffers, names: files.map(f => f.name) });
     setProgress(90, 'Finalizando...');
     if (!result.rows.length) throw new Error('Nenhum atendimento válido encontrado.');
