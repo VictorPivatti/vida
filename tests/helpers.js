@@ -7,7 +7,8 @@ const fs   = require('fs');
 const path = require('path');
 const { JSDOM } = require('jsdom');
 
-const HTML_FILE = path.join(__dirname, '..', 'index.html');
+const HTML_FILE    = path.join(__dirname, '..', 'index.html');
+const SRC_MODULES  = path.join(__dirname, '..', 'src', 'js');
 
 const STUBS = `<script>
 class Chart{constructor(){this.data={datasets:[]}}destroy(){}update(){}resize(){}}
@@ -68,4 +69,4 @@ function report({ results, fatal }) {
   return fail;
 }
 
-module.exports = { buildHtml, runTests, report, STUBS, HTML_FILE };
+module.exports = { buildHtml, runTests, report, STUBS, HTML_FILE, SRC_MODULES };
