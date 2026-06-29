@@ -57,22 +57,24 @@ export async function workerRun(type, payload) {
       const isBin = (hdr[0] === 0xD0 && hdr[1] === 0xCF) || (hdr[0] === 0x50 && hdr[1] === 0x4B);
       console.log('[VIDA:hist] arquivo:', name, '| isBin:', isBin, '| magic: 0x' +
         hdr[0].toString(16).padStart(2,'0') + hdr[1].toString(16).padStart(2,'0'));
-      let csv = isBin ? (await xlsxExtract(buf)) : null;
-      console.log('[VIDA:hist] xlsxExtract result | arquivo:', name, '| csv:', csv ? ('string[' + csv.length + '] temPontoVirgula=' + csv.includes(';')) : null);
-      if (csv && !csv.includes(';')) csv = null;
-      if (!csv && isBin) {
+      let csv = null;
+      // XLSX.js primeiro — lida com ZIP64/streaming; xlsxExtract customizado pode travar
+      if (isBin && typeof XLSX !== 'undefined') {
         try {
-          // XLSX is a CDN global — guard with typeof
-          if (typeof XLSX !== 'undefined') {
-            // eslint-disable-next-line no-undef
-            const wb = XLSX.read(new Uint8Array(buf), { type: 'array', raw: false });
-            const sh = wb.Sheets[wb.SheetNames[0]];
-            // eslint-disable-next-line no-undef
-            const arr = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: false });
-            csv = arr.map(r => r.join(';')).join('\n');
-          }
+          // eslint-disable-next-line no-undef
+          const wb = XLSX.read(new Uint8Array(buf), { type: 'array', raw: false });
+          const sh = wb.Sheets[wb.SheetNames[0]];
+          // eslint-disable-next-line no-undef
+          const arr = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: false });
+          csv = arr.map(r => r.join(';')).join('\n');
+          console.log('[VIDA:hist] XLSX.read OK | arquivo:', name, '| chars:', csv.length);
         } catch (xlsErr) { console.warn('[workerRun] XLSX.read falhou:', xlsErr.message); }
       }
+      if (!csv && isBin) {
+        csv = await xlsxExtract(buf);
+        console.log('[VIDA:hist] xlsxExtract result | arquivo:', name, '| csv:', csv ? ('string[' + csv.length + '] temPontoVirgula=' + csv.includes(';')) : null);
+      }
+      if (csv && !csv.includes(';')) csv = null;
       if (!csv) csv = smartDecode(buf);
       _checkLayoutFingerprint('hist', csv, name);
       csvs.push(csv); names.push(name);
@@ -160,12 +162,51 @@ export function deriveTriFromHist(histRows) {
     });
 }
 
-// ── fileToBuffer — FileReader em vez de File.arrayBuffer() (mais compativel) ──
-export function fileToBuffer(file) {
+// ── fileToBuffer — leitura com stream para arquivos grandes (evita freeze) ───
+export async function fileToBuffer(file, onProgress) {
+  const size = file.size || 0;
+  if (!size) return new ArrayBuffer(0);
+
+  const report = (loaded, total) => onProgress?.(loaded, total);
+
+  // Arquivos >2 MB: stream com yield entre chunks (FileReader/arrayBuffer travam em alguns XLSX Vivver)
+  if (typeof file.stream === 'function' && size > 2 * 1024 * 1024) {
+    console.log('[VIDA:hist] fileToBuffer | stream |', file.name, size + 'B');
+    const reader = file.stream().getReader();
+    const chunks = [];
+    let received = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      received += value.byteLength;
+      report(received, size);
+      await new Promise(r => setTimeout(r, 0));
+    }
+    const out = new Uint8Array(received);
+    let pos = 0;
+    for (const c of chunks) { out.set(c, pos); pos += c.byteLength; }
+    console.log('[VIDA:hist] fileToBuffer | stream OK |', received + 'B');
+    return out.buffer;
+  }
+
   return new Promise((resolve, reject) => {
+    console.log('[VIDA:hist] fileToBuffer | FileReader |', file.name, size + 'B');
     const r = new FileReader();
-    r.onload = e => resolve(e.target.result);
-    r.onerror = () => reject(r.error);
+    let lastTick = Date.now();
+    const watchdog = setInterval(() => {
+      if (Date.now() - lastTick > 120000) {
+        r.abort();
+        clearInterval(watchdog);
+        reject(new Error('Leitura excedeu 2 min — tente exportar como CSV no Vivver.'));
+      }
+    }, 5000);
+    r.onprogress = e => {
+      if (e.lengthComputable) { lastTick = Date.now(); report(e.loaded, e.total); }
+    };
+    r.onload = e => { clearInterval(watchdog); resolve(e.target.result); };
+    r.onerror = () => { clearInterval(watchdog); reject(r.error || new Error('Falha ao ler arquivo')); };
+    r.onabort = () => { clearInterval(watchdog); reject(new Error('Leitura cancelada')); };
     r.readAsArrayBuffer(file);
   });
 }
@@ -181,7 +222,9 @@ export async function loadHist(fileOrFiles) {
     const _isFirstLoad = state.raw.length === 0;
     console.log('[VIDA:hist] fileToBuffer -- inicio | arquivos:', files.map(f => f.name + ' (' + f.size + 'B)'));
     console.time('[VIDA:hist] fileToBuffer');
-    const buffers = await Promise.all(files.map(fileToBuffer));
+    const buffers = await Promise.all(files.map(f => fileToBuffer(f, (loaded, total) => {
+      setProgress(Math.round(loaded / total * 40), `Lendo ${f.name}… ${Math.round(loaded / total * 100)}%`);
+    })));
     console.timeEnd('[VIDA:hist] fileToBuffer');
     console.log('[VIDA:hist] buffers lidos | tamanhos:', buffers.map(b => b.byteLength + 'B'));
     const result = await workerRun('parseHist', { buffers, names: files.map(f => f.name) });
