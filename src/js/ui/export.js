@@ -60,6 +60,7 @@ export function exportXLSX() {
   showLoading('Gerando planilha...');
   setTimeout(() => {
     try {
+      if (typeof XLSX === 'undefined') throw new Error('Biblioteca XLSX não carregada. Verifique a conexão e recarregue a página.');
       const wb = XLSX.utils.book_new();
 
       // Sheet 1: Atendimentos filtrados

@@ -245,7 +245,7 @@ export async function exportarPDF() {
       { id: 'pane-geral',       title: 'Visão geral' },
       { id: 'pane-indicadores', title: 'Indicadores' },
       { id: 'pane-medicos',     title: 'Médicos' },
-      { id: 'pane-retornos',    title: 'Retornos ≤72h' },
+      { id: 'pane-retornos',    title: 'Retornos ≤72h', confidencial: true },
       { id: 'pane-cid',         title: 'CID / Notificáveis', confidencial: true },
     ];
     const originalActive = document.querySelector('.nav-item.active')?.dataset?.pane;

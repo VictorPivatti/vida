@@ -168,9 +168,9 @@ export async function loadHist(fileOrFiles) {
     }
     state.raw = result.rows;
     state.files.hist = files.length === 1 ? files[0].name : files.length + ' arquivos';
-    try { await VidaDB.clear('atendimentos'); } catch (e) { console.warn('[VidaDB] clear err:', e); }
     (async () => {
       try {
+        await VidaDB.clear('atendimentos');
         const n = await VidaDB.bulkPut('atendimentos', result.rows);
         console.log(`[VidaDB] ${n.toLocaleString('pt-BR')} atendimentos salvos`);
         if (typeof window.refreshDbStats === 'function') window.refreshDbStats();

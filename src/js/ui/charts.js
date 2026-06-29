@@ -52,6 +52,7 @@ export function chart(id,cfg){
   if(existingEmpty)existingEmpty.remove();
   cfg.plugins=[...(cfg.plugins||[]),targetLinePlugin];
   // Chart is a CDN global (window.Chart)
+  if (typeof Chart === 'undefined') { console.warn('[charts] Chart.js não carregado — gráfico omitido:', id); return; }
   state.charts[id]=new Chart(el,cfg);
 }
 

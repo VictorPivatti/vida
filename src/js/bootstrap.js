@@ -65,6 +65,14 @@ export async function autoLoadFromDB() {
     if (savedBtn && !savedBtn.dataset.bound) {
       savedBtn.dataset.bound = '1';
       savedBtn.onclick = async () => {
+        if (VidaDB.dataExpired()) {
+          try { await VidaDB.clearAll(); } catch (e) { console.warn('[VIDA] TTL clear on resume:', e); }
+          VidaDB.clearTimestamp();
+          banner.style.display = 'none';
+          showToast('Dados de pacientes expiraram (12h) e foram removidos por segurança. Recarregue os relatórios.', 'warn', 9000);
+          try { window.refreshDbStats?.(); } catch (e) {}
+          return;
+        }
         banner.style.display = 'none';
         await _execLoadFromDB(s);
       };

@@ -15,6 +15,7 @@ const MANCHESTER_METAS = { VERMELHO: 0, LARANJA: 15, AMARELO: 60, VERDE: 120, AZ
  * @returns {number}
  */
 export function metaManchester(cor) {
+  if (!cor) return 60;
   if (typeof document !== 'undefined') {
     const id = 'meta' + cor.charAt(0) + cor.slice(1).toLowerCase();
     const el = document.getElementById(id);
