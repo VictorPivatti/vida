@@ -23,16 +23,17 @@ import { saveLayout, applyLayout, toggleLayoutEdit, resetLayout } from './ui/lay
 import { toggleTheme, applyTheme } from './ui/theme.js';
 
 import * as Render from './render/index.js';
-import { loadUnitConfig, autoLoadFromDB, bindEvents } from './bootstrap.js';
+import { loadUnitConfig, autoLoadFromDB, bindEvents, checkDeps, showPrivacyNotice } from './bootstrap.js';
+import { refreshDbStats } from './storage/dbstats.js';
 
 initGlobals();
 
 document.addEventListener('DOMContentLoaded', () => {
   loadUnitConfig();
   bindEvents();
-  window.refreshDbStats?.().catch?.(() => {});
-  window.checkDeps?.();
-  window.showPrivacyNotice?.();
+  refreshDbStats().catch?.(() => {});
+  checkDeps();
+  try { showPrivacyNotice(); } catch (e) { console.warn('[VIDA] privacy:', e); }
   autoLoadFromDB().catch(() => {});
 });
 

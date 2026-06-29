@@ -56,7 +56,63 @@ export function renderTriagem() {
   renderEvasao(d);
 }
 
-function renderEvasao(triFilt) {
+export function renderRecepTable() {
+  const body = document.getElementById('recepInputBody'); if (!body) return;
+  const mesesTri = [...new Set(state.triFilt.map(r => r.anoMes))];
+  const mesesHist = [...new Set(state.filt.map(r => r.anoMes))];
+  const meses = [...new Set([...mesesTri, ...mesesHist])].sort();
+  if (!meses.length) { body.innerHTML = '<tr><td colspan="4" style="color:var(--mut);text-align:center;padding:16px">Carregue o historico para liberar os campos</td></tr>'; return; }
+  const brancosPorMes = {}, triadosPorMes = {};
+  state.triFilt.forEach(r => {
+    triadosPorMes[r.anoMes] = (triadosPorMes[r.anoMes] || 0) + 1;
+    if (r.cor === 'BRANCO') brancosPorMes[r.anoMes] = (brancosPorMes[r.anoMes] || 0) + 1;
+  });
+  const atendidosPorMes = {};
+  state.filt.forEach(r => { atendidosPorMes[r.anoMes] = (atendidosPorMes[r.anoMes] || 0) + 1; });
+  const inpStyle = 'width:80px;background:var(--sur3);border:1px solid var(--bdr2);border-radius:4px;padding:3px 7px;color:var(--txt);font-family:inherit;font-size:12px;text-align:right';
+  const inpStyleOv = 'width:80px;background:rgba(99,102,241,.08);border:1px solid var(--ac);border-radius:4px;padding:3px 7px;color:var(--txt);font-family:inherit;font-size:12px;text-align:right';
+  body.innerHTML = meses.map(m => {
+    const ov = state.recepOverride[m] || {};
+    const trAuto = triadosPorMes[m] || 0, brAuto = brancosPorMes[m] || 0, atAuto = atendidosPorMes[m] || 0;
+    const trVal = ov.triados != null ? ov.triados : trAuto;
+    const brVal = ov.brancos != null ? ov.brancos : brAuto;
+    const atVal = ov.atendidos != null ? ov.atendidos : atAuto;
+    const hasOv = ov.triados != null || ov.brancos != null || ov.atendidos != null;
+    const onchg = `(function(el){
+      const m='${m}';
+      const field=el.dataset.field;
+      const val=el.value?Number(el.value):null;
+      if(val===null){delete(state.recepOverride[m]||{})[field];}
+      else{state.recepOverride[m]=state.recepOverride[m]||{};state.recepOverride[m][field]=val;}
+      if(Object.keys(state.recepOverride[m]||{}).length===0)delete state.recepOverride[m];
+      saveRecepcionados();
+      if(state.triRaw.length)renderEvasao(state.triFilt);
+      else if(state.raw.length)renderEvasao(state.filt);
+    })(this)`;
+    return `<tr>
+      <td class="mono">${monthLabel(m)}</td>
+      <td><input type="number" min="0" step="1" style="${inpStyle}"
+        value="${state.recepcionados[m] || ''}" placeholder="—" data-mes="${m}"
+        onchange="state.recepcionados[this.dataset.mes]=this.value?Number(this.value):undefined;saveRecepcionados();if(state.triRaw.length)renderEvasao(state.triFilt);else if(state.raw.length)renderEvasao(state.filt)">
+      </td>
+      <td><input type="number" min="0" step="1" style="${ov.triados != null ? inpStyleOv : inpStyle}"
+        value="${trVal}" placeholder="${trAuto}" title="Auto: ${trAuto}. Edite para sobrescrever."
+        data-mes="${m}" data-field="triados" onchange="${onchg}">
+      </td>
+      <td><input type="number" min="0" step="1" style="${ov.brancos != null ? inpStyleOv : inpStyle}"
+        value="${brVal}" placeholder="${brAuto}" title="Auto: ${brAuto}. Edite para sobrescrever."
+        data-mes="${m}" data-field="brancos" onchange="${onchg}">
+      </td>
+      <td><input type="number" min="0" step="1" style="${ov.atendidos != null ? inpStyleOv : inpStyle}"
+        value="${atVal}" placeholder="${atAuto}" title="Auto: ${atAuto}. Edite para sobrescrever."
+        data-mes="${m}" data-field="atendidos" onchange="${onchg}">
+      </td>
+      <td style="text-align:center">${hasOv ? `<button type="button" onclick="delete state.recepOverride['${m}'];saveRecepcionados();renderRecepTable();if(state.triRaw.length)renderEvasao(state.triFilt);else if(state.raw.length)renderEvasao(state.filt);" style="background:none;border:none;cursor:pointer;color:var(--mut);font-size:13px;padding:2px 5px;border-radius:4px" title="Restaurar valores automáticos">↺</button>` : '<span style="color:var(--bdr2)">—</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+export function renderEvasao(triFilt) {
   const sec = $('evasaoSection'); if (!sec) return;
   const mesesSet = new Set(triFilt.map(r => r.anoMes));
   const meses = [...mesesSet].sort();

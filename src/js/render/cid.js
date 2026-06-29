@@ -60,12 +60,170 @@ function renderCidTable() {
   $('tableCid').innerHTML = `<thead><tr><th>#</th><th>CID</th><th>Capítulo</th><th>Descrição</th><th>Qtd</th></tr></thead><tbody>${top.map(r => `<tr><td class="mono">${r.i}</td><td class="mono" style="color:${CAP_COLOR[r.cap] || 'var(--txt)'}">${esc(r.cid)}</td><td>${esc(CAP[r.cap] || r.cap)}</td><td>${esc(r.desc)}</td><td class="mono">${fmt(r.n)}</td></tr>`).join('')}</tbody>`;
 }
 
-function renderCidTrend() {
-  // Stub — renderCidTrend defined in template, called from renderCid
-  // In the module context we skip or reimplement if needed
-  if (typeof window !== 'undefined' && typeof window.renderCidTrend === 'function') {
-    window.renderCidTrend();
+// ── CID Trend filter state ────────────────────────────────────────────────────
+let _trendFilter = 'all';
+export function setTrendFilter(type) { _trendFilter = type; }
+
+export function renderCidTrend() {
+  const d = state.cidFilt;
+  if (!d || !d.length) {
+    const el = document.getElementById('cidTrendAlerts');
+    if (el) el.innerHTML = '<div class="trend-empty-alert">Carregue dados de CID para analisar tendências.</div>';
+    return;
   }
+
+  const windowSize = parseInt(document.getElementById('trendWindow')?.value || '4');
+  const threshold  = parseFloat(document.getElementById('trendThreshold')?.value || '2');
+
+  const byMonth = {};
+  d.forEach(r => {
+    const m = r.anoMes || r.dateKey?.substring(0, 7);
+    if (!m) return;
+    if (!byMonth[m]) byMonth[m] = {};
+    if (!byMonth[m][r.cid]) byMonth[m][r.cid] = { count: 0, desc: r.desc || r.cid };
+    byMonth[m][r.cid].count++;
+  });
+
+  const months = Object.keys(byMonth).sort();
+  if (months.length < 3) {
+    const el = document.getElementById('cidTrendAlerts');
+    if (el) el.innerHTML = '<div class="trend-empty-alert">São necessários ao menos 3 meses de dados para análise de tendência.</div>';
+    const note = document.getElementById('cidTrendNote');
+    if (note) note.textContent = 'Dados insuficientes para análise. Importe pelo menos 3 meses de CID.';
+    return;
+  }
+
+  const lastMonth  = months[months.length - 1];
+  const baseMonths = months.slice(
+    Math.max(0, months.length - 1 - windowSize),
+    months.length - 1
+  );
+
+  const cidLastMonth = byMonth[lastMonth] || {};
+  const alerts = [];
+
+  const totalByMonth = {};
+  months.forEach(m => {
+    totalByMonth[m] = Object.values(byMonth[m]).reduce((s, v) => s + v.count, 0);
+  });
+
+  Object.entries(cidLastMonth).forEach(([cid, { count, desc }]) => {
+    const totalLast = totalByMonth[lastMonth] || 1;
+    const rateLast = count / totalLast;
+    const baseRates = baseMonths
+      .map(m => ((byMonth[m]?.[cid]?.count || 0) / (totalByMonth[m] || 1)))
+      .filter(r => r > 0);
+    if (baseRates.length < Math.max(1, Math.floor(baseMonths.length / 2))) return;
+    const baseline = baseRates.reduce((s, r) => s + r, 0) / baseRates.length;
+    if (baseline === 0) return;
+    const ratio = rateLast / baseline;
+    const pctChange = Math.round((ratio - 1) * 100);
+    const absChange = count - Math.round(baseline * totalLast);
+    const sparkMonths = months.slice(Math.max(0, months.length - windowSize - 1));
+    const sparkData = sparkMonths.map(m => byMonth[m]?.[cid]?.count || 0);
+    let direction, label, confidence;
+    if (ratio >= threshold) {
+      direction = 'rising';
+      label = `+${pctChange}%`;
+      confidence = baseRates.length >= windowSize ? 'alta' : 'moderada';
+    } else if (ratio <= 1 / threshold) {
+      direction = 'falling';
+      label = `${pctChange}%`;
+      confidence = baseRates.length >= windowSize ? 'alta' : 'moderada';
+    } else {
+      return;
+    }
+    alerts.push({
+      cid, desc, direction, label, pctChange, absChange,
+      countLast: count, baseline: Math.round(baseline * totalLast),
+      confidence, sparkData, sparkMonths,
+      lastMonth, ratio
+    });
+  });
+
+  const allCidsInBase = new Set(baseMonths.flatMap(m => Object.keys(byMonth[m] || {})));
+  allCidsInBase.forEach(cid => {
+    if (cidLastMonth[cid]) return;
+    const baseRates = baseMonths
+      .map(m => ((byMonth[m]?.[cid]?.count || 0) / (totalByMonth[m] || 1)))
+      .filter(r => r > 0);
+    if (baseRates.length < Math.ceil(baseMonths.length / 2)) return;
+    const baseline = baseRates.reduce((s, r) => s + r, 0) / baseRates.length;
+    if (baseline === 0) return;
+    const avgCount = Math.round(baseline * (totalByMonth[lastMonth] || 1));
+    if (avgCount < 3) return;
+    const desc = baseMonths.map(m => byMonth[m]?.[cid]?.desc).find(Boolean) || cid;
+    const sparkMonths = months.slice(Math.max(0, months.length - windowSize - 1));
+    const sparkData = sparkMonths.map(m => byMonth[m]?.[cid]?.count || 0);
+    alerts.push({
+      cid, desc, direction: 'falling', label: '-100%', pctChange: -100,
+      absChange: -avgCount, countLast: 0, baseline: avgCount,
+      confidence: 'moderada', sparkData, sparkMonths,
+      lastMonth, ratio: 0
+    });
+  });
+
+  alerts.sort((a, b) => Math.abs(b.pctChange) - Math.abs(a.pctChange));
+  window._lastTrendAlerts = alerts;
+
+  const note = document.getElementById('cidTrendNote');
+  if (note) {
+    const rising  = alerts.filter(a => a.direction === 'rising').length;
+    const falling = alerts.filter(a => a.direction === 'falling').length;
+    const refLabel = monthLabel(lastMonth);
+    note.innerHTML = `Comparando <strong>${refLabel}</strong> com a média dos <strong>${baseMonths.length} meses</strong> anteriores.
+      Limiar: variação acima de <strong>${Math.round((threshold - 1) * 100)}%</strong> da média.
+      ${rising ? `<span style="color:#c8493e;font-weight:600">${rising} CID${rising > 1 ? 's' : ''} em alta</span>` : ''}
+      ${rising && falling ? ' · ' : ''}
+      ${falling ? `<span style="color:#38ac8b;font-weight:600">${falling} CID${falling > 1 ? 's' : ''} em queda</span>` : ''}
+      ${!rising && !falling ? '<span style="color:var(--mut)">Nenhuma variação significativa encontrada.</span>' : ''}`;
+  }
+
+  renderCidTrendAlerts(alerts);
+}
+
+export function renderCidTrendAlerts(alerts) {
+  const el = document.getElementById('cidTrendAlerts');
+  if (!el) return;
+
+  const filtered = _trendFilter === 'all'
+    ? alerts
+    : alerts.filter(a => a.direction === _trendFilter);
+
+  if (!filtered.length) {
+    el.innerHTML = '<div class="trend-empty-alert">Nenhum alerta para o filtro selecionado no período.</div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(a => {
+    const max = Math.max(...a.sparkData, 1);
+    const bars = a.sparkData.map((v, i) => {
+      const isLast = i === a.sparkData.length - 1;
+      const h = Math.round((v / max) * 28) + 4;
+      const color = isLast
+        ? (a.direction === 'rising' ? '#c8493e' : '#38ac8b')
+        : 'var(--bdr2)';
+      return `<div class="trend-bar" style="height:${h}px;background:${color};opacity:${isLast ? 1 : 0.6}"></div>`;
+    }).join('');
+
+    const badgeClass = a.direction === 'rising' ? 'badge-rising' : 'badge-falling';
+    const dirLabel   = a.direction === 'rising' ? 'Alta' : 'Queda';
+    const absLabel   = a.absChange > 0 ? `+${a.absChange} casos` : `${a.absChange} casos`;
+
+    return `<div class="trend-alert ${a.direction}" role="article" aria-label="Alerta CID ${a.cid}: ${dirLabel}">
+      <div class="trend-alert-header">
+        <span class="trend-alert-badge ${badgeClass}">${dirLabel} ${a.label}</span>
+        <span class="trend-alert-cid">${esc(a.cid)}</span>
+      </div>
+      <div class="trend-alert-desc">${esc(a.desc)}</div>
+      <div class="trend-sparkline" role="img" aria-label="Sparkline de tendência do CID ${a.cid}">${bars}</div>
+      <div class="trend-alert-meta">
+        <span>${monthLabel(a.lastMonth)}: <strong style="color:var(--txt)">${a.countLast} casos</strong></span>
+        <span>Média anterior: <strong style="color:var(--txt)">${a.baseline} casos</strong></span>
+        <span style="opacity:.7">${absLabel} · conf. ${a.confidence}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderCidNotificaveisInternal() {
