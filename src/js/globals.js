@@ -19,6 +19,12 @@ import { RECEP_KEY, RECEP_OVERRIDE_KEY, UC_KEY } from './state.js';
 import { VidaDB } from './storage/vidadb.js';
 import { showToast } from './ui/toast.js';
 import { $ } from './utils/dom.js';
+import { loadHist, workerRun } from './loaders/hist.js';
+import { loadTri } from './loaders/tri.js';
+import { loadCid } from './loaders/cid.js';
+import { loadProcedimentos } from './loaders/proc.js';
+import { loadExamesPdf } from './loaders/exames.js';
+import { applyFilters, setupDates, populateMedicoFilter } from './filters.js';
 
 // ── Helpers that some stubs need ─────────────────────────────────────────────
 const esc = v => String(v ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
@@ -428,6 +434,19 @@ export function initGlobals() {
 
     // ── Patients
     buscaProntuario,
+
+    // ── File loaders (A.1)
+    loadHist,
+    loadTri,
+    loadCid,
+    loadProcedimentos,
+    loadExamesPdf,
+    workerRun,
+
+    // ── Filters (A.1)
+    applyFilters,
+    setupDates,
+    populateMedicoFilter,
 
     // ── Build flag
     VIDA_BUILD: 'modular',

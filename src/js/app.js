@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
   bindEvents();
   window.refreshDbStats?.().catch?.(() => {});
   window.checkDeps?.();
-  window.showPrivacyNotice?.();
+  try { window.showPrivacyNotice?.(); } catch (e) { console.warn('[VIDA] privacy:', e); }
   autoLoadFromDB().catch(() => {});
 });
 
