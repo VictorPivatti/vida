@@ -44,6 +44,27 @@ function _getHistWorkerUrl() {
   return _histWorkerUrl;
 }
 
+// ── Leitura via fetch(blobURL) — contorna travamento de arrayBuffer/FileReader ─
+async function _readFileViaFetch(file, onProgress) {
+  const url = URL.createObjectURL(file);
+  try {
+    onProgress?.(0, file.size);
+    const ab = await Promise.race([
+      (async () => {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('fetch status ' + res.status);
+        return res.arrayBuffer();
+      })(),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('fetch timeout 90s')), 90000)),
+    ]);
+    onProgress?.(file.size, file.size);
+    console.log('[VIDA:hist] fetch(blobURL) OK |', file.name, ab.byteLength + 'B');
+    return ab;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 // ── Pipeline worker: File → XLSX → parse (sem leitura na main thread) ────────
 async function _parseHistViaWorker(files) {
   const url = _getHistWorkerUrl();
@@ -53,10 +74,18 @@ async function _parseHistViaWorker(files) {
     w.onmessage = e => {
       const d = e.data;
       if (d.type === 'read') {
-        const base = d.phase === 'lendo' ? 5 : 22;
-        setProgress(base + Math.round((d.i - 1) / d.n * 18),
-          (d.phase === 'lendo' ? 'Lendo ' : 'Convertendo ') + d.name + (d.bytes ? ` (${(d.bytes / 1024 / 1024).toFixed(1)} MB)` : '…'));
-        console.log('[VIDA:worker] read |', d.phase, d.name, d.bytes || '');
+        const base = d.phase === 'lendo' ? 5 : d.phase === 'convertendo' ? 40 : 8;
+        const msg = d.phase === 'convertendo'
+          ? 'Convertendo ' + d.name + (d.bytes ? ` (${(d.bytes / 1024 / 1024).toFixed(1)} MB)` : '…')
+          : d.phase?.startsWith('lendo-') ? `Lendo (${d.phase.slice(6)}) ${d.name}…`
+          : d.phase?.startsWith('ok-') ? `Lido via ${d.phase.slice(3)} ${d.name}`
+          : d.phase?.startsWith('falhou-') ? `Falhou ${d.phase.slice(7)}: ${d.error || ''}`
+          : 'Lendo ' + d.name + '…';
+        if (d.i) setProgress(base + Math.round((d.i - 1) / d.n * 18), msg);
+        else setProgress(base, msg);
+        console.log('[VIDA:worker] read |', d.phase, d.name, d.bytes || d.error || '');
+      } else if (d.type === 'read-progress') {
+        setProgress(5 + Math.round(d.loaded / d.total * 35), `Lendo ${d.name}… ${Math.round(d.loaded / d.total * 100)}%`);
       } else if (d.type === 'fingerprint') {
         _checkLayoutFingerprint('hist', d.headerLine + '\n', d.name);
       } else if (d.type === 'progress') {
@@ -259,19 +288,29 @@ export async function loadHist(fileOrFiles) {
     state.quality = [];
     const _isFirstLoad = state.raw.length === 0;
     let result;
+    const names = files.map(f => f.name);
+    // 1) fetch(blobURL) na main — contorna iCloud/arrayBuffer travado
     try {
-      console.log('[VIDA:hist] tentando worker File pipeline (sem leitura na main thread)');
-      result = await _parseHistViaWorker(files);
-    } catch (workerErr) {
-      console.warn('[VIDA:hist] worker File falhou, fallback main thread:', workerErr.message);
-      console.log('[VIDA:hist] fileToBuffer -- inicio | arquivos:', files.map(f => f.name + ' (' + f.size + 'B)'));
-      console.time('[VIDA:hist] fileToBuffer');
-      const buffers = await Promise.all(files.map(f => fileToBuffer(f, (loaded, total) => {
+      console.log('[VIDA:hist] tentando fetch(blobURL)…');
+      const buffers = await Promise.all(files.map(f => _readFileViaFetch(f, (loaded, total) => {
         setProgress(Math.round(loaded / total * 40), `Lendo ${f.name}… ${Math.round(loaded / total * 100)}%`);
       })));
-      console.timeEnd('[VIDA:hist] fileToBuffer');
-      console.log('[VIDA:hist] buffers lidos | tamanhos:', buffers.map(b => b.byteLength + 'B'));
-      result = await workerRun('parseHist', { buffers, names: files.map(f => f.name) });
+      result = await workerRun('parseHist', { buffers, names });
+    } catch (fetchErr) {
+      console.warn('[VIDA:hist] fetch falhou:', fetchErr.message);
+      // 2) Worker lê File com fetch/slices/stream/arrayBuffer
+      try {
+        console.log('[VIDA:hist] tentando worker File pipeline');
+        result = await _parseHistViaWorker(files);
+      } catch (workerErr) {
+        console.warn('[VIDA:hist] worker File falhou:', workerErr.message);
+        // 3) Fallback main thread stream/FileReader
+        console.log('[VIDA:hist] fallback fileToBuffer');
+        const buffers = await Promise.all(files.map(f => fileToBuffer(f, (loaded, total) => {
+          setProgress(Math.round(loaded / total * 40), `Lendo ${f.name}… ${Math.round(loaded / total * 100)}%`);
+        })));
+        result = await workerRun('parseHist', { buffers, names });
+      }
     }
     setProgress(90, 'Finalizando...');
     if (!result.rows.length) throw new Error('Nenhum atendimento válido encontrado.');

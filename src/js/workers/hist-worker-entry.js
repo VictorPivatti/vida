@@ -35,18 +35,85 @@ function parseCsvs(csvs, names) {
   return { rows: all, total, invalid };
 }
 
+function _progress(file, loaded, total) {
+  self.postMessage({ type: 'read-progress', name: file.name, loaded, total });
+}
+
+async function readViaFetch(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('fetch status ' + res.status);
+    return await res.arrayBuffer();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function readViaSlices(file) {
+  const CHUNK = 256 * 1024;
+  const out = new Uint8Array(file.size);
+  let offset = 0;
+  while (offset < file.size) {
+    const end = Math.min(offset + CHUNK, file.size);
+    const buf = await file.slice(offset, end).arrayBuffer();
+    out.set(new Uint8Array(buf), offset);
+    offset = end;
+    _progress(file, offset, file.size);
+  }
+  return out.buffer;
+}
+
+async function readViaStream(file) {
+  if (typeof file.stream !== 'function') throw new Error('stream indisponível');
+  const reader = file.stream().getReader();
+  const chunks = [];
+  let received = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.byteLength;
+    _progress(file, received, file.size);
+  }
+  const out = new Uint8Array(received);
+  let pos = 0;
+  for (const c of chunks) { out.set(c, pos); pos += c.byteLength; }
+  return out.buffer;
+}
+
 async function readFileAb(file) {
-  return Promise.race([
-    file.arrayBuffer(),
-    new Promise((_, rej) => setTimeout(() => rej(new Error('Leitura excedeu 2 min no worker')), 120000)),
-  ]);
+  const strategies = [
+    ['fetch', () => readViaFetch(file)],
+    ['slices', () => readViaSlices(file)],
+    ['stream', () => readViaStream(file)],
+    ['arrayBuffer', () => file.arrayBuffer()],
+  ];
+  let lastErr;
+  for (const [name, fn] of strategies) {
+    try {
+      self.postMessage({ type: 'read', phase: 'lendo-' + name, name: file.name });
+      const ab = await Promise.race([
+        fn(),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout 90s (' + name + ')')), 90000)),
+      ]);
+      if (!ab || !ab.byteLength) throw new Error('buffer vazio');
+      self.postMessage({ type: 'read', phase: 'ok-' + name, name: file.name, bytes: ab.byteLength });
+      return ab;
+    } catch (e) {
+      lastErr = e;
+      self.postMessage({ type: 'read', phase: 'falhou-' + name, name: file.name, error: e.message });
+    }
+  }
+  throw lastErr || new Error(
+    'Não foi possível ler o arquivo. Se estiver no iCloud, baixe uma cópia local ou exporte CSV no Vivver.'
+  );
 }
 
 self.onmessage = async function(e) {
   try {
     const { files, csvs, names } = e.data;
 
-    // Pipeline completo: File → buffer → CSV → parse (main thread não lê o arquivo)
     if (files && files.length) {
       const csvList = [], nameList = [];
       for (let i = 0; i < files.length; i++) {
@@ -65,7 +132,6 @@ self.onmessage = async function(e) {
       return;
     }
 
-    // Legado: CSVs já convertidos na main thread
     if (csvs && names) {
       const result = parseCsvs(csvs, names);
       self.postMessage({ type: 'done', ...result });
