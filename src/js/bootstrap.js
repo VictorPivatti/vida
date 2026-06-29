@@ -13,6 +13,8 @@ import { showLoading, hideLoading } from './ui/progress.js';
 import { setupDates, populateMedicoFilter, applyFilters } from './filters.js';
 import { refreshDbStats } from './storage/dbstats.js';
 import { updateTtlCountdown } from './ui/ttl.js';
+import { deriveTriFromHist } from './loaders/hist.js';
+import { markDirty } from './render/index.js';
 
 // ── loadUnitConfig ─────────────────────────────────────────────────────────────
 // Mirrors the script-block function of the same name.
@@ -210,7 +212,7 @@ export function bindEvents() {
   ['procFiltroEsp', 'procFiltroProf', 'procFiltroProc', 'procFiltroFat'].forEach(id => {
     const el = $(id);
     if (el) el.addEventListener('change', () => {
-      window._dirtyPanes?.add?.('procedimentos');
+      markDirty('procedimentos');
       window.renderProcedimentos?.();
     });
   });
@@ -324,9 +326,7 @@ export async function _execLoadFromDB(s) {
       state.triRaw = triRows;
       state.triSource = 'db';
     } else {
-      state.triRaw = typeof window.deriveTriFromHist === 'function'
-        ? window.deriveTriFromHist(state.raw)
-        : [];
+      state.triRaw = deriveTriFromHist(state.raw);
       state.triSource = 'hist';
     }
     state.files.tri = '';

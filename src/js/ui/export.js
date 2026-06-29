@@ -5,9 +5,13 @@ import { state } from '../state.js';
 import { fmt, norm } from '../utils/dom.js';
 import { showToast } from './toast.js';
 import { showLoading, hideLoading } from './progress.js';
+import { medRows } from '../metrics/med.js';
+import { monthlyStats } from '../metrics/monthly.js';
+import { monthLabel } from '../utils/dates.js';
+import { dateRange } from '../filters.js';
 
 export function exportMedXlsx() {
-  const rows = typeof window.medRows === 'function' ? window.medRows() : [];
+  const rows = medRows();
   if (!rows.length) { showToast('Nenhum dado de médicos para exportar.', 'warn'); return; }
   try {
     const searchEl = document.getElementById('searchMed');
@@ -41,7 +45,7 @@ export function exportMedXlsx() {
     });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheet), 'Médicos');
-    const dr = typeof window.dateRange === 'function' ? window.dateRange() : { s: null, e: null };
+    const dr = dateRange();
     const sStr = dr.s ? dr.s.toLocaleDateString('pt-BR').replace(/\//g, '-') : 'inicio';
     const eStr = dr.e ? dr.e.toLocaleDateString('pt-BR').replace(/\//g, '-') : 'fim';
     XLSX.writeFile(wb, `VIDA_medicos_${sStr}_a_${eStr}.xlsx`);
@@ -86,9 +90,7 @@ export function exportXLSX() {
       }
 
       // Sheet 3: Resumo mensal
-      const monthlyStats = typeof window.monthlyStats === 'function' ? window.monthlyStats : null;
-      const monthLabel = typeof window.monthLabel === 'function' ? window.monthLabel : null;
-      if (monthlyStats && monthLabel) {
+      {
         const ms = monthlyStats(state.filt);
         const resumo = ms.map(m => ({
           'Mês': monthLabel(m.k),
@@ -101,7 +103,7 @@ export function exportXLSX() {
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumo), 'Resumo Mensal');
       }
 
-      const dr = typeof window.dateRange === 'function' ? window.dateRange() : { s: null, e: null };
+      const dr = dateRange();
       const fileName = `UPA_dados_${dr.s ? dr.s.toLocaleDateString('pt-BR').replace(/\//g, '-') : 'inicio'}_a_${dr.e ? dr.e.toLocaleDateString('pt-BR').replace(/\//g, '-') : 'fim'}.xlsx`;
       XLSX.writeFile(wb, fileName);
       hideLoading();

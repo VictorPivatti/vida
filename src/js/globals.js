@@ -21,13 +21,15 @@ import { state } from './state.js';
 import { RECEP_KEY, RECEP_OVERRIDE_KEY, UC_KEY } from './state.js';
 import { VidaDB } from './storage/vidadb.js';
 import { showToast } from './ui/toast.js';
+import { showLoading, hideLoading } from './ui/progress.js';
 import { $ } from './utils/dom.js';
 import { loadHist, workerRun } from './loaders/hist.js';
 import { loadTri } from './loaders/tri.js';
 import { loadCid } from './loaders/cid.js';
 import { loadProcedimentos } from './loaders/proc.js';
 import { loadExamesPdf } from './loaders/exames.js';
-import { applyFilters, setupDates, populateMedicoFilter } from './filters.js';
+import { applyFilters, setupDates, populateMedicoFilter, dateRange } from './filters.js';
+import { checkDeps, showPrivacyNotice } from './bootstrap.js';
 import { refreshDbStats } from './storage/dbstats.js';
 import { updateTtlCountdown } from './ui/ttl.js';
 import { exportXLSX, exportMedXlsx } from './ui/export.js';
@@ -198,11 +200,11 @@ function desfazerLimpeza() {
 }
 
 async function _confirmarLimpezaFinal() {
-  if (typeof window.showLoading === 'function') window.showLoading('Limpando banco...');
+  showLoading('Limpando banco...');
   try {
     await VidaDB.clearAll(); VidaDB.clearTimestamp(); location.reload();
   } catch (e) {
-    if (typeof window.hideLoading === 'function') window.hideLoading();
+    hideLoading();
     showToast('Erro ao limpar banco: ' + e.message, 'err');
   }
 }
@@ -422,6 +424,13 @@ export function initGlobals() {
 
     // ── Density (A.3)
     applyDensity,
+
+    // ── Date range (A.4)
+    dateRange,
+
+    // ── Deps / privacy (A.4)
+    checkDeps,
+    showPrivacyNotice,
 
     // ── Build flag
     VIDA_BUILD: 'modular',

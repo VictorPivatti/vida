@@ -68,3 +68,10 @@ export function populateMedicoFilter() {
     .sort();
   dl.innerHTML = medicos.map(m => `<option value="${esc(m)}">`).join('');
 }
+
+// ── dateRange — returns {s, e} Date objects from the date filter inputs ────────
+export function dateRange() {
+  const s = parseDate($('dateStart').value), e = parseDate($('dateEnd').value);
+  if (e) e.setHours(23, 59, 59, 999);
+  return { s, e };
+}

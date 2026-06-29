@@ -24,6 +24,7 @@ import {
   cleanRisk, legacyText, isEvasao, csvRows, parseDate, parseDuration,
 } from '../parsers/hist.js';
 import { fmt } from '../utils/dom.js';
+import { populateMedicoFilter } from '../filters.js';
 
 // ── Layout fingerprint check ──────────────────────────────────────────────────
 function _checkLayoutFingerprint(type, csv, name) {
@@ -150,7 +151,7 @@ export async function workerRun(type, payload) {
 }
 
 // ── deriveTriFromHist ─────────────────────────────────────────────────────────
-function deriveTriFromHist(histRows) {
+export function deriveTriFromHist(histRows) {
   return histRows
     .filter(r => r.dhAcol || r.tEspTri != null)
     .map(r => {
@@ -206,7 +207,7 @@ export async function loadHist(fileOrFiles) {
     state.files.tri = '';
     if (typeof window.updateTriBtn === 'function') window.updateTriBtn();
     if (typeof window.setupDates === 'function') window.setupDates();
-    if (typeof window.populateMedicoFilter === 'function') window.populateMedicoFilter();
+    populateMedicoFilter();
     if (typeof window.applyFilters === 'function') window.applyFilters();
     if (typeof window.setHistFileName === 'function') window.setHistFileName(state.files.hist);
     const upload = document.getElementById('upload');
