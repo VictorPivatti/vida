@@ -20,9 +20,7 @@ export function loadUnitConfig() {
     if (!raw) return;
     const parsed = JSON.parse(raw);
     // Keep window.UC in sync for the script-block stubs (present during transition)
-    if (typeof window.UC === 'object' && window.UC !== null) {
-      Object.assign(window.UC, parsed);
-    }
+    window.UC = Object.assign(window.UC || {}, parsed);
   } catch (e) {
     // localStorage may be blocked in sandboxed iframes — silently ignore
   }
