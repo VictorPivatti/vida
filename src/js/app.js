@@ -15,6 +15,12 @@ import { monthlyStats, calcProjecao } from './metrics/monthly.js';
 import { metaManchester, manchesterConformidade } from './metrics/manchester.js';
 import { medRows, evasaoDisponivel } from './metrics/med.js';
 import { calcularPontos } from './metrics/executive.js';
+import { VidaDB } from './storage/vidadb.js';
+import { chart, destroyCharts, targetLinePlugin, gridColor, tickColor, axes } from './ui/charts.js';
+import { showToast } from './ui/toast.js';
+import { setProgress, showLoading, hideLoading } from './ui/progress.js';
+import { saveLayout, applyLayout, toggleLayoutEdit, resetLayout } from './ui/layout.js';
+import { toggleTheme, applyTheme } from './ui/theme.js';
 
 initGlobals();
 console.log('[VIDA] build scaffold OK');
