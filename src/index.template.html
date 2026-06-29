@@ -76,8 +76,8 @@
 
     <!-- Zona principal de importação -->
     <div class="up-upload-primary">
-      <label class="up-dropzone" id="histDrop">
-        <input id="histFile" type="file" accept=".xlsx,.xls,.csv" multiple>
+      <input id="histFile" class="hidden" type="file" accept=".xlsx,.xls,.csv" multiple>
+      <div class="up-dropzone" id="histDrop" role="button" tabindex="0" aria-label="Importar histórico de atendimentos do Vivver">
         <div class="up-drop-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -99,7 +99,7 @@
           <div class="up-drop-spinner"></div>
           <div class="up-drop-progress-text" id="upDropProgressText">processando…</div>
         </div>
-      </label>
+      </div>
       <p class="up-after-upload">Após a importação: dashboards de volume, tempos, gargalos e produção são gerados automaticamente neste navegador.</p>
     </div>
 

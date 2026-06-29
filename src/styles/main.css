@@ -276,11 +276,11 @@
       min-height:100vh;
       display:flex;flex-direction:column;
       align-items:center;justify-content:center;
-      position:relative;overflow:hidden;
+      position:relative;
       background:var(--bg);
     }
 
-    /* Fundo: mesh gradient sutil com acento violeta do sistema */
+    /* Fundo: mesh gradient sutil */
     #upload::before{
       content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
       background:
@@ -293,20 +293,7 @@
         radial-gradient(ellipse 55% 45% at 15% 20%, rgba(19,87,166,.04) 0%, transparent 60%),
         radial-gradient(ellipse 40% 55% at 88% 75%, rgba(19,87,166,.04) 0%, transparent 55%);
     }
-
-    /* Grade de pontos ultrafina */
-    #upload::after{
-      content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-      background-image:radial-gradient(circle, rgba(19,87,166,.14) 1px, transparent 1px);
-      background-size:40px 40px;
-      mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 80%);
-      -webkit-mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 80%);
-      opacity:.5
-    }
-    [data-theme="light"] #upload::after{
-      background-image:radial-gradient(circle, rgba(19,87,166,.09) 1px, transparent 1px);
-      opacity:.6
-    }
+    #upload::after{display:none}
 
     /* ── Marca canto superior esquerdo ── */
     .up-wordmark{
@@ -341,7 +328,7 @@
       width:min(560px, 92vw);
       animation:upFadeUp .8s cubic-bezier(.16,1,.3,1) .1s both
     }
-    @keyframes upFadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+    @keyframes upFadeUp{from{opacity:0}to{opacity:1}}
 
     /* Branding secundário */
     .up-brand-tag{
@@ -360,7 +347,7 @@
       font-family:'Plus Jakarta Sans',sans-serif;
       font-size:clamp(26px,5.2vw,38px);
       font-weight:800;letter-spacing:-.03em;line-height:1.12;
-      color:var(--txt);margin:0 0 14px;max-width:28ch
+      color:var(--txt);margin:0 0 14px;max-width:36ch
     }
     .up-lead{
       font-size:14px;line-height:1.65;color:var(--txt2);
@@ -434,11 +421,12 @@
       cursor:pointer;
       transition:border-color var(--t-base),background var(--t-base),box-shadow var(--t-base),transform var(--t-base);
       box-shadow:var(--sh2);
-      text-align:center
+      text-align:center;
+      outline:none
     }
-    .up-dropzone::before{
-      content:"";position:absolute;inset:0;border-radius:15px;pointer-events:none;
-      background:radial-gradient(ellipse 70% 60% at 50% 0%, rgba(19,87,166,.04), transparent 60%)
+    .up-dropzone:focus-visible{
+      border-color:var(--ac);
+      box-shadow:0 0 0 4px var(--ac-glow),var(--sh2)
     }
     .up-dropzone:hover,.up-dropzone.drag{
       border-color:var(--ac);
@@ -450,9 +438,6 @@
       border-color:var(--ok);border-style:solid;
       background:rgba(47,158,126,.05);
       box-shadow:0 0 0 4px rgba(47,158,126,.1)
-    }
-    .up-dropzone input{
-      position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%
     }
 
     /* Ícone dentro do drop */

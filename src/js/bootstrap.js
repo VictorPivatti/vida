@@ -129,6 +129,16 @@ export function bindEvents() {
       }
       window.loadHist?.(files);
     });
+    histDrop.addEventListener('click', () => {
+      if (histDrop.classList.contains('loading')) return;
+      histFile.click();
+    });
+    histDrop.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (!histDrop.classList.contains('loading')) histFile.click();
+      }
+    });
   }
 
   // ── Full-screen drag overlay ──────────────────────────────────────────────
