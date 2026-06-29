@@ -56,7 +56,8 @@ export async function autoLoadFromDB() {
         `Continuar de onde parou <span style="font-weight:400;opacity:.7">· ${s.atendimentos.toLocaleString('pt-BR')} registros</span>`;
       banner.style.display = 'flex';
     }
-    if (savedBtn) {
+    if (savedBtn && !savedBtn.dataset.bound) {
+      savedBtn.dataset.bound = '1';
       savedBtn.onclick = async () => {
         banner.style.display = 'none';
         // Delegate to the full _execLoadFromDB that lives in the script block

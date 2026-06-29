@@ -6053,6 +6053,12 @@
     // Restaurar preferência salva
     try{const saved=localStorage.getItem('upa_density');if(saved)applyDensity(saved);}catch(e){}
 
+    // Expose script-block functions for module stub delegation
+    window._renderRecepTable = renderRecepTable;
+    window._renderEvasao = renderEvasao;
+    window._renderCidTrendAlerts = renderCidTrendAlerts;
+    window._renderNotifGrid = renderNotifGrid;
+
     // ── Init único após DOM pronto ──────────────────────────────
     document.addEventListener('DOMContentLoaded',()=>{
       // Busca de pacientes
