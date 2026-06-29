@@ -744,11 +744,11 @@
       .topbar-row1{padding:0 12px!important;min-height:50px!important;gap:8px!important}
       .topbar-section-title{font-size:13px!important}
       .density-btn{display:none!important}
-      #layoutEditBtn,#exportBtn,#printBtn{display:none!important}
+      #layoutEditBtn,#printBtn{display:none!important}
       .topbar-actions .file-name{max-width:100px!important;font-size:10px!important}
       .topbar-row2 .pill[data-shortcut]{display:none!important}
       .topbar-row2 #filtroMedico,.topbar-row2 #filtroRisco,.topbar-row2 .flabel:nth-of-type(n+4){display:none!important}
-      .tb-source-chips-wrap{display:flex!important;align-items:center;gap:4px;margin-left:auto;flex-shrink:0}
+      .tb-source-chips-wrap.is-visible{display:flex!important;align-items:center;gap:4px;margin-left:auto;flex-shrink:0}
       #dbStatsBadge{display:none!important}
     }
     @media(max-width:560px){
@@ -1162,7 +1162,8 @@
     body.presentation-mode .grid{gap:18px}
     body.presentation-mode .k-value{font-size:clamp(28px,3vw,36px)!important}
     body.presentation-mode .onboarding-panel{display:none!important}
-    .tb-source-chips-wrap{display:flex;align-items:center;gap:4px;margin-left:auto}
+    .tb-source-chips-wrap{display:none;align-items:center;gap:4px;margin-left:auto}
+    .tb-source-chips-wrap.is-visible{display:flex}
 
     /* Banner offline / CDN ausente */
     .offline-bar{

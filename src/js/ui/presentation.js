@@ -33,6 +33,9 @@ export function togglePresentationMode(force) {
 }
 
 export function initPresentationMode() {
+  try {
+    if (localStorage.getItem(PREF_KEY) === '1') togglePresentationMode(true);
+  } catch (e) { /* preferência opcional */ }
   document.addEventListener('keydown', e => {
     if (e.shiftKey && (e.key === 'P' || e.key === 'p') && !e.ctrlKey && !e.metaKey && !e.altKey) {
       const tag = (e.target?.tagName || '').toLowerCase();

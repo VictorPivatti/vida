@@ -1,6 +1,16 @@
 // ui/offline.js — detecção de CDN ausente e banner offline
 
 let _pdfBlocked = false;
+let _exportInProgress = false;
+
+/** Impede refreshOfflineGuards de reabilitar botões durante exportação. */
+export function setExportInProgress(on) {
+  _exportInProgress = !!on;
+}
+
+export function isExportInProgress() {
+  return _exportInProgress;
+}
 
 /** @returns {{ xlsx: boolean, chart: boolean, pdf: boolean }} */
 export function getCdnStatus() {
@@ -53,17 +63,19 @@ function _renderOfflineBar(lines) {
     bar.id = 'offlineBar';
     bar.className = 'offline-bar';
     bar.setAttribute('role', 'alert');
+    bar.innerHTML =
+      '<div class="offline-bar-icon" aria-hidden="true">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></div>' +
+      '<div class="offline-bar-body"></div>' +
+      '<button type="button" class="offline-bar-reload">Recarregar</button>';
+    bar.addEventListener('click', e => {
+      if (e.target.closest('.offline-bar-reload')) location.reload();
+    });
     document.body.prepend(bar);
   }
-  bar.innerHTML =
-    '<div class="offline-bar-icon" aria-hidden="true">' +
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
-    '<line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></div>' +
-    '<div class="offline-bar-body">' +
-    lines.map(l => `<p>${l}</p>`).join('') +
-    '</div>' +
-    '<button type="button" class="offline-bar-reload">Recarregar</button>';
-  bar.querySelector('.offline-bar-reload')?.addEventListener('click', () => location.reload());
+  const body = bar.querySelector('.offline-bar-body');
+  if (body) body.innerHTML = lines.map(l => `<p>${l}</p>`).join('');
   document.body.classList.add('has-offline-bar');
 }
 
@@ -72,11 +84,13 @@ function _syncControls(status, offline) {
   const pdfReason = 'Exportação PDF requer conexão com a internet.';
 
   document.querySelectorAll('.requires-cdn-xlsx').forEach(el => {
+    if (_exportInProgress && (el.id === 'exportBtn' || el.id === 'exportMedBtn')) return;
     if (!el.dataset.defaultTitle && el.title) el.dataset.defaultTitle = el.title;
     _setDisabled(el, !status.xlsx, xlsxReason);
   });
 
   document.querySelectorAll('.requires-cdn-pdf').forEach(el => {
+    if (_exportInProgress && el.id === 'printBtn') return;
     if (!el.dataset.defaultTitle && el.title) el.dataset.defaultTitle = el.title;
     _setDisabled(el, offline || _pdfBlocked, pdfReason);
   });

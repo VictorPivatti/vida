@@ -5,7 +5,7 @@ import { state } from '../state.js';
 import { fmt, norm } from '../utils/dom.js';
 import { showToast } from './toast.js';
 import { showLoading, hideLoading } from './progress.js';
-import { isXlsxAvailable } from './offline.js';
+import { isXlsxAvailable, setExportInProgress, refreshOfflineGuards } from './offline.js';
 import { medRows } from '../metrics/med.js';
 import { monthlyStats } from '../metrics/monthly.js';
 import { monthLabel } from '../utils/dates.js';
@@ -14,6 +14,15 @@ import { dateRange } from '../filters.js';
 export function exportMedXlsx() {
   const rows = medRows();
   if (!rows.length) { showToast('Nenhum dado de médicos para exportar.', 'warn'); return; }
+  if (!isXlsxAvailable()) {
+    showToast('Exportação XLSX indisponível — XLSX.js não carregou. Conecte-se e recarregue (F5).', 'warn', 6000);
+    return;
+  }
+  const _medBtn = document.getElementById('exportMedBtn');
+  if (_medBtn) { _medBtn.disabled = true; _medBtn.style.opacity = '.5'; _medBtn.style.cursor = 'wait'; }
+  setExportInProgress(true);
+  showLoading('Gerando planilha de médicos...');
+  setTimeout(() => {
   try {
     const searchEl = document.getElementById('searchMed');
     const q = norm(searchEl ? searchEl.value : '');
@@ -50,8 +59,17 @@ export function exportMedXlsx() {
     const sStr = dr.s ? dr.s.toLocaleDateString('pt-BR').replace(/\//g, '-') : 'inicio';
     const eStr = dr.e ? dr.e.toLocaleDateString('pt-BR').replace(/\//g, '-') : 'fim';
     XLSX.writeFile(wb, `VIDA_medicos_${sStr}_a_${eStr}.xlsx`);
+    hideLoading();
     showToast(`Ranking exportado: ${data.length} médico(s).`, 'ok');
-  } catch (err) { showToast('Erro ao exportar: ' + err.message, 'err'); }
+  } catch (err) {
+    hideLoading();
+    showToast('Erro ao exportar: ' + err.message, 'err');
+  } finally {
+    setExportInProgress(false);
+    if (_medBtn) { _medBtn.disabled = false; _medBtn.style.opacity = ''; _medBtn.style.cursor = ''; }
+    refreshOfflineGuards();
+  }
+  }, 50);
 }
 
 export function exportXLSX() {
@@ -62,6 +80,7 @@ export function exportXLSX() {
   }
   const _expBtn = document.getElementById('exportBtn');
   if (_expBtn) { _expBtn.disabled = true; _expBtn.style.opacity = '.5'; _expBtn.style.cursor = 'wait'; }
+  setExportInProgress(true);
   showLoading('Gerando planilha...');
   setTimeout(() => {
     try {
@@ -113,12 +132,14 @@ export function exportXLSX() {
       const fileName = `UPA_dados_${dr.s ? dr.s.toLocaleDateString('pt-BR').replace(/\//g, '-') : 'inicio'}_a_${dr.e ? dr.e.toLocaleDateString('pt-BR').replace(/\//g, '-') : 'fim'}.xlsx`;
       XLSX.writeFile(wb, fileName);
       hideLoading();
-      if (_expBtn) { _expBtn.disabled = false; _expBtn.style.opacity = ''; _expBtn.style.cursor = ''; }
       showToast(`Planilha exportada com ${state.filt.length.toLocaleString('pt-BR')} atendimentos.`, 'ok');
     } catch (err) {
       hideLoading();
-      if (_expBtn) { _expBtn.disabled = false; _expBtn.style.opacity = ''; _expBtn.style.cursor = ''; }
       showToast('Erro ao exportar: ' + err.message, 'err');
+    } finally {
+      setExportInProgress(false);
+      if (_expBtn) { _expBtn.disabled = false; _expBtn.style.opacity = ''; _expBtn.style.cursor = ''; }
+      refreshOfflineGuards();
     }
   }, 50);
 }

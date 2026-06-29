@@ -229,6 +229,8 @@ export function bindEvents() {
   // ── Theme / print / new ───────────────────────────────────────────────────
   const themeBtn = $('themeBtn'); if (themeBtn) themeBtn.onclick = () => window.toggleTheme?.();
   const printBtn = $('printBtn'); if (printBtn) printBtn.onclick = () => window.exportarPDF?.();
+  const exportBtn = $('exportBtn'); if (exportBtn) exportBtn.onclick = () => window.exportXLSX?.();
+  const exportMedBtn = $('exportMedBtn'); if (exportMedBtn) exportMedBtn.onclick = () => window.exportMedXlsx?.();
   const presentationBtn = $('presentationBtn');
   if (presentationBtn) presentationBtn.onclick = () => window.togglePresentationMode?.();
   const newBtn   = $('newBtn');   if (newBtn)   newBtn.onclick   = () => window.resetApp?.();

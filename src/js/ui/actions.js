@@ -9,7 +9,7 @@ import { applyFilters, dateRange } from '../filters.js';
 import { renderAll, renderActivePane } from '../render/index.js';
 import { buildExecutiveCoverData } from '../render/geral.js';
 import { renderOnboardingPanel } from './onboarding-panel.js';
-import { isPdfExportBlocked, markPdfExportUnavailable, clearPdfExportBlock, refreshOfflineGuards } from './offline.js';
+import { isPdfExportBlocked, markPdfExportUnavailable, clearPdfExportBlock, refreshOfflineGuards, setExportInProgress } from './offline.js';
 import { VidaDB } from '../storage/vidadb.js';
 import { showLoading, hideLoading, setProgress } from './progress.js';
 import { showToast } from './toast.js';
@@ -103,7 +103,7 @@ export function updateSourceChips() {
   const wrap = document.getElementById('tbSourceChips');
   if (!wrap) return;
   const hasHist = state.raw.length > 0;
-  wrap.style.display = hasHist ? 'flex' : 'none';
+  wrap.classList.toggle('is-visible', hasHist);
   function _chip(id, cls, loaded, label, titleLoaded, titleMissing, action) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -218,6 +218,8 @@ export async function exportarPDF() {
   const _pdfBtn = $('printBtn');
   const _btnSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF';
   if (_pdfBtn) { _pdfBtn.disabled = true; _pdfBtn.style.opacity = '.5'; _pdfBtn.style.cursor = 'wait'; _pdfBtn.textContent = 'Gerando...'; }
+  setExportInProgress(true);
+  try {
   // Load CDN libs on demand
   if (typeof html2canvas === 'undefined' || !window.jspdf) {
     showToast('Carregando bibliotecas de PDF...', 'ok', 2000);
@@ -242,7 +244,6 @@ export async function exportarPDF() {
     refreshOfflineGuards();
   }
   showLoading('Gerando PDF — aguarde...');
-  try {
     const UC = _getUC();
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
@@ -394,13 +395,15 @@ export async function exportarPDF() {
     pdf.save(`VIDA_relatorio_${periodo}.pdf`);
     setProgress(100, 'PDF gerado');
     hideLoading();
-    if (_pdfBtn) { _pdfBtn.disabled = false; _pdfBtn.style.opacity = ''; _pdfBtn.style.cursor = ''; _pdfBtn.innerHTML = _btnSvg; }
     showToast('PDF exportado com sucesso.', 'ok');
   } catch (err) {
     hideLoading();
-    if (_pdfBtn) { _pdfBtn.disabled = false; _pdfBtn.style.opacity = ''; _pdfBtn.style.cursor = ''; _pdfBtn.innerHTML = _btnSvg; }
     if (/PDF|html2canvas|jspdf|biblioteca/i.test(err.message || '')) markPdfExportUnavailable();
     showToast('Erro ao gerar PDF: ' + err.message, 'err');
     console.error(err);
+  } finally {
+    setExportInProgress(false);
+    if (_pdfBtn) { _pdfBtn.disabled = false; _pdfBtn.style.opacity = ''; _pdfBtn.style.cursor = ''; _pdfBtn.innerHTML = _btnSvg; }
+    refreshOfflineGuards();
   }
 }

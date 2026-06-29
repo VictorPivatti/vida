@@ -97,13 +97,14 @@ export function buildExecutiveCoverData() {
   const retRate = total ? ret.length / total * 100 : 0;
   const grave = d.filter(r => ['VERMELHO', 'LARANJA', 'AMARELO'].includes(r.cor)).length;
   const graveRate = total ? grave / total * 100 : 0;
-  const alerts = topAlerts(d).slice(0, 3);
+  const allAlerts = topAlerts(d);
+  const alerts = allAlerts.slice(0, 3);
   const { s, e } = dateRange();
   const UC = typeof window.UC === 'object' && window.UC ? window.UC : {};
   let score = 0;
   try {
-    const bad = alerts.filter(a => a[0] === 'err').length;
-    const warn = alerts.filter(a => a[0] === 'warn').length;
+    const bad = allAlerts.filter(a => a[0] === 'err').length;
+    const warn = allAlerts.filter(a => a[0] === 'warn').length;
     const tMed = avg(d, r => r.tEspMed), tTri = avg(d, r => r.tEspTri);
     const p = EXEC_SCORE.penalties;
     const penalty = bad * p.criticalAlert + warn * p.warningAlert +
