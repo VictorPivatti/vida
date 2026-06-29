@@ -4,7 +4,7 @@
 //       This module coexists with it during the cutover phase.
 
 import { state } from '../state.js';
-import { parseHistLegacy } from '../parsers/hist.js';
+import { parseHistLegacy, safeMinutes } from '../parsers/hist.js';
 import { parseCidFromText } from '../parsers/cid.js';
 import { smartDecode, xlsxExtract } from '../parsers/workbook.js';
 import { showToast } from '../ui/toast.js';
@@ -12,17 +12,6 @@ import { showLoading, hideLoading, setProgress } from '../ui/progress.js';
 import { renderAll } from '../render/index.js';
 import { VidaDB } from '../storage/vidadb.js';
 import { ymd, monthKey } from '../utils/dates.js';
-import { safeMinutes } from '../parsers/hist.js';
-import { CONFIG } from '../constants.js';
-import { norm } from '../parsers/workbook.js';
-import {
-  decodeXmlEntities,
-  fixMojibake,
-  _CP1252_REV,
-} from '../parsers/workbook.js';
-import {
-  cleanRisk, legacyText, isEvasao, csvRows, parseDate, parseDuration,
-} from '../parsers/hist.js';
 import { fmt } from '../utils/dom.js';
 import { populateMedicoFilter } from '../filters.js';
 
@@ -44,37 +33,14 @@ function _checkLayoutFingerprint(type, csv, name) {
 }
 
 // ── Blob Worker URL (built lazily) ────────────────────────────────────────────
+// __HIST_WORKER_CODE__ is injected at build time by scripts/build.cjs via esbuild define.
+// In dev (no define), typeof returns 'undefined' and the worker path is skipped.
+/* global __HIST_WORKER_CODE__ */
 let _histWorkerUrl = null;
 function _getHistWorkerUrl() {
   if (_histWorkerUrl) return _histWorkerUrl;
-  const code = [
-    `const CONFIG={MAX_MINUTES:${CONFIG.MAX_MINUTES}};`,
-    `const _CP1252_REV=new Map(${JSON.stringify([..._CP1252_REV])});`,
-    `const norm=${norm.toString()};`,
-    `const ymd=${ymd.toString()};`,
-    `const monthKey=${monthKey.toString()};`,
-    decodeXmlEntities.toString(),
-    fixMojibake.toString(),
-    cleanRisk.toString(),
-    legacyText.toString(),
-    isEvasao.toString(),
-    csvRows.toString(),
-    parseDate.toString(),
-    parseDuration.toString(),
-    safeMinutes.toString(),
-    parseHistLegacy.toString(),
-    `self.onmessage=function(e){`,
-    `  const{csvs,names}=e.data,all=[],seen=new Set();`,
-    `  for(let i=0;i<csvs.length;i++){`,
-    `    const{data:rows}=parseHistLegacy(csvs[i]);`,
-    `    for(const r of rows){const k=r.pront+'|'+r.dateKey+'|'+r.hora;if(!seen.has(k)){seen.add(k);all.push(r);}}`,
-    `    self.postMessage({type:'progress',i:i+1,n:csvs.length,name:names[i],count:rows.length});`,
-    `  }`,
-    `  all.sort((a,b)=>a.dh-b.dh);`,
-    `  self.postMessage({type:'done',rows:all});`,
-    `};`,
-  ].join('\n');
-  _histWorkerUrl = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
+  if (typeof __HIST_WORKER_CODE__ !== 'string' || !__HIST_WORKER_CODE__) return null;
+  _histWorkerUrl = URL.createObjectURL(new Blob([__HIST_WORKER_CODE__], { type: 'text/javascript' }));
   return _histWorkerUrl;
 }
 
@@ -113,6 +79,7 @@ export async function workerRun(type, payload) {
     if (typeof Worker !== 'undefined') {
       try {
         const url = _getHistWorkerUrl();
+        if (!url) throw new Error('Worker code not available');
         const rows = await new Promise((res, rej) => {
           const w = new Worker(url);
           w.onmessage = e => {
