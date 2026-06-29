@@ -22,5 +22,7 @@ import { setProgress, showLoading, hideLoading } from './ui/progress.js';
 import { saveLayout, applyLayout, toggleLayoutEdit, resetLayout } from './ui/layout.js';
 import { toggleTheme, applyTheme } from './ui/theme.js';
 
+import * as Render from './render/index.js';
+
 initGlobals();
 console.log('[VIDA] build scaffold OK');
