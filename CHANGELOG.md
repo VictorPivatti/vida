@@ -5,6 +5,35 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [v3.5.0] — 2026-06-29
+
+### Arquitetura modular (esbuild)
+
+- Monolito `<script>` de ~6000 linhas removido de `src/index.template.html`
+- App migrado para ES6 modules em `src/js/` compilados via esbuild
+- `npm run build` gera `index.html` bundle-only (366 KB, era 708 KB — −48%)
+- Template HTML reduzido de ~7000 para 1092 linhas
+
+### Módulos adicionados
+
+- `src/js/loaders/` — carregadores de arquivo (hist, tri, cid, proc, exames)
+- `src/js/filters.js` — `applyFilters`, `setupDates`, `dateRange`
+- `src/js/storage/dbstats.js`, `src/js/ui/ttl.js`, `src/js/ui/export.js`
+
+### Testes
+
+- Suite de testes unitários ESM (`.mjs`) para utils, parsers e metrics
+- CI: build obrigatório + `git diff --exit-code index.html` para garantir sincronismo
+
+### CI/CD
+
+- `"type": "module"` em `package.json` — sem warnings `MODULE_TYPELESS_PACKAGE_JSON`
+- Arquivos CJS renomeados para `.cjs`
+- esbuild fixado em versão exata (`0.28.1`)
+- Deploy via GitHub Actions para GitHub Pages
+
+---
+
 ## [v3.4.0] — 2026-06-28
 
 ### Adicionado
