@@ -51,6 +51,7 @@ export const DOENCAS_NOTIFICAVEIS = {
 };
 
 let _notifGrupoAtivo = 'Todos';
+export function setNotifGrupo(grupo) { _notifGrupoAtivo = grupo; }
 
 export function renderNotificaveis() {
   const d = state.cidFilt;
@@ -127,7 +128,7 @@ export function renderNotificaveis() {
   renderNotifGrid(resultados);
 }
 
-function renderNotifGrid(resultados) {
+export function renderNotifGrid(resultados) {
   const el = document.getElementById('notifGrid');
   if (!el) return;
   const filtered = _notifGrupoAtivo === 'Todos' ? resultados : resultados.filter(r => r.grupo === _notifGrupoAtivo);

@@ -16,10 +16,12 @@ import { renderAuditoria } from './auditoria.js';
 import { renderPacientes, buscaProntuario } from './pacientes.js';
 import { renderEscala } from './escala.js';
 import { renderAnotacoes, deletarAnotacao } from './anotacoes.js';
-import { renderRelatorio } from './relatorio.js';
+import { renderRelatorio, renderPrintCover } from './relatorio.js';
 import { renderNotificaveis, DOENCAS_NOTIFICAVEIS } from './notificaveis.js';
 import { state } from '../state.js';
 import { showToast } from '../ui/toast.js';
+import { manchesterConformidade } from '../metrics/manchester.js';
+import { returns72 } from '../metrics/returns.js';
 
 export { renderGeral, renderExecutive, renderHeatmap };
 export { renderIndicadores };
@@ -40,6 +42,43 @@ export { renderEscala };
 export { renderAnotacoes, deletarAnotacao };
 export { renderRelatorio };
 export { renderNotificaveis, DOENCAS_NOTIFICAVEIS };
+
+function meta(id) { return Number(document.getElementById(id)?.value) || 0; }
+
+export function updateNavAlerts() {
+  if (!state.raw.length) return;
+  const alerts = {};
+
+  const manch = manchesterConformidade(state.filt);
+  const manchCrit = Object.values(manch).some(x => x.total > 0 && (x.ok / x.total * 100) < 90);
+  if (manchCrit) alerts['indicadores'] = true;
+
+  const { ret } = returns72();
+  const retRate = state.filt.length ? ret.length / state.filt.length * 100 : 0;
+  if (retRate > meta('metaRet')) alerts['retornos'] = true;
+
+  const meses = [...new Set(state.triFilt.map(r => r.anoMes))];
+  const taxasEvasao = meses.map(m => {
+    const recep = state.recepcionados[m] || null;
+    if (!recep) return null;
+    const brancos = state.triFilt.filter(r => r.anoMes === m && r.cor === 'BRANCO').length;
+    const atend = state.filt.filter(r => r.anoMes === m).length;
+    const ev = recep - brancos - atend;
+    return recep > 0 ? ev / recep * 100 : null;
+  }).filter(v => v != null);
+  const taxaMedia = taxasEvasao.length ? taxasEvasao.reduce((a, b) => a + b, 0) / taxasEvasao.length : null;
+  if (taxaMedia != null && taxaMedia > meta('metaRet')) alerts['triagem'] = true;
+
+  document.querySelectorAll('.nav-item[data-pane]').forEach(btn => {
+    const pane = btn.dataset.pane;
+    let dot = btn.querySelector('.nav-alert');
+    if (alerts[pane]) {
+      if (!dot) { dot = document.createElement('span'); dot.className = 'nav-alert'; btn.appendChild(dot); }
+    } else {
+      if (dot) dot.remove();
+    }
+  });
+}
 
 // Dirty-pane tracking (module-level, mirrors script-block pattern)
 export const _dirtyPanes = new Set();

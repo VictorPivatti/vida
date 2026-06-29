@@ -12,6 +12,9 @@
 import { toggleLayoutEdit, resetLayout } from './ui/layout.js';
 import { toggleTheme } from './ui/theme.js';
 import { renderAll, renderActivePane, markDirty, renderNotificaveis } from './render/index.js';
+import { renderEvasao, renderRecepTable } from './render/triagem.js';
+import { renderCidTrend, renderCidTrendAlerts, setTrendFilter } from './render/cid.js';
+import { renderNotifGrid, setNotifGrupo } from './render/notificaveis.js';
 import { deletarAnotacao } from './render/anotacoes.js';
 import { buscaProntuario } from './render/pacientes.js';
 import { state } from './state.js';
@@ -277,47 +280,19 @@ function toggleMobileSidebar() { document.body.classList.toggle('sidebar-open');
 function closeMobileSidebar() { document.body.classList.remove('sidebar-open'); }
 
 // ── CID trend filter ──────────────────────────────────────────────────────────
-// The full renderCidTrend implementation lives in the script block (and will
-// move to render/cid.js in Task 9). Here we expose the filter toggle only;
-// the actual render is delegated to the script-block version via window.*.
-let _trendFilter = 'all';
-
 function filterCidTrend(type, btn) {
-  _trendFilter = type;
+  setTrendFilter(type);
   document.querySelectorAll('#cidTrendFilters .trend-filter-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  // Delegate to script-block implementation until Task 9
-  if (typeof window._renderCidTrendAlerts === 'function') {
-    window._renderCidTrendAlerts(window._lastTrendAlerts || []);
-  } else if (typeof window.renderCidTrendAlerts === 'function') {
-    window.renderCidTrendAlerts(window._lastTrendAlerts || []);
-  }
-}
-
-// ── onchange="renderCidTrend()" ───────────────────────────────────────────────
-// Full implementation lives in the script block (will move to render/cid.js in
-// Task 9). This stub is intentionally a no-op so that the private
-// renderCidTrend() inside render/cid.js (which calls window.renderCidTrend)
-// does not recurse. At runtime the script block overwrites this binding with
-// the real implementation.
-function renderCidTrend() {
-  // no-op stub: overwritten by the <script> block at runtime.
-  // render/cid.js's private renderCidTrend() calls window.renderCidTrend()
-  // only when it exists — this binding satisfies that guard without recursing.
+  renderCidTrendAlerts(window._lastTrendAlerts || []);
 }
 
 // ── Notificáveis filter ───────────────────────────────────────────────────────
-let _notifGrupoAtivo = 'Todos';
-
 function filterNotifGrupo(grupo, btn) {
-  _notifGrupoAtivo = grupo;
+  setNotifGrupo(grupo);
   document.querySelectorAll('#notifGrupoFilters .notif-filter-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  if (typeof window._renderNotifGrid === 'function') {
-    window._renderNotifGrid(window._lastNotifResultados || []);
-  } else if (typeof window.renderNotifGrid === 'function') {
-    window.renderNotifGrid(window._lastNotifResultados || []);
-  }
+  renderNotifGrid(window._lastNotifResultados || []);
 }
 
 // ── onchange="renderCidNotificaveis()" ───────────────────────────────────────
@@ -358,21 +333,8 @@ function saveRecepcionados() {
   try { localStorage.setItem(RECEP_OVERRIDE_KEY, JSON.stringify(state.recepOverride)); } catch (e) {}
 }
 
-// ── renderRecepTable (used in onclick) ───────────────────────────────────────
-// Delegates to script-block version; will move to a module in Task 9.
-function renderRecepTable() {
-  if (typeof window._renderRecepTable === 'function') { window._renderRecepTable(); return; }
-  if (typeof window.renderRecepTable_impl === 'function') { window.renderRecepTable_impl(); return; }
-  // Fallback: no-op until extracted
-}
-
-// ── renderEvasao (used in onchange) ──────────────────────────────────────────
-// Delegates to script-block version; will move to render/triagem.js in Task 9.
-function renderEvasao(triFilt) {
-  if (typeof window._renderEvasao === 'function') { window._renderEvasao(triFilt); return; }
-  if (typeof window.renderEvasao_impl === 'function') { window.renderEvasao_impl(triFilt); return; }
-  // Fallback: no-op until extracted
-}
+// ── renderRecepTable + renderEvasao — imported from render/triagem.js ─────────
+// (imported at top of file — re-exported to window in Object.assign below)
 
 // ── Main export ───────────────────────────────────────────────────────────────
 export function initGlobals() {
