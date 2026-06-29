@@ -25,8 +25,10 @@ import { toggleTheme, applyTheme } from './ui/theme.js';
 import * as Render from './render/index.js';
 import { loadUnitConfig, autoLoadFromDB, bindEvents, checkDeps, showPrivacyNotice } from './bootstrap.js';
 import { refreshDbStats } from './storage/dbstats.js';
+import { initPresentationMode } from './ui/presentation.js';
 
 initGlobals();
+initPresentationMode();
 
 document.addEventListener('DOMContentLoaded', () => {
   loadUnitConfig();

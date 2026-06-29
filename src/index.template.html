@@ -264,7 +264,7 @@
           <input id="histFileSwitch" class="hidden" type="file" accept=".xlsx,.xls,.csv" multiple>
           <div class="file-name" id="fileName" style="display:flex;align-items:center;gap:6px;max-width:220px;overflow:hidden"></div>
           <div class="upload-dropdown" id="uploadDropdown">
-            <button type="button" class="btn" id="uploadMenuBtn" onclick="toggleUploadMenu()" aria-haspopup="true" aria-expanded="false" aria-controls="uploadMenuList">
+            <button type="button" class="btn requires-cdn-xlsx" id="uploadMenuBtn" onclick="toggleUploadMenu()" aria-haspopup="true" aria-expanded="false" aria-controls="uploadMenuList">
 <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               Carregar dados
               <span id="uploadBadge" style="display:none;background:var(--ok);color:#fff;border-radius:99px;font-size:9px;padding:1px 5px;font-weight:700;font-family:'IBM Plex Mono',monospace"></span>
@@ -303,9 +303,11 @@
 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
           <button type="button" class="btn btn-icon" id="themeBtn" title="Alternar tema" aria-label="Alternar tema">
 <svg aria-hidden="true" id="themeBtnIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
-          <button type="button" class="btn export" id="exportBtn" aria-label="Exportar XLSX">
+          <button type="button" class="btn btn-icon pill" id="presentationBtn" title="Modo apresentação — oculta menus e amplia KPIs (Shift+P)" aria-label="Modo apresentação" aria-pressed="false">
+<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></button>
+          <button type="button" class="btn export requires-cdn requires-cdn-xlsx" id="exportBtn" aria-label="Exportar XLSX">
 <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>XLSX</button>
-          <button type="button" class="btn primary" id="printBtn" aria-label="Exportar PDF">
+          <button type="button" class="btn primary requires-cdn requires-cdn-pdf" id="printBtn" aria-label="Exportar PDF">
 <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF</button>
           <button type="button" class="btn btn-icon" id="newBtn" title="Trocar base de dados (limpa o banco e volta à tela de upload)" aria-label="Trocar base de dados">
 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></button>
@@ -352,7 +354,7 @@
           <button type="button" class="pill density-btn" data-density="compact" title="Compacto">▤</button>
           <button type="button" class="pill density-btn" data-density="wide" title="Amplo">▢</button>
         </div>
-                <div id="tbSourceChips" style="display:none;align-items:center;gap:4px;margin-left:auto">
+                <div id="tbSourceChips" class="tb-source-chips-wrap" style="display:none">
           <span class="tb-source-chip" id="tbChipHist" title="Histórico de atendimentos">Hist</span>
           <span class="tb-source-chip" id="tbChipTri"  title="Triagem">Tri</span>
           <span class="tb-source-chip" id="tbChipCid"  title="CID / Diagnósticos">CID</span>
@@ -434,11 +436,23 @@
 
       <section class="pane active" id="pane-geral" aria-labelledby="pane-geral-title">
         <div class="page-header"><h1 id="pane-geral-title" class="page-title">Visão geral</h1><p class="page-desc">Indicadores-chave de demanda, ritmo e pressão assistencial no período selecionado</p></div>
+        <div class="onboarding-panel" id="onboardingPanel" style="display:none">
+          <div class="onboarding-panel-head">
+            <div>
+              <strong>Próximos passos</strong>
+              <span class="onboarding-panel-count">0/4 complementos</span>
+            </div>
+            <button type="button" class="onboarding-panel-dismiss" onclick="dismissOnboardingPanel()" aria-label="Dispensar">✕</button>
+          </div>
+          <p class="onboarding-panel-lead">Complete as fontes abaixo para desbloquear cruzamentos, notificáveis e produção.</p>
+          <div class="onboarding-panel-body"></div>
+        </div>
         <div class="dash-insight">Leitura executiva do período: volume, distribuição temporal e prioridades operacionais consolidadas abaixo.</div>
         <div class="executive">
           <div class="card" id="execSituation"></div>
           <div class="card"><div class="card-title">Prioridades do período</div><div class="exec-list" id="execAlerts"></div></div>
         </div>
+        <div class="dash-delta-row" id="dashDeltaRow" aria-label="Comparativo vs período anterior"></div>
         <div class="grid" id="kpisGeral"></div>
         <div id="projGeralNotice" style="margin-bottom:12px"></div>
         <div class="chart-grid">

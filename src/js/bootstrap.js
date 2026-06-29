@@ -11,6 +11,7 @@ import { $ } from './utils/dom.js';
 import { showToast } from './ui/toast.js';
 import { showExpiredHomeNotice, hideExpiredHomeNotice, initExpiredHomeNotice, bindExpiredHomeNotice } from './ui/home-notice.js';
 import { updateHomeFromStats, renderHomeSourceChecklist } from './ui/home-sources.js';
+import { initOfflineGuards } from './ui/offline.js';
 import { showLoading, hideLoading } from './ui/progress.js';
 import { setupDates, populateMedicoFilter, applyFilters } from './filters.js';
 import { refreshDbStats } from './storage/dbstats.js';
@@ -228,6 +229,8 @@ export function bindEvents() {
   // ── Theme / print / new ───────────────────────────────────────────────────
   const themeBtn = $('themeBtn'); if (themeBtn) themeBtn.onclick = () => window.toggleTheme?.();
   const printBtn = $('printBtn'); if (printBtn) printBtn.onclick = () => window.exportarPDF?.();
+  const presentationBtn = $('presentationBtn');
+  if (presentationBtn) presentationBtn.onclick = () => window.togglePresentationMode?.();
   const newBtn   = $('newBtn');   if (newBtn)   newBtn.onclick   = () => window.resetApp?.();
 
   document.querySelectorAll('[data-theme-choice]').forEach(btn => {
@@ -402,18 +405,9 @@ export async function _execLoadFromDB(s) {
 }
 
 // ── checkDeps ─────────────────────────────────────────────────────────────────
-// Checks if CDN libraries (XLSX, Chart) loaded; shows warning bar if not.
+// Verifica bibliotecas CDN (XLSX, Chart) e conectividade; delega a offline.js.
 export function checkDeps() {
-  const missing = [];
-  if (typeof XLSX === 'undefined') missing.push('leitura de planilhas (XLSX.js)');
-  if (typeof Chart === 'undefined') missing.push('gráficos (Chart.js)');
-  if (!missing.length) return;
-  const bar = document.createElement('div');
-  bar.id = 'depWarnBar';
-  bar.setAttribute('role', 'alert');
-  bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:var(--er,#a83a31);color:#fff;padding:10px 16px;font:600 13px "Plus Jakarta Sans",system-ui,sans-serif;display:flex;align-items:center;gap:10px;justify-content:center;text-align:center';
-  bar.innerHTML = '<span>⚠ Sem conexão com a internet: ' + missing.join(' e ') + ' indisponíveis. Conecte-se e recarregue a página (F5). O parser interno de .xlsx continua funcionando parcialmente.</span><button type="button" style="background:rgba(255,255,255,.2);border:0;color:#fff;padding:4px 12px;border-radius:6px;cursor:pointer;font:inherit" onclick="location.reload()">Recarregar</button>';
-  document.body.prepend(bar);
+  initOfflineGuards();
 }
 
 // ── showPrivacyNotice ─────────────────────────────────────────────────────────

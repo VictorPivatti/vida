@@ -2,13 +2,16 @@
 import { state } from '../state.js';
 import { $, esc, fmt, fmtN, pct, norm, shortName, kpi } from '../utils/dom.js';
 import { avg } from '../utils/stats.js';
-import { monthKey, monthLabel, ymd } from '../utils/dates.js';
+import { monthKey, monthLabel } from '../utils/dates.js';
 import { chart, gridColor, tickColor, axes } from '../ui/charts.js';
 import { CONFIG, EXEC_SCORE, DOW, DOWO } from '../constants.js';
 import { monthlyStats, calcProjecao } from '../metrics/monthly.js';
 import { metaManchester } from '../metrics/manchester.js';
 import { returns72 } from '../metrics/returns.js';
 import { evasaoDisponivel } from '../metrics/med.js';
+import { previousRows, prevVal, periodDelta } from '../metrics/previous-period.js';
+import { renderOnboardingPanel } from '../ui/onboarding-panel.js';
+import { dateRange } from '../filters.js';
 
 // ── Internal helpers ─────────────────────────────────────────────────────────
 
@@ -20,46 +23,6 @@ function group(arr, fn) {
 /** Read a meta input value by element id. */
 function meta(id) {
   return Number(document.getElementById(id)?.value) || 0;
-}
-
-/** Get date range from dateStart/dateEnd inputs. */
-function dateRange() {
-  const s = parseDate(document.getElementById('dateStart')?.value);
-  const e = parseDate(document.getElementById('dateEnd')?.value);
-  if (e) e.setHours(23, 59, 59, 999);
-  return { s, e };
-}
-
-function parseDate(v) {
-  if (!v) return null;
-  const d = new Date(v + 'T00:00:00');
-  return isNaN(d) ? null : d;
-}
-
-function rowsInRange(rows, s, e, turno) {
-  const t = turno || document.getElementById('turno')?.value || 'all';
-  const sKey = s ? ymd(s) : null;
-  const eKey = e ? ymd(e) : null;
-  return rows.filter(r =>
-    (!sKey || (r.dateKey || '') >= sKey) &&
-    (!eKey || (r.dateKey || '') <= eKey) &&
-    (t === 'all' || r.turno === t)
-  );
-}
-
-function previousRows() {
-  const { s, e } = dateRange();
-  if (!s || !e) return [];
-  const span = e - s, prevEnd = new Date(s.getTime() - 1), prevStart = new Date(prevEnd.getTime() - span);
-  return rowsInRange(state.raw, prevStart, prevEnd);
-}
-
-/** prevVal: returns prev only if coverage is >= 50% of current period. */
-export function prevVal(val, prevRows, curMonths, prevMonths) {
-  if (val == null || !Number.isFinite(val)) return null;
-  if (!prevMonths || (curMonths > 0 && prevMonths < curMonths * 0.5)) return null;
-  if (!prevRows || prevRows.length < curMonths * 10) return null;
-  return val;
 }
 
 function metricDelta(cur, prev, unit = '', inverse = false) {
@@ -91,12 +54,91 @@ function topAlerts(rows) {
   return alerts;
 }
 
+function _deltaPill(label, cur, prev, { unit = '', inverse = false, format = v => String(v) } = {}) {
+  const d = periodDelta(cur, prev, { inverse });
+  if (d.dir == null) {
+    return `<div class="dash-delta-pill muted"><span class="dash-delta-label">${esc(label)}</span><span class="dash-delta-val">${format(cur ?? '—')}</span><span class="dash-delta-sub">sem período anterior</span></div>`;
+  }
+  const arrow = d.dir === 'up' ? '↑' : d.dir === 'down' ? '↓' : '→';
+  const cls = d.good ? 'okc' : 'erc';
+  const sign = d.diff > 0 ? '+' : '';
+  const diffTxt = unit === 'pp' ? `${sign}${fmtN(d.diff, 1)} p.p.` : unit === 'min' ? `${sign}${Math.round(d.diff)} min` : `${sign}${Math.round(d.diff)}`;
+  const pctTxt = d.pct != null ? ` (${sign}${fmtN(d.pct, 1)}%)` : '';
+  return `<div class="dash-delta-pill ${cls}"><span class="dash-delta-label">${esc(label)}</span><span class="dash-delta-val">${format(cur)}</span><span class="dash-delta-sub">${arrow} ${diffTxt}${pctTxt} vs período anterior</span></div>`;
+}
+
+function renderDashDeltaRow(d, prev, pm_g, m_g) {
+  const el = $('dashDeltaRow');
+  if (!el) return;
+  const metaTri = meta('metaTri');
+  const triN = d.filter(r => r.tEspTri != null).length;
+  const triOk = d.filter(r => r.tEspTri != null && r.tEspTri <= metaTri).length;
+  const triRate = triN ? triOk / triN * 100 : null;
+  const pTriN = prev.filter(r => r.tEspTri != null).length;
+  const pTriOk = prev.filter(r => r.tEspTri != null && r.tEspTri <= metaTri).length;
+  const prevTriRate = prevVal(pTriN ? pTriOk / pTriN * 100 : null, prev, m_g, pm_g.length);
+  const curTotal = avg(d, r => r.tTotal);
+  const prevTotal = prevVal(avg(prev, r => r.tTotal), prev, m_g, pm_g.length);
+  const prevVol = prevVal(prev.length, prev, m_g, pm_g.length);
+  el.innerHTML =
+    _deltaPill('Volume', d.length, prevVol, { format: v => fmt(v) }) +
+    _deltaPill('Triagem na meta', triRate, prevTriRate, { unit: 'pp', format: v => v != null ? fmtN(v, 1) + '%' : '—' }) +
+    _deltaPill('Tempo total médio', curTotal, prevTotal, { unit: 'min', inverse: true, format: v => v != null ? Math.round(v) + ' min' : '—' });
+}
+
+/** Dados serializáveis para capa executiva do PDF. */
+export function buildExecutiveCoverData() {
+  const d = state.filt;
+  const total = d.length;
+  const days = new Set(d.map(r => r.dateKey)).size;
+  const curDaily = days ? Math.round(total / days) : 0;
+  const curTotalTime = avg(d, r => r.tTotal);
+  const { ret } = returns72();
+  const retRate = total ? ret.length / total * 100 : 0;
+  const grave = d.filter(r => ['VERMELHO', 'LARANJA', 'AMARELO'].includes(r.cor)).length;
+  const graveRate = total ? grave / total * 100 : 0;
+  const alerts = topAlerts(d).slice(0, 3);
+  const { s, e } = dateRange();
+  const UC = typeof window.UC === 'object' && window.UC ? window.UC : {};
+  let score = 0;
+  try {
+    const bad = alerts.filter(a => a[0] === 'err').length;
+    const warn = alerts.filter(a => a[0] === 'warn').length;
+    const tMed = avg(d, r => r.tEspMed), tTri = avg(d, r => r.tEspTri);
+    const p = EXEC_SCORE.penalties;
+    const penalty = bad * p.criticalAlert + warn * p.warningAlert +
+      Math.max(0, retRate - meta('metaRet')) * p.retornoPerPoint +
+      Math.max(0, (tMed ?? 0) - meta('metaMed')) * p.medicoPerMinute +
+      Math.max(0, (tTri ?? 0) - meta('metaTri')) * p.triagemPerMinute +
+      Math.max(0, (curTotalTime ?? 0) - meta('metaTotal')) * p.totalPerMinute +
+      Math.max(0, graveRate - 35) * p.graveShareOver35PerPoint;
+    score = Math.max(0, Math.round(EXEC_SCORE.base - penalty));
+  } catch (err) { /* score opcional */ }
+  return {
+    unitName: UC.nome || 'Unidade de Saúde',
+    periodStart: s ? s.toLocaleDateString('pt-BR') : '',
+    periodEnd: e ? e.toLocaleDateString('pt-BR') : '',
+    kpis: [
+      { label: 'Atendimentos', value: fmt(total), sub: `${days} dias` },
+      { label: 'Média diária', value: fmt(curDaily), sub: 'atend./dia' },
+      { label: 'Tempo total médio', value: curTotalTime != null ? Math.round(curTotalTime) + ' min' : '—', sub: 'recepção → alta' },
+      { label: 'Retorno ≤72h', value: fmtN(retRate, 1) + '%', sub: fmt(ret.length) + ' eventos' },
+    ],
+    alerts,
+    score,
+  };
+}
+
+// Re-export for globals / tests
+export { prevVal } from '../metrics/previous-period.js';
+
 // ── Exported render functions ────────────────────────────────────────────────
 
 export function renderGeral() {
   const d = state.filt, total = d.length, days = new Set(d.map(r => r.dateKey)).size;
   const prev = previousRows(), prevDays = new Set(prev.map(r => r.dateKey)).size;
   const pm_g = monthlyStats(prev), m_g = new Set(d.map(r => r.anoMes)).size;
+  renderDashDeltaRow(d, prev, pm_g, m_g);
   const curDaily = days ? Math.round(total / days) : 0, prevDaily = prevDays ? Math.round(prev.length / prevDays) : null;
   const curTotalTime = avg(d, r => r.tTotal), prevTotalTime = avg(prev, r => r.tTotal);
   const { ret } = returns72(), retRate = total ? ret.length / total * 100 : 0;
@@ -160,6 +202,7 @@ export function renderGeral() {
       </div>`;
     }
   }
+  renderOnboardingPanel();
 }
 
 export function renderExecutive(total, daily, totalTime, retRate, graveRate) {

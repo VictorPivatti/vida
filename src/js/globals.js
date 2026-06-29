@@ -31,7 +31,9 @@ import { renderNotifGrid, setNotifGrupo } from './render/notificaveis.js';
 import { deletarAnotacao } from './render/anotacoes.js';
 import { buscaProntuario } from './render/pacientes.js';
 import { AUDIT_RULES } from './render/auditoria.js';
-import { prevVal } from './render/geral.js';
+import { prevVal } from './metrics/previous-period.js';
+import { togglePresentationMode, initPresentationMode } from './ui/presentation.js';
+import { dismissOnboardingPanel } from './ui/onboarding-panel.js';
 import { returns72, returnsFor } from './metrics/returns.js';
 import { monthlyStats, calcProjecao } from './metrics/monthly.js';
 import { metaManchester, manchesterConformidade } from './metrics/manchester.js';
@@ -442,6 +444,8 @@ export function initGlobals() {
     copyReport,
     downloadReport,
     exportarPDF,
+    togglePresentationMode,
+    dismissOnboardingPanel,
 
     // ── Recepcionados (used in onchange / onclick inline code)
     saveRecepcionados,

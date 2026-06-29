@@ -7,6 +7,9 @@ import { $, esc, norm, fmt } from '../utils/dom.js';
 import { ymd } from '../utils/dates.js';
 import { applyFilters, dateRange } from '../filters.js';
 import { renderAll, renderActivePane } from '../render/index.js';
+import { buildExecutiveCoverData } from '../render/geral.js';
+import { renderOnboardingPanel } from './onboarding-panel.js';
+import { isPdfExportBlocked, markPdfExportUnavailable, clearPdfExportBlock, refreshOfflineGuards } from './offline.js';
 import { VidaDB } from '../storage/vidadb.js';
 import { showLoading, hideLoading, setProgress } from './progress.js';
 import { showToast } from './toast.js';
@@ -164,6 +167,7 @@ export function updateUploadStatuses() {
   updateSourceChips();
   updateQualityChip();
   renderHomeSourceChecklist();
+  renderOnboardingPanel();
 }
 
 export function updateTriBtn() {
@@ -207,6 +211,10 @@ export function downloadReport() {
 
 export async function exportarPDF() {
   if (!state.filt.length) { showToast('Carregue dados antes de exportar.', 'warn'); return; }
+  if (isPdfExportBlocked()) {
+    showToast('Exportação PDF indisponível offline. Conecte-se à internet e recarregue a página.', 'warn', 6000);
+    return;
+  }
   const _pdfBtn = $('printBtn');
   const _btnSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF';
   if (_pdfBtn) { _pdfBtn.disabled = true; _pdfBtn.style.opacity = '.5'; _pdfBtn.style.cursor = 'wait'; _pdfBtn.textContent = 'Gerando...'; }
@@ -230,6 +238,8 @@ export async function exportarPDF() {
         document.head.appendChild(s2);
       } else { check(); }
     });
+    clearPdfExportBlock();
+    refreshOfflineGuards();
   }
   showLoading('Gerando PDF — aguarde...');
   try {
@@ -267,7 +277,72 @@ export async function exportarPDF() {
       });
     };
     let pagina = 0;
+    const totalPages = panes.length + 1;
+
+    function _renderPdfCover(pdf, margin, pdfW, pdfH) {
+      const cover = buildExecutiveCoverData();
+      pdf.setFillColor(245, 246, 250);
+      pdf.rect(0, 0, pdfW, pdfH, 'F');
+      pdf.setFontSize(22);
+      pdf.setTextColor(15, 23, 42);
+      pdf.text('V.I.D.A.', margin, margin + 14);
+      pdf.setFontSize(11);
+      pdf.setTextColor(80, 90, 110);
+      pdf.text(cover.unitName, margin, margin + 22);
+      pdf.setFontSize(10);
+      pdf.text(`Período: ${cover.periodStart} – ${cover.periodEnd}`, margin, margin + 30);
+      if (cover.score) {
+        pdf.setFontSize(9);
+        pdf.text(`Score executivo: ${cover.score}`, pdfW - margin, margin + 14, { align: 'right' });
+      }
+      const gridY = margin + 40;
+      const cellW = (pdfW - margin * 2 - 8) / 2;
+      const cellH = 28;
+      cover.kpis.forEach((k, i) => {
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const x = margin + col * (cellW + 8);
+        const y = gridY + row * (cellH + 8);
+        pdf.setDrawColor(220, 224, 232);
+        pdf.setFillColor(255, 255, 255);
+        pdf.roundedRect(x, y, cellW, cellH, 3, 3, 'FD');
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 110, 130);
+        pdf.text(k.label, x + 6, y + 10);
+        pdf.setFontSize(16);
+        pdf.setTextColor(20, 30, 50);
+        pdf.text(String(k.value), x + 6, y + 20);
+        pdf.setFontSize(7);
+        pdf.setTextColor(130, 140, 155);
+        pdf.text(k.sub || '', x + 6, y + 26);
+      });
+      const alertY = gridY + cellH * 2 + 24;
+      pdf.setFontSize(10);
+      pdf.setTextColor(20, 30, 50);
+      pdf.text('Prioridades do período', margin, alertY);
+      let ay = alertY + 8;
+      cover.alerts.forEach(([t, title, msg]) => {
+        const color = t === 'err' ? [200, 73, 62] : t === 'warn' ? [210, 145, 42] : [47, 158, 126];
+        pdf.setFillColor(...color);
+        pdf.circle(margin + 2, ay + 1.5, 1.2, 'F');
+        pdf.setFontSize(8.5);
+        pdf.setTextColor(30, 35, 50);
+        pdf.text(title, margin + 7, ay + 2.5);
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(90, 100, 120);
+        const lines = pdf.splitTextToSize(msg, pdfW - margin * 2 - 8);
+        pdf.text(lines, margin + 7, ay + 7);
+        ay += 7 + lines.length * 3.5 + 4;
+      });
+      pdf.setFontSize(6.5);
+      pdf.setTextColor(150, 150, 160);
+      pdf.text(`V.I.D.A. · Uso interno · Não substitui notificação SINAN · Gerado em ${new Date().toLocaleString('pt-BR')}`, pdfW / 2, pdfH - 6, { align: 'center' });
+    }
+
     try {
+      _renderPdfCover(pdf, margin, pdfW, pdfH);
+      pagina++;
+
       for (const p of panes) {
         const el = document.getElementById(p.id);
         if (!el) continue;
@@ -277,7 +352,7 @@ export async function exportarPDF() {
         document.querySelector(`.nav-item[data-pane="${p.id.replace('pane-', '')}"]`)?.classList.add('active');
         renderActivePane();
         await new Promise(r => setTimeout(r, 400));
-        setProgress((pagina / panes.length) * 90, `Capturando: ${p.title}`, `${pagina + 1}/${panes.length}`);
+        setProgress((pagina / totalPages) * 90, `Capturando: ${p.title}`, `${pagina + 1}/${totalPages}`);
         const canvas = await html2canvas(el, { // eslint-disable-line no-undef
           backgroundColor: getComputedStyle(document.body).backgroundColor,
           scale: 2.5, logging: false, useCORS: true, imageTimeout: 0,
@@ -291,7 +366,7 @@ export async function exportarPDF() {
         if (pagina > 0) pdf.addPage();
         pdf.setFontSize(8); pdf.setTextColor(120, 120, 130);
         pdf.text(`V.I.D.A. — ${UC.nome || 'Unidade de Saúde'}`, margin, margin + 3);
-        pdf.text(`Página ${pagina + 1}/${panes.length}`, pdfW - margin, margin + 3, { align: 'right' });
+        pdf.text(`Página ${pagina + 1}/${totalPages}`, pdfW - margin, margin + 3, { align: 'right' });
         pdf.setFontSize(13); pdf.setTextColor(20, 20, 30);
         pdf.text(p.title, margin, margin + 10);
         if (p.confidencial) {
@@ -324,6 +399,7 @@ export async function exportarPDF() {
   } catch (err) {
     hideLoading();
     if (_pdfBtn) { _pdfBtn.disabled = false; _pdfBtn.style.opacity = ''; _pdfBtn.style.cursor = ''; _pdfBtn.innerHTML = _btnSvg; }
+    if (/PDF|html2canvas|jspdf|biblioteca/i.test(err.message || '')) markPdfExportUnavailable();
     showToast('Erro ao gerar PDF: ' + err.message, 'err');
     console.error(err);
   }

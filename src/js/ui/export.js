@@ -5,6 +5,7 @@ import { state } from '../state.js';
 import { fmt, norm } from '../utils/dom.js';
 import { showToast } from './toast.js';
 import { showLoading, hideLoading } from './progress.js';
+import { isXlsxAvailable } from './offline.js';
 import { medRows } from '../metrics/med.js';
 import { monthlyStats } from '../metrics/monthly.js';
 import { monthLabel } from '../utils/dates.js';
@@ -55,6 +56,10 @@ export function exportMedXlsx() {
 
 export function exportXLSX() {
   if (!state.filt.length) { showToast('Nenhum dado filtrado para exportar.', 'warn'); return; }
+  if (!isXlsxAvailable()) {
+    showToast('Exportação XLSX indisponível — XLSX.js não carregou. Conecte-se e recarregue (F5).', 'warn', 6000);
+    return;
+  }
   const _expBtn = document.getElementById('exportBtn');
   if (_expBtn) { _expBtn.disabled = true; _expBtn.style.opacity = '.5'; _expBtn.style.cursor = 'wait'; }
   showLoading('Gerando planilha...');

@@ -2,41 +2,14 @@
 import { state } from '../state.js';
 import { $, fmt, fmtN, pct, kpi } from '../utils/dom.js';
 import { percentile } from '../utils/stats.js';
-import { monthLabel, ymd } from '../utils/dates.js';
+import { monthLabel } from '../utils/dates.js';
 import { chart, gridColor, tickColor, axes } from '../ui/charts.js';
 import { monthlyStats } from '../metrics/monthly.js';
 import { metaManchester, manchesterConformidade } from '../metrics/manchester.js';
 import { RISK_COLOR } from '../constants.js';
+import { previousRows, prevVal } from '../metrics/previous-period.js';
 
 function meta(id) { return Number(document.getElementById(id)?.value) || 0; }
-
-function previousRows() {
-  const sEl = document.getElementById('dateStart');
-  const eEl = document.getElementById('dateEnd');
-  if (!sEl?.value || !eEl?.value) return [];
-  const s = new Date(sEl.value + 'T00:00:00');
-  const e = new Date(eEl.value + 'T23:59:59');
-  if (isNaN(s) || isNaN(e)) return [];
-  const span = e - s;
-  const prevEnd = new Date(s.getTime() - 1);
-  const prevStart = new Date(prevEnd.getTime() - span);
-  const t = document.getElementById('turno')?.value || 'all';
-  const sKey = ymd(prevStart), eKey = ymd(prevEnd);
-  return state.raw.filter(r =>
-    (r.dateKey || '') >= sKey && (r.dateKey || '') <= eKey && (t === 'all' || r.turno === t)
-  );
-}
-
-function group(arr, fn) {
-  return arr.reduce((m, r) => { const k = fn(r); m[k] = (m[k] || 0) + 1; return m; }, {});
-}
-
-function prevVal(val, prevRows, curMonths, prevMonths) {
-  if (val == null || !Number.isFinite(val)) return null;
-  if (!prevMonths || (curMonths > 0 && prevMonths < curMonths * 0.5)) return null;
-  if (!prevRows || prevRows.length < curMonths * 10) return null;
-  return val;
-}
 
 function metricDelta(cur, prev, unit = '', inverse = false) {
   if (cur == null || prev == null || !Number.isFinite(cur) || !Number.isFinite(prev) || prev === 0) return '';

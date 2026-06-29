@@ -744,8 +744,12 @@
       .topbar-row1{padding:0 12px!important;min-height:50px!important;gap:8px!important}
       .topbar-section-title{font-size:13px!important}
       .density-btn{display:none!important}
-      #layoutEditBtn,#exportBtn{display:none!important}
+      #layoutEditBtn,#exportBtn,#printBtn{display:none!important}
       .topbar-actions .file-name{max-width:100px!important;font-size:10px!important}
+      .topbar-row2 .pill[data-shortcut]{display:none!important}
+      .topbar-row2 #filtroMedico,.topbar-row2 #filtroRisco,.topbar-row2 .flabel:nth-of-type(n+4){display:none!important}
+      .tb-source-chips-wrap{display:flex!important;align-items:center;gap:4px;margin-left:auto;flex-shrink:0}
+      #dbStatsBadge{display:none!important}
     }
     @media(max-width:560px){
       .up-wordmark{top:max(16px,env(safe-area-inset-top));left:16px}
@@ -1085,6 +1089,118 @@
       background:var(--sur2);border:1px solid var(--bdr);
       border-left:3px solid var(--ac);border-radius:var(--radius);
       font-size:13px;color:var(--txt2);line-height:1.55
+    }
+
+    .dash-delta-row{
+      display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
+      margin-bottom:var(--card-gap)
+    }
+    @media(max-width:900px){.dash-delta-row{grid-template-columns:1fr}}
+    .dash-delta-pill{
+      padding:10px 12px;border-radius:var(--radius);
+      border:1px solid var(--bdr2);background:var(--sur2);
+      display:flex;flex-direction:column;gap:3px;min-width:0
+    }
+    .dash-delta-pill.okc{border-color:rgba(47,158,126,.28);background:rgba(47,158,126,.06)}
+    .dash-delta-pill.erc{border-color:rgba(200,73,62,.28);background:rgba(200,73,62,.06)}
+    .dash-delta-pill.muted{opacity:.85}
+    .dash-delta-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:700}
+    .dash-delta-val{font-size:18px;font-weight:700;color:var(--txt);line-height:1.2}
+    .dash-delta-sub{font-size:10px;color:var(--txt2);line-height:1.4}
+    .dash-delta-pill.okc .dash-delta-sub{color:var(--ok)}
+    .dash-delta-pill.erc .dash-delta-sub{color:var(--er)}
+
+    .onboarding-panel{
+      margin-bottom:var(--card-gap);padding:14px 16px;
+      background:rgba(19,87,166,.06);border:1px solid rgba(19,87,166,.18);
+      border-radius:var(--radius-lg)
+    }
+    .onboarding-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px}
+    .onboarding-panel-head strong{font-size:13px;color:var(--txt)}
+    .onboarding-panel-count{
+      display:inline-block;margin-left:8px;font-size:10px;font-weight:600;
+      color:var(--ac);font-family:'IBM Plex Mono',monospace
+    }
+    .onboarding-panel-dismiss{
+      background:none;border:none;color:var(--mut);cursor:pointer;
+      font-size:14px;line-height:1;padding:2px 6px;border-radius:4px
+    }
+    .onboarding-panel-dismiss:hover{color:var(--txt);background:var(--sur3)}
+    .onboarding-panel-lead{font-size:12px;color:var(--txt2);margin:0 0 10px;line-height:1.5}
+    .onboarding-panel-body{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    @media(max-width:720px){.onboarding-panel-body{grid-template-columns:1fr}}
+    .onboarding-step{
+      display:flex;align-items:flex-start;gap:10px;text-align:left;
+      padding:10px 12px;border-radius:var(--radius);
+      border:1px dashed var(--bdr2);background:var(--sur);
+      cursor:pointer;transition:border-color .15s,background .15s
+    }
+    .onboarding-step:hover:not(:disabled){border-color:var(--ac);background:var(--sur2)}
+    .onboarding-step.done{opacity:.65;border-style:solid;border-color:rgba(47,158,126,.25);cursor:default}
+    .onboarding-step-icon{
+      width:22px;height:22px;border-radius:50%;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font-size:12px;font-weight:700;color:var(--ac);
+      border:1.5px solid var(--ac);background:var(--ac-glow)
+    }
+    .onboarding-step.done .onboarding-step-icon{color:var(--ok);border-color:var(--ok);background:rgba(47,158,126,.1)}
+    .onboarding-step-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .onboarding-step-text strong{font-size:12px;color:var(--txt)}
+    .onboarding-step-text span{font-size:10px;color:var(--mut);line-height:1.4}
+
+    body.presentation-mode .sidebar{display:none!important}
+    body.presentation-mode #uploadDropdown{display:none!important}
+    body.presentation-mode .topbar-row2 .pill[data-shortcut],
+    body.presentation-mode .topbar-row2 #filtroMedico,
+    body.presentation-mode .topbar-row2 #filtroRisco,
+    body.presentation-mode .topbar-row2 .density-btn,
+    body.presentation-mode #layoutEditBtn,
+    body.presentation-mode #exportBtn,
+    body.presentation-mode #newBtn,
+    body.presentation-mode .file-name{display:none!important}
+    body.presentation-mode main{padding:24px 32px;max-width:1600px}
+    body.presentation-mode .grid{gap:18px}
+    body.presentation-mode .k-value{font-size:clamp(28px,3vw,36px)!important}
+    body.presentation-mode .onboarding-panel{display:none!important}
+    .tb-source-chips-wrap{display:flex;align-items:center;gap:4px;margin-left:auto}
+
+    /* Banner offline / CDN ausente */
+    .offline-bar{
+      position:fixed;top:0;left:0;right:0;z-index:99998;
+      display:flex;align-items:flex-start;gap:12px;
+      padding:10px 16px;
+      background:linear-gradient(180deg,rgba(200,73,62,.97),rgba(168,58,49,.97));
+      color:#fff;font-size:12px;line-height:1.45;
+      box-shadow:0 4px 20px rgba(0,0,0,.25)
+    }
+    body.has-offline-bar #app,
+    body.has-offline-bar #upload{padding-top:52px}
+    body.has-offline-bar .topbar{top:0}
+    .offline-bar-icon{
+      flex:none;width:32px;height:32px;border-radius:8px;
+      background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center
+    }
+    .offline-bar-body{flex:1;min-width:0}
+    .offline-bar-body p{margin:0 0 4px}
+    .offline-bar-body p:last-child{margin:0}
+    .offline-bar-reload{
+      flex:none;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);
+      color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;
+      font:inherit;font-size:11px;font-weight:600;white-space:nowrap
+    }
+    .offline-bar-reload:hover{background:rgba(255,255,255,.28)}
+    .btn.cdn-disabled,.btn.cdn-disabled:hover{
+      opacity:.45;cursor:not-allowed;transform:none;box-shadow:none
+    }
+    body.cdn-missing-chart .chart{
+      position:relative;min-height:120px;display:flex;align-items:center;justify-content:center
+    }
+    body.cdn-missing-chart .chart canvas{opacity:.15;pointer-events:none}
+    body.cdn-missing-chart .chart::after{
+      content:'Gráfico indisponível offline — KPIs e tabelas acima permanecem ativos.';
+      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      padding:16px;text-align:center;font-size:11px;color:var(--mut);line-height:1.45;
+      pointer-events:none
     }
 
     /* Empty states — onboarding contextual */
