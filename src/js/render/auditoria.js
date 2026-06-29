@@ -6,7 +6,7 @@ import { chart, gridColor, tickColor } from '../ui/charts.js';
 import { CONFIG } from '../constants.js';
 import { returns72, returnsFor } from '../metrics/returns.js';
 
-const AUDIT_RULES = [
+export const AUDIT_RULES = [
   { id: 't01', tipo: 'temporal', sev: 'alta', label: 'Acolhimento antes da recepção', fn: r => r.dhAcol && r.dh && r.dhAcol < r.dh, motivo: r => `dh_acolhimento (${r.dhAcol?.toLocaleString('pt-BR')}) < dh_recepcao (${r.dh?.toLocaleString('pt-BR')})`, campo: 'dh_acolhimento' },
   { id: 't02', tipo: 'temporal', sev: 'alta', label: 'Atendimento médico antes do acolhimento', fn: r => r.dhAtend && r.dhAcol && r.dhAtend < r.dhAcol, motivo: r => `dh_atendimento (${r.dhAtend?.toLocaleString('pt-BR')}) < dh_acolhimento (${r.dhAcol?.toLocaleString('pt-BR')})`, campo: 'dh_atendimento' },
   { id: 't03', tipo: 'temporal', sev: 'media', label: 'Data futura — além de hoje', fn: r => r.dh && r.dh > new Date(), motivo: r => `Data ${r.dh?.toLocaleDateString('pt-BR')} está no futuro`, campo: 'dh_recepcao' },

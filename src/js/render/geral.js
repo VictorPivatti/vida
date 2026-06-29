@@ -55,7 +55,7 @@ function previousRows() {
 }
 
 /** prevVal: returns prev only if coverage is >= 50% of current period. */
-function prevVal(val, prevRows, curMonths, prevMonths) {
+export function prevVal(val, prevRows, curMonths, prevMonths) {
   if (val == null || !Number.isFinite(val)) return null;
   if (!prevMonths || (curMonths > 0 && prevMonths < curMonths * 0.5)) return null;
   if (!prevRows || prevRows.length < curMonths * 10) return null;

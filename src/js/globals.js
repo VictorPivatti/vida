@@ -11,12 +11,35 @@
 
 import { toggleLayoutEdit, resetLayout, applyDensity } from './ui/layout.js';
 import { toggleTheme } from './ui/theme.js';
-import { renderAll, renderActivePane, markDirty, renderNotificaveis } from './render/index.js';
+import {
+  renderAll, renderActivePane, markDirty, renderNotificaveis,
+  renderGeral, renderExecutive, renderHeatmap,
+  renderIndicadores, renderFluxo, renderGargalos, renderMedicos,
+  renderRetornos, renderEvolucao, renderAnoAano, renderRelatorio,
+  renderTriagem, renderCid, renderCruzamento, renderQuality,
+  renderProcedimentos, renderEnfermagem, renderExames,
+  renderAuditoria, renderPacientes, renderEscala, renderAnotacoes,
+} from './render/index.js';
 import { renderEvasao, renderRecepTable } from './render/triagem.js';
 import { renderCidTrend, renderCidTrendAlerts, setTrendFilter } from './render/cid.js';
 import { renderNotifGrid, setNotifGrupo } from './render/notificaveis.js';
 import { deletarAnotacao } from './render/anotacoes.js';
 import { buscaProntuario } from './render/pacientes.js';
+import { AUDIT_RULES } from './render/auditoria.js';
+import { prevVal } from './render/geral.js';
+import { returns72, returnsFor } from './metrics/returns.js';
+import { monthlyStats, calcProjecao } from './metrics/monthly.js';
+import { metaManchester, manchesterConformidade } from './metrics/manchester.js';
+import { monthReturnRate } from './metrics/returns.js';
+import { evasaoDisponivel } from './metrics/med.js';
+import { calcularPontos } from './metrics/executive.js';
+import { parseHistLegacy, safeMinutes, parseHist, chooseParsed } from './parsers/hist.js';
+import { parseTriLegacy } from './parsers/tri.js';
+import { parseCidLegacy } from './parsers/cid.js';
+import { parseProcedimentosText } from './parsers/proc.js';
+import { _parseExamesLines } from './parsers/exames.js';
+import { CONFIG } from './constants.js';
+import { deriveTriFromHist } from './loaders/hist.js';
 import { state } from './state.js';
 import { RECEP_KEY, RECEP_OVERRIDE_KEY, UC_KEY } from './state.js';
 import { VidaDB } from './storage/vidadb.js';
@@ -348,10 +371,34 @@ export function initGlobals() {
     // ── UI: theme
     toggleTheme,
 
-    // ── Render
+    // ── Render: orchestration
     renderAll,
     renderActivePane,
     markDirty,
+
+    // ── Render: individual panels (for harness and direct calls)
+    renderGeral,
+    renderExecutive,
+    renderHeatmap,
+    renderIndicadores,
+    renderFluxo,
+    renderGargalos,
+    renderMedicos,
+    renderRetornos,
+    renderEvolucao,
+    renderAnoAano,
+    renderRelatorio,
+    renderTriagem,
+    renderCid,
+    renderCruzamento,
+    renderQuality,
+    renderProcedimentos,
+    renderEnfermagem,
+    renderExames,
+    renderAuditoria,
+    renderPacientes,
+    renderEscala,
+    renderAnotacoes,
 
     // ── Unit config modal
     openUnitConfig,
@@ -431,6 +478,32 @@ export function initGlobals() {
     // ── Deps / privacy (A.4)
     checkDeps,
     showPrivacyNotice,
+
+    // ── State (for harness and inline scripts)
+    state,
+
+    // ── Metrics and parsers (for harness and test scripts)
+    deriveTriFromHist,
+    returns72,
+    returnsFor,
+    monthlyStats,
+    calcProjecao,
+    metaManchester,
+    manchesterConformidade,
+    monthReturnRate,
+    evasaoDisponivel,
+    calcularPontos,
+    prevVal,
+    parseHistLegacy,
+    parseHist,
+    chooseParsed,
+    parseTriLegacy,
+    parseCidLegacy,
+    parseProcedimentosText,
+    _parseExamesLines,
+    safeMinutes,
+    CONFIG,
+    AUDIT_RULES,
 
     // ── Build flag
     VIDA_BUILD: 'modular',
