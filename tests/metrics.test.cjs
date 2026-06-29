@@ -20,7 +20,7 @@
  *
  * Uso: node tests/metrics.test.js
  */
-const { buildHtml, report } = require('./helpers');
+const { buildHtml, report } = require('./helpers.cjs');
 const { JSDOM } = require('jsdom');
 
 let html = buildHtml();

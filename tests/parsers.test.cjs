@@ -20,7 +20,7 @@
 const fs   = require('fs');
 const path = require('path');
 const { JSDOM } = require('jsdom');
-const { buildHtml, report } = require('./helpers');
+const { buildHtml, report } = require('./helpers.cjs');
 
 let html = buildHtml();
 
