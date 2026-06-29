@@ -44,6 +44,39 @@ function _getHistWorkerUrl() {
   return _histWorkerUrl;
 }
 
+// ── Pipeline worker: File → XLSX → parse (sem leitura na main thread) ────────
+async function _parseHistViaWorker(files) {
+  const url = _getHistWorkerUrl();
+  if (!url || typeof Worker === 'undefined') throw new Error('Worker indisponível');
+  return new Promise((res, rej) => {
+    const w = new Worker(url);
+    w.onmessage = e => {
+      const d = e.data;
+      if (d.type === 'read') {
+        const base = d.phase === 'lendo' ? 5 : 22;
+        setProgress(base + Math.round((d.i - 1) / d.n * 18),
+          (d.phase === 'lendo' ? 'Lendo ' : 'Convertendo ') + d.name + (d.bytes ? ` (${(d.bytes / 1024 / 1024).toFixed(1)} MB)` : '…'));
+        console.log('[VIDA:worker] read |', d.phase, d.name, d.bytes || '');
+      } else if (d.type === 'fingerprint') {
+        _checkLayoutFingerprint('hist', d.headerLine + '\n', d.name);
+      } else if (d.type === 'progress') {
+        setProgress(50 + Math.round(d.i / d.n * 45), d.name + ': ' + d.count.toLocaleString('pt-BR') + ' registros');
+      } else if (d.type === 'error') {
+        w.terminate(); rej(new Error(d.message));
+      } else if (d.type === 'done') {
+        console.log('[VIDA:worker] done | rows:', d.rows?.length, '| total:', d.total);
+        w.terminate(); res({ rows: d.rows, total: d.total, invalid: d.invalid });
+      }
+    };
+    w.onerror = e => {
+      console.error('[VIDA:worker] onerror |', e.message, e.filename, e.lineno);
+      w.terminate(); rej(new Error(e.message || 'Worker error'));
+    };
+    console.log('[VIDA:hist] worker File pipeline |', files.map(f => f.name + ' (' + f.size + 'B)'));
+    w.postMessage({ files });
+  });
+}
+
 // ── workerRun — async parsing orchestrator ────────────────────────────────────
 export async function workerRun(type, payload) {
   if (type === 'parseHist') {
@@ -90,6 +123,8 @@ export async function workerRun(type, payload) {
           w.onmessage = e => {
             if (e.data.type === 'progress') {
               setProgress(50 + Math.round(e.data.i / e.data.n * 45), e.data.name + ': ' + e.data.count.toLocaleString('pt-BR') + ' registros');
+            } else if (e.data.type === 'error') {
+              w.terminate(); rej(new Error(e.data.message));
             } else {
               console.log('[VIDA:worker] onmessage | type:', e.data.type, '| rows:', e.data.rows?.length, '| total:', e.data.total, '| invalid:', e.data.invalid);
               w.terminate(); res({ rows: e.data.rows, total: e.data.total, invalid: e.data.invalid });
@@ -223,14 +258,21 @@ export async function loadHist(fileOrFiles) {
   try {
     state.quality = [];
     const _isFirstLoad = state.raw.length === 0;
-    console.log('[VIDA:hist] fileToBuffer -- inicio | arquivos:', files.map(f => f.name + ' (' + f.size + 'B)'));
-    console.time('[VIDA:hist] fileToBuffer');
-    const buffers = await Promise.all(files.map(f => fileToBuffer(f, (loaded, total) => {
-      setProgress(Math.round(loaded / total * 40), `Lendo ${f.name}… ${Math.round(loaded / total * 100)}%`);
-    })));
-    console.timeEnd('[VIDA:hist] fileToBuffer');
-    console.log('[VIDA:hist] buffers lidos | tamanhos:', buffers.map(b => b.byteLength + 'B'));
-    const result = await workerRun('parseHist', { buffers, names: files.map(f => f.name) });
+    let result;
+    try {
+      console.log('[VIDA:hist] tentando worker File pipeline (sem leitura na main thread)');
+      result = await _parseHistViaWorker(files);
+    } catch (workerErr) {
+      console.warn('[VIDA:hist] worker File falhou, fallback main thread:', workerErr.message);
+      console.log('[VIDA:hist] fileToBuffer -- inicio | arquivos:', files.map(f => f.name + ' (' + f.size + 'B)'));
+      console.time('[VIDA:hist] fileToBuffer');
+      const buffers = await Promise.all(files.map(f => fileToBuffer(f, (loaded, total) => {
+        setProgress(Math.round(loaded / total * 40), `Lendo ${f.name}… ${Math.round(loaded / total * 100)}%`);
+      })));
+      console.timeEnd('[VIDA:hist] fileToBuffer');
+      console.log('[VIDA:hist] buffers lidos | tamanhos:', buffers.map(b => b.byteLength + 'B'));
+      result = await workerRun('parseHist', { buffers, names: files.map(f => f.name) });
+    }
     setProgress(90, 'Finalizando...');
     if (!result.rows.length) throw new Error('Nenhum atendimento válido encontrado.');
     if (result.total != null) {

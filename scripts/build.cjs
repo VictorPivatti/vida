@@ -24,7 +24,8 @@ async function build() {
     target: ['es2020'],
     legalComments: 'none',
   });
-  const workerCode = workerResult.outputFiles[0].text;
+  const XLSX_CDN = "importScripts('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');\n";
+  const workerCode = XLSX_CDN + workerResult.outputFiles[0].text;
 
   const jsResult = await esbuild.build({
     entryPoints: [path.join(ROOT, 'src/js/app.js')],
