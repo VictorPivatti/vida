@@ -1,5 +1,6 @@
 // storage/vidadb.js — IndexedDB wrapper (browser-only, not testable in Node/jsdom)
-// Verbatim copy of the VidaDB IIFE from src/index.template.html, converted to ES module export.
+
+import { TTL_KEY } from '../state.js';
 
 const DB_NAME = 'vida_db';
 const DB_VERSION = 1;
@@ -78,7 +79,6 @@ async function bulkPut(storeName, rows){
 }
 
 // ── TTL: dados de pacientes expiram após 12h (proteção LGPD) ──
-const TTL_KEY = 'vida_db_ts';
 const TTL_MS = 12 * 60 * 60 * 1000; // 12 horas
 function touchTimestamp(){
   try{ localStorage.setItem(TTL_KEY, String(Date.now())); }catch(e){}
@@ -147,29 +147,4 @@ async function stats(){
   return { atendimentos: att, cid, triagem: tri };
 }
 
-// Query por índice — preparação para Etapa 2
-async function queryByIndex(storeName, indexName, value){
-  const db = await open();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(storeName, 'readonly');
-    const idx = tx.objectStore(storeName).index(indexName);
-    const req = idx.getAll(value);
-    req.onsuccess = () => resolve(req.result.map(restoreDates));
-    req.onerror = () => reject(req.error);
-  });
-}
-
-// Query por range em índice (ex: dateKey entre s e e)
-async function queryRange(storeName, indexName, lower, upper){
-  const db = await open();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(storeName, 'readonly');
-    const idx = tx.objectStore(storeName).index(indexName);
-    const range = IDBKeyRange.bound(lower, upper);
-    const req = idx.getAll(range);
-    req.onsuccess = () => resolve(req.result.map(restoreDates));
-    req.onerror = () => reject(req.error);
-  });
-}
-
-export const VidaDB = { open, bulkPut, getAll, count, clear, clearAll, stats, queryByIndex, queryRange, dataExpired, touchTimestamp, clearTimestamp };
+export const VidaDB = { open, bulkPut, getAll, count, clear, clearAll, stats, dataExpired, touchTimestamp, clearTimestamp };

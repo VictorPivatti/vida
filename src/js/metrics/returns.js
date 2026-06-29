@@ -1,8 +1,29 @@
 // metrics/returns.js — return-visit metrics
-// NOTE: Also exists in original <script> block (will be removed in Tasks 7–9).
 
 import { CONFIG } from '../constants.js';
 import { state } from '../state.js';
+
+function _groupByPront(rows) {
+  const byP = {};
+  rows.forEach(r => {
+    if (!r.pront || String(r.pront).trim() === '' || /^0+$/.test(String(r.pront))) return;
+    byP[r.pront] = byP[r.pront] || [];
+    byP[r.pront].push(r);
+  });
+  Object.values(byP).forEach(v => v.sort((a, b) => a.dh - b.dh));
+  return byP;
+}
+
+function _collectReturns(byP, hours) {
+  const ret = [];
+  Object.entries(byP).forEach(([p, vis]) => {
+    for (let i = 1; i < vis.length; i++) {
+      const h = (vis[i].dh - vis[i - 1].dh) / 36e5;
+      if (h > 0 && h <= hours) ret.push({ ...vis[i], pront: p, diffH: h, prev: vis[i - 1] });
+    }
+  });
+  return ret;
+}
 
 /**
  * Compute all return visits within CONFIG.RETURN_HOURS from an arbitrary rows
@@ -12,21 +33,8 @@ import { state } from '../state.js';
  * @returns {{ byP: object, ret: object[] }}
  */
 export function returnsFor(rows) {
-  const byP = {};
-  rows.forEach(r => {
-    if (!r.pront || String(r.pront).trim() === '' || /^0+$/.test(String(r.pront))) return;
-    byP[r.pront] = byP[r.pront] || [];
-    byP[r.pront].push(r);
-  });
-  Object.values(byP).forEach(v => v.sort((a, b) => a.dh - b.dh));
-  const ret = [];
-  Object.entries(byP).forEach(([p, vis]) => {
-    for (let i = 1; i < vis.length; i++) {
-      const h = (vis[i].dh - vis[i - 1].dh) / 36e5;
-      if (h > 0 && h <= CONFIG.RETURN_HOURS) ret.push({ ...vis[i], pront: p, diffH: h, prev: vis[i - 1] });
-    }
-  });
-  return { byP, ret };
+  const byP = _groupByPront(rows);
+  return { byP, ret: _collectReturns(byP, CONFIG.RETURN_HOURS) };
 }
 
 /**
@@ -37,21 +45,7 @@ export function returnsFor(rows) {
  * @returns {object[]}
  */
 export function returnsWithin(rows, hours) {
-  const byP = {};
-  rows.forEach(r => {
-    if (!r.pront || String(r.pront).trim() === '' || /^0+$/.test(String(r.pront))) return;
-    byP[r.pront] = byP[r.pront] || [];
-    byP[r.pront].push(r);
-  });
-  Object.values(byP).forEach(v => v.sort((a, b) => a.dh - b.dh));
-  const ret = [];
-  Object.entries(byP).forEach(([p, vis]) => {
-    for (let i = 1; i < vis.length; i++) {
-      const h = (vis[i].dh - vis[i - 1].dh) / 36e5;
-      if (h > 0 && h <= hours) ret.push({ ...vis[i], pront: p, diffH: h, prev: vis[i - 1] });
-    }
-  });
-  return ret;
+  return _collectReturns(_groupByPront(rows), hours);
 }
 
 /**

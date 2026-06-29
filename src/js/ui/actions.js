@@ -112,10 +112,12 @@ export function updateSourceChips() {
   _chip('tbChipHist', 'loaded', hasHist,
     'Hist', 'Histórico carregado — clique para substituir', '',
     () => document.getElementById('histFileSwitch')?.click());
-  const triLoaded = state.triRaw.length > 0, triCls = state.triSource === 'file' ? 'loaded' : 'derived';
+  const triLoaded = state.triRaw.length > 0;
+  const triPersisted = state.triSource === 'file' || state.triSource === 'db';
+  const triCls = triPersisted ? 'loaded' : 'derived';
   _chip('tbChipTri', triCls, triLoaded,
     'Tri',
-    state.triSource === 'file' ? 'Triagem (planilha) — clique para substituir' : 'Triagem derivada do histórico — clique para carregar planilha',
+    triPersisted ? 'Triagem carregada — clique para substituir' : 'Triagem derivada do histórico — clique para carregar planilha',
     'Adicionar planilha de Triagem — clique para carregar',
     () => document.getElementById('triFile')?.click());
   _chip('tbChipCid', 'loaded', state.cidRaw.length > 0,
@@ -131,8 +133,10 @@ export function updateSourceChips() {
 
 export function updateUploadStatuses() {
   const procTotal = state.procRaw.reduce((s, r) => s + (r.qde || 0), 0);
+  const triPersisted = state.triSource === 'file' || state.triSource === 'db';
   const statuses = {
-    triStatus: state.triSource === 'file' ? `${state.triRaw.length.toLocaleString('pt-BR')} reg.` : (state.triSource === 'hist' ? 'derivado' : ''),
+    triStatus: triPersisted ? `${state.triRaw.length.toLocaleString('pt-BR')} reg.`
+      : (state.triSource === 'hist' ? 'derivado' : ''),
     cidStatus: state.cidRaw.length ? `${state.cidRaw.length.toLocaleString('pt-BR')} reg.` : '',
     procStatus: procTotal ? `${procTotal.toLocaleString('pt-BR')} proc.` : '',
     examesStatus: state.examesRaw.length ? `${state.examesRaw.length.toLocaleString('pt-BR')} guias` : '',
@@ -153,7 +157,7 @@ export function updateUploadStatuses() {
     const item = document.getElementById(itemIds[id]);
     if (item) item.classList.toggle('loaded', !!text);
   });
-  const loaded = [state.triSource === 'file', state.cidRaw.length > 0, state.procRaw.length > 0, state.examesRaw.length > 0].filter(Boolean).length;
+  const loaded = [triPersisted, state.cidRaw.length > 0, state.procRaw.length > 0, state.examesRaw.length > 0].filter(Boolean).length;
   const badge = document.getElementById('uploadBadge');
   if (badge) { badge.textContent = loaded + '/4'; badge.style.display = loaded > 0 ? 'inline' : 'none'; }
   updateSourceChips();

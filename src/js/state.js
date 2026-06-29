@@ -8,7 +8,7 @@ export const PREF_KEY = 'upa_dash_prefs';
 export const ANOT_KEY = 'upa_dash_anotacoes';
 
 // Application state — single mutable object shared across modules
-// triSource: "none" | "hist" | "file"
+// triSource: "none" | "hist" | "file" | "db"  (db = restaurado do IndexedDB)
 export const state = {
   raw: [],
   filt: [],

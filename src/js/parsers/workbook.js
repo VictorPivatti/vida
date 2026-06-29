@@ -1,8 +1,11 @@
 // parsers/workbook.js — low-level I/O and encoding helpers
 // NOTE: smartDecode, xlsxExtract, sheetData, readWorkbook depend on browser APIs
 // (TextDecoder, FileReader, DecompressionStream, XLSX CDN global).
-// Export them here so app.js can import them; they only work in browser context.
-// The original <script> block retains these for the built index.html.
+
+const VIDA_DEBUG = typeof localStorage !== 'undefined' && localStorage.getItem('vida_debug') === '1';
+function _dbg(...args) { if (VIDA_DEBUG) console.log(...args); }
+function _dbgTime(label) { if (VIDA_DEBUG) console.time(label); }
+function _dbgTimeEnd(label) { if (VIDA_DEBUG) console.timeEnd(label); }
 
 // ── Encoding / decoding helpers ─────────────────────────────────────────────
 
@@ -75,8 +78,8 @@ export function smartDecode(buf) {
  * Browser-only.
  */
 export async function readZipEntry(arrayBuf, targetName) {
-  console.log('[VIDA:zip] readZipEntry | alvo:', targetName, '| buf:', arrayBuf.byteLength, 'bytes');
-  console.time('[VIDA:zip] readZipEntry ' + targetName);
+  _dbg('[VIDA:zip] readZipEntry | alvo:', targetName, '| buf:', arrayBuf.byteLength, 'bytes');
+  _dbgTime('[VIDA:zip] readZipEntry ' + targetName);
   const buf = new Uint8Array(arrayBuf);
   const dv = new DataView(arrayBuf);
   let off = 0, idx = 0;
@@ -88,7 +91,7 @@ export async function readZipEntry(arrayBuf, targetName) {
     const nameLen = dv.getUint16(off + 26, true);
     const extraLen = dv.getUint16(off + 28, true);
     const name = new TextDecoder().decode(buf.slice(off + 30, off + 30 + nameLen));
-    console.log('[VIDA:zip] entrada #' + idx + ' | nome:', name, '| cSize:', cSize,
+    _dbg('[VIDA:zip] entrada #' + idx + ' | nome:', name, '| cSize:', cSize,
       '| gpFlag: 0x' + gpFlag.toString(16), '| bit3(data-descriptor):', !!(gpFlag & 8),
       '| method:', method);
     if (cSize === 0 && (gpFlag & 8)) console.warn('[VIDA:zip] ATENCAO: cSize=0 + bit3 set (ZIP streaming) -- DecompressionStream pode travar');
@@ -96,12 +99,12 @@ export async function readZipEntry(arrayBuf, targetName) {
     idx++;
     const dataOff = off + 30 + nameLen + extraLen;
     if (name === targetName) {
-      console.log('[VIDA:zip] alvo encontrado | descomprimindo | cSize efetivo:', cSize);
+      _dbg('[VIDA:zip] alvo encontrado | descomprimindo | cSize efetivo:', cSize);
       const compressed = arrayBuf.slice(dataOff, dataOff + cSize);
       if (method === 0) {
         const result = new TextDecoder('utf-8').decode(compressed);
-        console.log('[VIDA:zip] method=stored | tamanho:', result.length, 'chars');
-        console.timeEnd('[VIDA:zip] readZipEntry ' + targetName);
+        _dbg('[VIDA:zip] method=stored | tamanho:', result.length, 'chars');
+        _dbgTimeEnd('[VIDA:zip] readZipEntry ' + targetName);
         return result;
       }
       const ds = new DecompressionStream('deflate-raw');
@@ -114,14 +117,14 @@ export async function readZipEntry(arrayBuf, targetName) {
       const out = new Uint8Array(parts.reduce((s, p) => s + p.length, 0));
       let pos = 0; for (const p of parts) { out.set(p, pos); pos += p.length; }
       const result = new TextDecoder('utf-8').decode(out);
-      console.log('[VIDA:zip] descomprimido | tamanho:', result.length, 'chars');
-      console.timeEnd('[VIDA:zip] readZipEntry ' + targetName);
+      _dbg('[VIDA:zip] descomprimido | tamanho:', result.length, 'chars');
+      _dbgTimeEnd('[VIDA:zip] readZipEntry ' + targetName);
       return result;
     }
     off = dataOff + cSize;
   }
-  console.log('[VIDA:zip] alvo nao encontrado:', targetName, '| entradas lidas:', idx);
-  console.timeEnd('[VIDA:zip] readZipEntry ' + targetName);
+  _dbg('[VIDA:zip] alvo nao encontrado:', targetName, '| entradas lidas:', idx);
+  _dbgTimeEnd('[VIDA:zip] readZipEntry ' + targetName);
   return null;
 }
 
@@ -130,15 +133,15 @@ export async function readZipEntry(arrayBuf, targetName) {
  * Browser-only.
  */
 export async function xlsxExtract(ab) {
-  console.log('[VIDA:xlsx] xlsxExtract | buf:', ab.byteLength, 'bytes');
-  console.time('[VIDA:xlsx] xlsxExtract');
+  _dbg('[VIDA:xlsx] xlsxExtract | buf:', ab.byteLength, 'bytes');
+  _dbgTime('[VIDA:xlsx] xlsxExtract');
   const xml = await readZipEntry(ab, 'xl/sharedStrings.xml');
   if (!xml) {
-    console.log('[VIDA:xlsx] xlsxExtract | sharedStrings.xml ausente -- retornando null');
-    console.timeEnd('[VIDA:xlsx] xlsxExtract');
+    _dbg('[VIDA:xlsx] xlsxExtract | sharedStrings.xml ausente -- retornando null');
+    _dbgTimeEnd('[VIDA:xlsx] xlsxExtract');
     return null;
   }
-  console.log('[VIDA:xlsx] sharedStrings.xml | tamanho:', xml.length, 'chars');
+  _dbg('[VIDA:xlsx] sharedStrings.xml | tamanho:', xml.length, 'chars');
   const strings = [];
   const siRe = /<si>([\s\S]*?)<\/si>/g;
   const tRe = /<t[^>]*>([^<]*)<\/t>/g;
@@ -149,8 +152,8 @@ export async function xlsxExtract(ab) {
     while ((t = tRe.exec(block)) !== null) seg += t[1];
     strings.push(fixMojibake(decodeXmlEntities(seg)).normalize('NFC'));
   }
-  console.log('[VIDA:xlsx] <si> processados:', strings.length);
-  console.timeEnd('[VIDA:xlsx] xlsxExtract');
+  _dbg('[VIDA:xlsx] <si> processados:', strings.length);
+  _dbgTimeEnd('[VIDA:xlsx] xlsxExtract');
   return strings.length > 1 ? strings.join('\n') : null;
 }
 

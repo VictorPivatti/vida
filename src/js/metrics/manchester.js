@@ -1,10 +1,10 @@
 // metrics/manchester.js — Manchester triage conformity metrics
-// NOTE: Also exists in original <script> block (will be removed in Tasks 7–9).
 
 // Default Manchester time thresholds (minutes) per triage colour.
 // These match the values stored in the DOM input elements; when running
 // outside the browser the constants below are used as fallbacks.
 const MANCHESTER_METAS = { VERMELHO: 0, LARANJA: 15, AMARELO: 60, VERDE: 120, AZUL: 240, BRANCO: 240 };
+const MANCHESTER_CORES = ['VERMELHO', 'LARANJA', 'AMARELO', 'VERDE', 'AZUL', 'BRANCO'];
 
 /**
  * Return the Manchester time threshold (minutes) for a given triage colour.
@@ -31,11 +31,13 @@ export function metaManchester(cor) {
  * @returns {object}  Map from colour → { total, ok, semDado, meta, D, N }.
  */
 export function manchesterConformidade(rows) {
+  const metas = {};
+  MANCHESTER_CORES.forEach(c => { metas[c] = metaManchester(c); });
   const byRisco = {};
   rows.forEach(r => {
     if (!r.cor) return;
     byRisco[r.cor] = byRisco[r.cor] || {
-      total: 0, ok: 0, semDado: 0, meta: metaManchester(r.cor),
+      total: 0, ok: 0, semDado: 0, meta: metas[r.cor] ?? metaManchester(r.cor),
       D: { total: 0, ok: 0 }, N: { total: 0, ok: 0 }
     };
     const x = byRisco[r.cor];

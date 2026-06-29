@@ -83,7 +83,7 @@ export function renderPrintCover() {
   printCover.innerHTML = `<h2>V.I.D.A. — Relatório Assistencial</h2>
     <p class="mono" id="printUnit"></p>
     <p class="mono">Período: ${s ? s.toLocaleDateString('pt-BR') : '-'} até ${e ? e.toLocaleDateString('pt-BR') : '-'} - ${fmt(d.length)} atendimentos</p>
-    <p class="mono">Arquivo histórico: ${esc(state.files.hist || '-')} | Triagem: ${state.triSource === 'file' ? esc(state.files.tri) : state.triSource === 'hist' ? 'derivada do histórico' : 'não carregada'} | CID: ${esc(state.files.cid || 'não carregado')}</p>
+    <p class="mono">Arquivo histórico: ${esc(state.files.hist || '-')} | Triagem: ${state.triSource === 'file' ? esc(state.files.tri) : state.triSource === 'db' ? 'banco local' : state.triSource === 'hist' ? 'derivada do histórico' : 'não carregada'} | CID: ${esc(state.files.cid || 'não carregado')}</p>
     <p class="mono">Resumo: triagem ${tTri == null ? '-' : Math.round(tTri) + ' min'}; médico ${tMed == null ? '-' : Math.round(tMed) + ' min'}; total ${tTot == null ? '-' : Math.round(tTot) + ' min'}.</p>
     <p class="mono">Prioridade principal: ${esc(alerts[0]?.[1] || 'Sem alerta crítico')} - ${esc(alerts[0]?.[2] || '')}</p>`;
 }

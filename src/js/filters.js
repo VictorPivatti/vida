@@ -48,7 +48,9 @@ export function applyFilters() {
     (!sKey || r.dateKey >= sKey) && (!eKey || r.dateKey <= eKey) &&
     (turno === 'all' || r.turno === turno)
   );
-  state.cidFilt = state.cidRaw.filter(r => (!s || r.dh >= s) && (!e || r.dh <= e));
+  state.cidFilt = state.cidRaw.filter(r =>
+    (!sKey || r.dateKey >= sKey) && (!eKey || r.dateKey <= eKey)
+  );
   const recordBadge = $('recordBadge');
   if (recordBadge) recordBadge.textContent = `${state.filt.length.toLocaleString('pt-BR')} registros`;
   renderAll();

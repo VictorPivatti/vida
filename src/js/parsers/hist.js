@@ -66,8 +66,6 @@ export function parseDuration(v) {
   if (!s || s === '0' || s === '00:00' || s === '00:00:00') return 0;
   let m = s.match(/^(\d+):(\d{2}):(\d{2})(?:[.,]\d+)?$/);
   if (m) return +m[1] * 60 + (+m[2]) + (+m[3]) / 60;
-  m = s.match(/^(\d+):(\d{2}):(\d{2})$/);
-  if (m) return +m[1] * 60 + (+m[2]) + (+m[3]) / 60;
   m = s.match(/^(\d+):(\d{2})$/);
   if (m) return +m[1] * 60 + (+m[2]);
   m = s.match(/^(\d+(?:[,.]\d+)?)\s*(min|m|h)$/i);

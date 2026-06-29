@@ -1,5 +1,4 @@
 // metrics/med.js — médico (doctor) productivity metrics
-// NOTE: Also exists in original <script> block (will be removed in Tasks 7–9).
 
 import { avg } from '../utils/stats.js';
 import { norm } from '../utils/dom.js';

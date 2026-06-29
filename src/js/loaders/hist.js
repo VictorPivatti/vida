@@ -369,7 +369,7 @@ export async function loadHist(fileOrFiles) {
         if (parseFloat(evRate.replace(',', '.')) >= 2) showToast(`${ev} evasões detectadas (${evRate}% do período). Verifique o fluxo de triagem.`, 'warn', 6000);
       }
       if (_isFirstLoad) {
-        const noExtras = !state.cidRaw.length && state.triSource !== 'file' && !state.procRaw.length;
+        const noExtras = !state.cidRaw.length && state.triSource !== 'file' && state.triSource !== 'db' && !state.procRaw.length;
         if (noExtras) {
           showToast('1/3 — Adicione a planilha de Triagem para conformidade Manchester, tempos por enfermeiro e cruzamento de dados.', 'inf', 7000);
           setTimeout(() => showToast('2/3 — Adicione o arquivo CID para ver Notificáveis compulsórios e diagnósticos por médico.', 'inf', 7000), 8000);

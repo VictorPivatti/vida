@@ -1,5 +1,4 @@
 // metrics/monthly.js — monthly aggregations
-// NOTE: Also exists in original <script> block (will be removed in Tasks 7–9).
 
 import { avg } from '../utils/stats.js';
 import { state } from '../state.js';
