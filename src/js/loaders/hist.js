@@ -21,11 +21,11 @@ function _checkLayoutFingerprint(type, csv, name) {
   if (typeof localStorage === 'undefined') return;
   try {
     const key = '_fp_' + type;
-    const headerLine = (csv || '').split(/\r?\n/)[0].trim();
+    const headerLine = (csv || '').split(/\r?\n/)[0].trim().replace(/;+$/, '');
     if (!headerLine) return;
     const stored = localStorage.getItem(key);
     if (!stored) { localStorage.setItem(key, headerLine); return; }
-    if (stored !== headerLine) {
+    if (stored.replace(/;+$/, '') !== headerLine) {
       console.warn('[fingerprint] Layout de ' + type + ' mudou em "' + name + '". Esperado:\n' + stored + '\nRecebido:\n' + headerLine);
       showToast('⚠ Layout de ' + type + ' diferente do esperado em "' + name + '". Verifique se o arquivo é do formato correto.', 'warn');
       localStorage.setItem(key, headerLine);
@@ -290,22 +290,22 @@ export async function loadHist(fileOrFiles) {
     const _isFirstLoad = state.raw.length === 0;
     let result;
     const names = files.map(f => f.name);
-    // 1) fetch(blobURL) na main — contorna iCloud/arrayBuffer travado
+    // 1) Worker lê File diretamente (off main thread — nao freezes iCloud)
     try {
-      console.log('[VIDA:hist] tentando fetch(blobURL)…');
-      const buffers = await Promise.all(files.map(f => _readFileViaFetch(f, (loaded, total) => {
-        setProgress(Math.round(loaded / total * 40), `Lendo ${f.name}… ${Math.round(loaded / total * 100)}%`);
-      })));
-      result = await workerRun('parseHist', { buffers, names });
-    } catch (fetchErr) {
-      console.warn('[VIDA:hist] fetch falhou:', fetchErr.message);
-      // 2) Worker lê File com fetch/slices/stream/arrayBuffer
+      console.log('[VIDA:hist] tentando worker File pipeline');
+      result = await _parseHistViaWorker(files);
+    } catch (workerErr) {
+      console.warn('[VIDA:hist] worker File falhou:', workerErr.message);
+      // 2) fetch(blobURL) na main com timeout
       try {
-        console.log('[VIDA:hist] tentando worker File pipeline');
-        result = await _parseHistViaWorker(files);
-      } catch (workerErr) {
-        console.warn('[VIDA:hist] worker File falhou:', workerErr.message);
-        // 3) Fallback main thread stream/FileReader
+        console.log('[VIDA:hist] tentando fetch(blobURL)…');
+        const buffers = await Promise.all(files.map(f => _readFileViaFetch(f, (loaded, total) => {
+          setProgress(Math.round(loaded / total * 40), `Lendo ${f.name}… ${Math.round(loaded / total * 100)}%`);
+        })));
+        result = await workerRun('parseHist', { buffers, names });
+      } catch (fetchErr) {
+        console.warn('[VIDA:hist] fetch falhou:', fetchErr.message);
+        // 3) Fallback FileReader na main thread
         console.log('[VIDA:hist] fallback fileToBuffer');
         const buffers = await Promise.all(files.map(f => fileToBuffer(f, (loaded, total) => {
           setProgress(Math.round(loaded / total * 40), `Lendo ${f.name}… ${Math.round(loaded / total * 100)}%`);

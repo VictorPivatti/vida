@@ -5,8 +5,8 @@ import { parseHistLegacy, histDedupKey } from '../parsers/hist.js';
 function bufToCsv(ab) {
   const hdr = new Uint8Array(ab, 0, 4);
   const isBin = (hdr[0] === 0xD0 && hdr[1] === 0xCF) || (hdr[0] === 0x50 && hdr[1] === 0x4B);
-  if (isBin && typeof XLSX !== 'undefined') {
-    // XLSX global via importScripts (build.cjs)
+  if (isBin) {
+    if (typeof XLSX === 'undefined') throw new Error('XLSX nao disponivel para arquivo binario'); // eslint-disable-line no-undef
     // eslint-disable-next-line no-undef
     const wb = XLSX.read(new Uint8Array(ab), { type: 'array', raw: false });
     const sh = wb.Sheets[wb.SheetNames[0]];
@@ -15,7 +15,7 @@ function bufToCsv(ab) {
     return arr.map(r => r.join(';')).join('\n');
   }
   const utf8 = new TextDecoder('utf-8', { fatal: false }).decode(ab);
-  if (!(utf8.match(/\uFFFD/g) || []).length || utf8.length < 100) return utf8;
+  if (!(utf8.match(/�/g) || []).length || utf8.length < 100) return utf8;
   return new TextDecoder('windows-1252').decode(ab);
 }
 
@@ -50,11 +50,12 @@ async function readViaFetch(file) {
   }
 }
 
-async function readViaSlices(file) {
+async function readViaSlices(file, signal) {
   const CHUNK = 256 * 1024;
   const out = new Uint8Array(file.size);
   let offset = 0;
   while (offset < file.size) {
+    if (signal?.aborted) throw new Error('aborted');
     const end = Math.min(offset + CHUNK, file.size);
     const buf = await file.slice(offset, end).arrayBuffer();
     out.set(new Uint8Array(buf), offset);
@@ -64,49 +65,58 @@ async function readViaSlices(file) {
   return out.buffer;
 }
 
-async function readViaStream(file) {
-  if (typeof file.stream !== 'function') throw new Error('stream indisponível');
+async function readViaStream(file, signal) {
+  if (typeof file.stream !== 'function') throw new Error('stream indisponivel');
   const reader = file.stream().getReader();
-  const chunks = [];
-  let received = 0;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-    received += value.byteLength;
-    _progress(file, received, file.size);
+  try {
+    const chunks = [];
+    let received = 0;
+    while (true) {
+      if (signal?.aborted) throw new Error('aborted');
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value?.byteLength) continue;
+      chunks.push(value);
+      received += value.byteLength;
+      _progress(file, received, file.size);
+    }
+    if (!received) throw new Error('stream retornou 0 bytes');
+    const out = new Uint8Array(received);
+    let pos = 0;
+    for (const c of chunks) { out.set(c, pos); pos += c.byteLength; }
+    return out.buffer;
+  } finally {
+    try { reader.releaseLock(); } catch (_) {}
   }
-  const out = new Uint8Array(received);
-  let pos = 0;
-  for (const c of chunks) { out.set(c, pos); pos += c.byteLength; }
-  return out.buffer;
 }
 
 async function readFileAb(file) {
   const strategies = [
-    ['fetch', () => readViaFetch(file)],
-    ['slices', () => readViaSlices(file)],
-    ['stream', () => readViaStream(file)],
-    ['arrayBuffer', () => file.arrayBuffer()],
+    ['slices',      (sig) => readViaSlices(file, sig), 120000],
+    ['stream',      (sig) => readViaStream(file, sig), 120000],
+    ['fetch',       ()    => readViaFetch(file),          8000],
+    ['arrayBuffer', ()    => file.arrayBuffer(),          8000],
   ];
   let lastErr;
-  for (const [name, fn] of strategies) {
+  for (const [name, fn, timeout] of strategies) {
+    const ac = typeof AbortController !== 'undefined' ? new AbortController() : null;
     try {
       self.postMessage({ type: 'read', phase: 'lendo-' + name, name: file.name });
       const ab = await Promise.race([
-        fn(),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout 90s (' + name + ')')), 90000)),
+        fn(ac?.signal),
+        new Promise((_, rej) => setTimeout(() => { ac?.abort(); rej(new Error('timeout ' + timeout / 1000 + 's (' + name + ')')); }, timeout)),
       ]);
       if (!ab || !ab.byteLength) throw new Error('buffer vazio');
       self.postMessage({ type: 'read', phase: 'ok-' + name, name: file.name, bytes: ab.byteLength });
       return ab;
     } catch (e) {
+      ac?.abort();
       lastErr = e;
       self.postMessage({ type: 'read', phase: 'falhou-' + name, name: file.name, error: e.message });
     }
   }
   throw lastErr || new Error(
-    'Não foi possível ler o arquivo. Se estiver no iCloud, baixe uma cópia local ou exporte CSV no Vivver.'
+    'Nao foi possivel ler o arquivo. Se estiver no iCloud, baixe uma copia local ou exporte CSV no Vivver.'
   );
 }
 
@@ -138,7 +148,7 @@ self.onmessage = async function(e) {
       return;
     }
 
-    throw new Error('Worker: payload inválido (esperado files ou csvs)');
+    throw new Error('Worker: payload invalido (esperado files ou csvs)');
   } catch (err) {
     self.postMessage({ type: 'error', message: err.message || String(err) });
   }
