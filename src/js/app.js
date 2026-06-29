@@ -23,6 +23,17 @@ import { saveLayout, applyLayout, toggleLayoutEdit, resetLayout } from './ui/lay
 import { toggleTheme, applyTheme } from './ui/theme.js';
 
 import * as Render from './render/index.js';
+import { loadUnitConfig, autoLoadFromDB, bindEvents } from './bootstrap.js';
 
 initGlobals();
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadUnitConfig();
+  bindEvents();
+  window.refreshDbStats?.().catch?.(() => {});
+  window.checkDeps?.();
+  window.showPrivacyNotice?.();
+  autoLoadFromDB().catch(() => {});
+});
+
 console.log('[VIDA] build scaffold OK');
