@@ -1,28 +1,41 @@
 // loaders/cid.js — CID file loader
-// Extracted from src/index.template.html <script> block (Task A.1).
-// NOTE: The monolith's <script> block still contains these functions.
-//       This module coexists with it during the cutover phase.
 
 import { state } from '../state.js';
 import { showToast } from '../ui/toast.js';
 import { showLoading, hideLoading, setProgress } from '../ui/progress.js';
+import { setUploadStage } from '../ui/upload-stages.js';
+import { validateUploadFiles } from '../ui/file-guard.js';
 import { VidaDB } from '../storage/vidadb.js';
-import { workerRun, fileToBuffer } from './hist.js';
+import { parseFilesViaWorker, workerRun, fileToBuffer } from './hist.js';
 
 // ── loadCid ───────────────────────────────────────────────────────────────────
 export async function loadCid(files) {
   if (!files || !files.length) return;
-  showLoading('Lendo CID...');
-  setProgress(5, 'Lendo CID...');
+  const fileArr = [...files];
   try {
-    const fileArr = [...files];
-    const buffers = await Promise.all(fileArr.map(f => fileToBuffer(f, (loaded, total) => {
-      setProgress(5 + Math.round(loaded / total * 35), `Lendo ${f.name}… ${Math.round(loaded / total * 100)}%`);
-    })));
-    const result = await workerRun('parseCid', { buffers, names: fileArr.map(f => f.name) });
+    await validateUploadFiles(fileArr, { kind: 'cid' });
+  } catch (e) {
+    if (e.message !== 'Importação cancelada.') showToast(e.message, 'warn');
+    return;
+  }
+  showLoading('Lendo CID...');
+  setUploadStage('reading', fileArr[0].name, 0, fileArr.length);
+  try {
+    let result;
+    try {
+      console.log('[VIDA:cid] tentando worker File pipeline');
+      result = await parseFilesViaWorker(fileArr, 'cid');
+    } catch (workerErr) {
+      console.warn('[VIDA:cid] worker File falhou:', workerErr.message);
+      const buffers = await Promise.all(fileArr.map((f, i) => fileToBuffer(f, (loaded, total) => {
+        setUploadStage('reading', `${f.name} ${Math.round(loaded / total * 100)}%`, i, fileArr.length);
+      })));
+      result = await workerRun('parseCid', { buffers, names: fileArr.map(f => f.name) });
+    }
     if (result.total != null) {
       state.quality.push({ type: 'CID', total: result.total, invalid: result.invalid ?? 0 });
     }
+    setUploadStage('saving');
     state.cidRaw = result.rows;
     state.files.cid = fileArr.length + ' arquivo(s)';
     (async () => {

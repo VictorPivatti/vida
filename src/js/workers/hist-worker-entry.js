@@ -1,6 +1,7 @@
-// Worker: lê File → CSV (XLSX.js via importScripts) → parseHistLegacy
+// Worker: lê File → CSV (XLSX.js via importScripts) → parse hist ou CID
 // Injetado em __HIST_WORKER_CODE__ por scripts/build.cjs (prefixo importScripts XLSX).
 import { parseHistLegacy, histDedupKey } from '../parsers/hist.js';
+import { parseCidFromText } from '../parsers/cid.js';
 
 function bufToCsv(ab) {
   const hdr = new Uint8Array(ab, 0, 4);
@@ -19,7 +20,7 @@ function bufToCsv(ab) {
   return new TextDecoder('windows-1252').decode(ab);
 }
 
-function parseCsvs(csvs, names) {
+function parseHistCsvs(csvs, names) {
   const all = [], seen = new Set();
   let total = 0, invalid = 0;
   for (let i = 0; i < csvs.length; i++) {
@@ -30,6 +31,21 @@ function parseCsvs(csvs, names) {
       if (!seen.has(k)) { seen.add(k); all.push(r); }
     }
     self.postMessage({ type: 'progress', i: i + 1, n: csvs.length, name: names[i], count: rows.length });
+  }
+  all.sort((a, b) => a.dh - b.dh);
+  return { rows: all, total, invalid };
+}
+
+function parseCidCsvs(csvs, names) {
+  let all = [], total = 0, invalid = 0;
+  for (let i = 0; i < csvs.length; i++) {
+    const csv = csvs[i];
+    const parsed = parseCidFromText(csv);
+    const lineCount = Math.max(0, csv.split(/\r?\n/).filter(l => l.trim()).length - 1);
+    total += lineCount;
+    invalid += Math.max(0, lineCount - parsed.length);
+    all = all.concat(parsed);
+    self.postMessage({ type: 'progress', i: i + 1, n: csvs.length, name: names[i], count: parsed.length });
   }
   all.sort((a, b) => a.dh - b.dh);
   return { rows: all, total, invalid };
@@ -120,9 +136,13 @@ async function readFileAb(file) {
   );
 }
 
+function parseCsvs(csvs, names, mode) {
+  return mode === 'cid' ? parseCidCsvs(csvs, names) : parseHistCsvs(csvs, names);
+}
+
 self.onmessage = async function(e) {
   try {
-    const { files, csvs, names } = e.data;
+    const { files, csvs, names, mode = 'hist' } = e.data;
 
     if (files && files.length) {
       const csvList = [], nameList = [];
@@ -133,17 +153,18 @@ self.onmessage = async function(e) {
         self.postMessage({ type: 'read', i: i + 1, n: files.length, name: file.name, phase: 'convertendo', bytes: ab.byteLength });
         const csv = bufToCsv(ab);
         const headerLine = (csv || '').split(/\r?\n/)[0] || '';
-        self.postMessage({ type: 'fingerprint', name: file.name, headerLine });
+        self.postMessage({ type: 'fingerprint', name: file.name, headerLine, mode });
         csvList.push(csv);
         nameList.push(file.name);
       }
-      const result = parseCsvs(csvList, nameList);
+      self.postMessage({ type: 'stage', stage: 'parsing' });
+      const result = parseCsvs(csvList, nameList, mode);
       self.postMessage({ type: 'done', ...result });
       return;
     }
 
     if (csvs && names) {
-      const result = parseCsvs(csvs, names);
+      const result = parseCsvs(csvs, names, mode);
       self.postMessage({ type: 'done', ...result });
       return;
     }

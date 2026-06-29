@@ -11,6 +11,7 @@ import { VidaDB } from '../storage/vidadb.js';
 import { showLoading, hideLoading, setProgress } from './progress.js';
 import { showToast } from './toast.js';
 import { applyTheme } from './theme.js';
+import { renderHomeSourceChecklist } from './home-sources.js';
 
 // ── Private helpers ───────────────────────────────────────────────────────────
 
@@ -162,6 +163,7 @@ export function updateUploadStatuses() {
   if (badge) { badge.textContent = loaded + '/4'; badge.style.display = loaded > 0 ? 'inline' : 'none'; }
   updateSourceChips();
   updateQualityChip();
+  renderHomeSourceChecklist();
 }
 
 export function updateTriBtn() {

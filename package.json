@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node scripts/build.cjs",
     "dev": "esbuild src/js/app.js --bundle --servedir=src --outdir=src/.dev --format=esm --watch",
-    "test": "npm run build && node harness.cjs index.html && node tests/metrics.test.cjs && node tests/parsers.test.cjs && node tests/integration.test.cjs && node tests/unit/utils.test.mjs && node tests/parsers.unit.test.mjs && node tests/metrics.unit.test.mjs",
+    "test": "npm run build && node harness.cjs index.html && node tests/metrics.test.cjs && node tests/parsers.test.cjs && node tests/integration.test.cjs && node tests/loaders.integration.test.cjs && node tests/unit/utils.test.mjs && node tests/unit/file-guard.test.mjs && node tests/unit/home-sources.test.mjs && node tests/parsers.unit.test.mjs && node tests/metrics.unit.test.mjs",
     "smoke": "node harness.cjs index.html",
     "test:watch": "node scripts/watch.cjs"
   },

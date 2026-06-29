@@ -41,7 +41,7 @@ import { calcularPontos } from './metrics/executive.js';
 import { medRows } from './metrics/med.js';
 import { parseHistLegacy, safeMinutes, parseHist, chooseParsed } from './parsers/hist.js';
 import { parseTriLegacy } from './parsers/tri.js';
-import { parseCidLegacy } from './parsers/cid.js';
+import { parseCidLegacy, parseCidFromText } from './parsers/cid.js';
 import { parseProcedimentosText } from './parsers/proc.js';
 import { _parseExamesLines } from './parsers/exames.js';
 import { CONFIG } from './constants.js';
@@ -507,6 +507,7 @@ export function initGlobals() {
     chooseParsed,
     parseTriLegacy,
     parseCidLegacy,
+    parseCidFromText,
     parseProcedimentosText,
     _parseExamesLines,
     safeMinutes,

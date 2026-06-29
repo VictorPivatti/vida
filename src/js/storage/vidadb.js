@@ -147,4 +147,24 @@ async function stats(){
   return { atendimentos: att, cid, triagem: tri };
 }
 
-export const VidaDB = { open, bulkPut, getAll, count, clear, clearAll, stats, dataExpired, touchTimestamp, clearTimestamp };
+/** Min/max dh nos atendimentos salvos (para resumo na home). */
+async function getPeriodBounds(storeName = 'atendimentos') {
+  if (!(await count(storeName))) return null;
+  const db = await open();
+  const readEdge = direction =>
+    new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readonly');
+      const req = tx.objectStore(storeName).index('dh').openCursor(null, direction);
+      req.onsuccess = () => {
+        const row = req.result?.value;
+        const dh = row?.dh;
+        if (!dh) { resolve(null); return; }
+        resolve(dh instanceof Date ? dh : new Date(dh));
+      };
+      req.onerror = () => reject(req.error);
+    });
+  const [min, max] = await Promise.all([readEdge('next'), readEdge('prev')]);
+  return min && max ? { min, max } : null;
+}
+
+export const VidaDB = { open, bulkPut, getAll, count, clear, clearAll, stats, getPeriodBounds, dataExpired, touchTimestamp, clearTimestamp };

@@ -10,6 +10,7 @@ import { VidaDB } from './storage/vidadb.js';
 import { $ } from './utils/dom.js';
 import { showToast } from './ui/toast.js';
 import { showExpiredHomeNotice, hideExpiredHomeNotice, initExpiredHomeNotice, bindExpiredHomeNotice } from './ui/home-notice.js';
+import { updateHomeFromStats, renderHomeSourceChecklist } from './ui/home-sources.js';
 import { showLoading, hideLoading } from './ui/progress.js';
 import { setupDates, populateMedicoFilter, applyFilters } from './filters.js';
 import { refreshDbStats } from './storage/dbstats.js';
@@ -60,6 +61,9 @@ export async function autoLoadFromDB() {
     const banner = $('upSavedBanner');
     const savedText = $('upSavedText');
     const savedBtn = $('upSavedBtn');
+    let period = null;
+    try { period = await VidaDB.getPeriodBounds(); } catch (e) { /* IDB indisponível em testes */ }
+    updateHomeFromStats(s, period);
     if (banner && savedText) {
       savedText.innerHTML =
         `Continuar de onde parou <span>· ${s.atendimentos.toLocaleString('pt-BR')} registros</span>`;
@@ -332,6 +336,7 @@ export function bindEvents() {
   loadRecepcionados();
   initExpiredHomeNotice();
   bindExpiredHomeNotice();
+  renderHomeSourceChecklist();
 }
 
 // ── _execLoadFromDB ────────────────────────────────────────────────────────────

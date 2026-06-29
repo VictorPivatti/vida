@@ -6,15 +6,18 @@
 import { state } from '../state.js';
 import { parseHistLegacy, safeMinutes, histDedupKey } from '../parsers/hist.js';
 import { parseCidFromText } from '../parsers/cid.js';
-import { smartDecode, xlsxExtract } from '../parsers/workbook.js';
+import { bufferToCsv } from '../parsers/buffer-to-csv.js';
 import { showToast } from '../ui/toast.js';
 import { showLoading, hideLoading, setProgress } from '../ui/progress.js';
+import { setUploadStage } from '../ui/upload-stages.js';
 import { renderAll } from '../render/index.js';
 import { VidaDB } from '../storage/vidadb.js';
 import { ymd, monthKey } from '../utils/dates.js';
 import { fmt } from '../utils/dom.js';
 import { populateMedicoFilter } from '../filters.js';
 import { hideExpiredHomeNotice } from '../ui/home-notice.js';
+import { validateUploadFiles } from '../ui/file-guard.js';
+import { maybePromptFirstRunMetas } from '../ui/first-run-metas.js';
 
 // ── Layout fingerprint check ──────────────────────────────────────────────────
 function _checkLayoutFingerprint(type, csv, name) {
@@ -67,29 +70,35 @@ async function _readFileViaFetch(file, onProgress) {
 }
 
 // ── Pipeline worker: File → XLSX → parse (sem leitura na main thread) ────────
-async function _parseHistViaWorker(files) {
+export async function parseFilesViaWorker(files, mode = 'hist') {
   const url = _getHistWorkerUrl();
   if (!url || typeof Worker === 'undefined') throw new Error('Worker indisponível');
+  const fpType = mode === 'cid' ? 'cid' : 'hist';
+  const parseBase = mode === 'cid' ? 5 : 5;
   return new Promise((res, rej) => {
     const w = new Worker(url);
     w.onmessage = e => {
       const d = e.data;
       if (d.type === 'read') {
-        const base = d.phase === 'lendo' ? 5 : d.phase === 'convertendo' ? 40 : 8;
+        const base = d.phase === 'lendo' ? parseBase : d.phase === 'convertendo' ? 40 : 8;
         const msg = d.phase === 'convertendo'
           ? 'Convertendo ' + d.name + (d.bytes ? ` (${(d.bytes / 1024 / 1024).toFixed(1)} MB)` : '…')
           : d.phase?.startsWith('lendo-') ? `Lendo (${d.phase.slice(6)}) ${d.name}…`
           : d.phase?.startsWith('ok-') ? `Lido via ${d.phase.slice(3)} ${d.name}`
           : d.phase?.startsWith('falhou-') ? `Falhou ${d.phase.slice(7)}: ${d.error || ''}`
           : 'Lendo ' + d.name + '…';
-        if (d.i) setProgress(base + Math.round((d.i - 1) / d.n * 18), msg);
+        if (d.phase === 'convertendo') setUploadStage('converting', d.name);
+        else if (d.i) setProgress(base + Math.round((d.i - 1) / d.n * 18), msg);
         else setProgress(base, msg);
         console.log('[VIDA:worker] read |', d.phase, d.name, d.bytes || d.error || '');
       } else if (d.type === 'read-progress') {
-        setProgress(5 + Math.round(d.loaded / d.total * 35), `Lendo ${d.name}… ${Math.round(d.loaded / d.total * 100)}%`);
+        setUploadStage('reading', `${d.name} ${Math.round(d.loaded / d.total * 100)}%`);
       } else if (d.type === 'fingerprint') {
-        _checkLayoutFingerprint('hist', d.headerLine + '\n', d.name);
+        _checkLayoutFingerprint(fpType, d.headerLine + '\n', d.name);
+      } else if (d.type === 'stage') {
+        setUploadStage(d.stage || 'parsing');
       } else if (d.type === 'progress') {
+        setUploadStage('parsing', `${d.name}: ${d.count.toLocaleString('pt-BR')} registros`);
         setProgress(50 + Math.round(d.i / d.n * 45), d.name + ': ' + d.count.toLocaleString('pt-BR') + ' registros');
       } else if (d.type === 'error') {
         w.terminate(); rej(new Error(d.message));
@@ -102,36 +111,14 @@ async function _parseHistViaWorker(files) {
       console.error('[VIDA:worker] onerror |', e.message, e.filename, e.lineno);
       w.terminate(); rej(new Error(e.message || 'Worker error'));
     };
-    console.log('[VIDA:hist] worker File pipeline |', files.map(f => f.name + ' (' + f.size + 'B)'));
-    w.postMessage({ files });
+    console.log('[VIDA:worker] File pipeline | mode:', mode, '|', files.map(f => f.name + ' (' + f.size + 'B)'));
+    w.postMessage({ files, mode });
   });
 }
 
-// ── bufferToCsv — ArrayBuffer → texto CSV (XLS/XLSX/CSV) ─────────────────────
-async function bufferToCsv(buf, name) {
-  const hdr = new Uint8Array(buf, 0, 4);
-  const isBin = (hdr[0] === 0xD0 && hdr[1] === 0xCF) || (hdr[0] === 0x50 && hdr[1] === 0x4B);
-  console.log('[VIDA:hist] arquivo:', name, '| isBin:', isBin, '| magic: 0x' +
-    hdr[0].toString(16).padStart(2, '0') + hdr[1].toString(16).padStart(2, '0'));
-  let csv = null;
-  if (isBin && typeof XLSX !== 'undefined') {
-    try {
-      // eslint-disable-next-line no-undef
-      const wb = XLSX.read(new Uint8Array(buf), { type: 'array', raw: false });
-      const sh = wb.Sheets[wb.SheetNames[0]];
-      // eslint-disable-next-line no-undef
-      const arr = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: false });
-      csv = arr.map(r => r.join(';')).join('\n');
-      console.log('[VIDA:hist] XLSX.read OK | arquivo:', name, '| chars:', csv.length);
-    } catch (xlsErr) { console.warn('[workerRun] XLSX.read falhou:', xlsErr.message); }
-  }
-  if (!csv && isBin) {
-    csv = await xlsxExtract(buf);
-    console.log('[VIDA:hist] xlsxExtract result | arquivo:', name, '| csv:', csv ? ('string[' + csv.length + '] temPontoVirgula=' + csv.includes(';')) : null);
-  }
-  if (csv && !csv.includes(';')) csv = null;
-  if (!csv) csv = smartDecode(buf);
-  return csv;
+/** @deprecated alias — use parseFilesViaWorker(files, 'hist') */
+async function _parseHistViaWorker(files) {
+  return parseFilesViaWorker(files, 'hist');
 }
 
 // ── workerRun — async parsing orchestrator ────────────────────────────────────
@@ -141,13 +128,13 @@ export async function workerRun(type, payload) {
     const csvs = [], names = [];
     for (let i = 0; i < payload.buffers.length; i++) {
       const buf = payload.buffers[i], name = payload.names[i];
-      setProgress(5 + Math.round(i / payload.buffers.length * 40), 'Lendo ' + name + '...');
+      setUploadStage('reading', name, i, payload.buffers.length);
       await new Promise(r => setTimeout(r, 0));
-      const csv = await bufferToCsv(buf, name);
+      const csv = await bufferToCsv(buf, name, { onConverting: () => setUploadStage('converting', name) });
       _checkLayoutFingerprint('hist', csv, name);
       csvs.push(csv); names.push(name);
     }
-    setProgress(50, 'Parseando...');
+    setUploadStage('parsing');
     // Fase B: tenta Worker real (desbloqueia UI); cai para main thread em ambientes sem Worker
     if (typeof Worker !== 'undefined') {
       try {
@@ -169,8 +156,8 @@ export async function workerRun(type, payload) {
             console.error('[VIDA:worker] onerror | message:', e.message, '| filename:', e.filename, '| lineno:', e.lineno);
             w.terminate(); rej(new Error(e.message || 'Worker parse error'));
           };
-          console.log('[VIDA:worker] postMessage | csvs:', csvs.length, '| names:', names);
-          w.postMessage({ csvs, names });
+          console.log('[VIDA:worker] postMessage | csvs:', csvs.length, '| names:', names, '| mode: hist');
+          w.postMessage({ csvs, names, mode: 'hist' });
         });
         return result;
       } catch (workerErr) { console.warn('[workerRun] Worker falhou, fallback main thread:', workerErr.message); }
@@ -190,10 +177,13 @@ export async function workerRun(type, payload) {
   } else if (type === 'parseCid') {
     let all = [], cidTotal = 0, cidInvalid = 0;
     for (let i = 0; i < payload.buffers.length; i++) {
-      setProgress(10 + Math.round(i / payload.buffers.length * 80), 'Lendo ' + payload.names[i] + '...');
+      setUploadStage('reading', payload.names[i], i, payload.buffers.length);
       await new Promise(r => setTimeout(r, 0));
-      const cidCsv = await bufferToCsv(payload.buffers[i], payload.names[i]);
+      const cidCsv = await bufferToCsv(payload.buffers[i], payload.names[i], {
+        onConverting: () => setUploadStage('converting', payload.names[i]),
+      });
       _checkLayoutFingerprint('cid', cidCsv, payload.names[i]);
+      setUploadStage('parsing', payload.names[i]);
       const parsed = parseCidFromText(cidCsv);
       const lineCount = Math.max(0, cidCsv.split(/\r?\n/).filter(l => l.trim()).length - 1);
       cidTotal += lineCount;
@@ -288,6 +278,12 @@ export async function fileToBuffer(file, onProgress) {
 export async function loadHist(fileOrFiles) {
   const files = fileOrFiles instanceof FileList ? [...fileOrFiles] : Array.isArray(fileOrFiles) ? fileOrFiles : fileOrFiles ? [fileOrFiles] : [];
   if (!files.length) return;
+  try {
+    await validateUploadFiles(files, { kind: 'hist' });
+  } catch (e) {
+    if (e.message !== 'Importação cancelada.') showToast(e.message, 'warn');
+    return;
+  }
   showLoading('Lendo histórico...');
   setProgress(0, 'Lendo ' + files.length + ' arquivo(s)...');
   try {
@@ -369,6 +365,7 @@ export async function loadHist(fileOrFiles) {
         if (parseFloat(evRate.replace(',', '.')) >= 2) showToast(`${ev} evasões detectadas (${evRate}% do período). Verifique o fluxo de triagem.`, 'warn', 6000);
       }
       if (_isFirstLoad) {
+        setTimeout(() => maybePromptFirstRunMetas(), 2500);
         const noExtras = !state.cidRaw.length && state.triSource !== 'file' && state.triSource !== 'db' && !state.procRaw.length;
         if (noExtras) {
           showToast('1/3 — Adicione a planilha de Triagem para conformidade Manchester, tempos por enfermeiro e cruzamento de dados.', 'inf', 7000);
