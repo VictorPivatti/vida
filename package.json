@@ -1,6 +1,6 @@
 {
   "name": "vida-dashboard",
-  "version": "3.5.0",
+  "version": "3.5.1",
   "description": "Dashboard assistencial single-file para UPA 24h",
   "type": "module",
   "scripts": {
