@@ -16,6 +16,11 @@ export function csvRows(csv) {
   return String(csv ?? '').split(/\r?\n/).filter(l => l.trim()).map(l => l.split(';'));
 }
 
+/** Dedup key for hist rows — full timestamp + prof avoids collapsing rows when pront is blank. */
+export function histDedupKey(r) {
+  return r.pront + '|' + (r.dh ? r.dh.getTime() : r.dateKey) + '|' + (r.prof || '');
+}
+
 /** Safe string coercion for legacy positional fields. */
 export function legacyText(v) { return String(v ?? ''); }
 

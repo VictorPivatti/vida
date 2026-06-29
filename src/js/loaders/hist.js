@@ -4,7 +4,7 @@
 //       This module coexists with it during the cutover phase.
 
 import { state } from '../state.js';
-import { parseHistLegacy, safeMinutes } from '../parsers/hist.js';
+import { parseHistLegacy, safeMinutes, histDedupKey } from '../parsers/hist.js';
 import { parseCidFromText } from '../parsers/cid.js';
 import { smartDecode, xlsxExtract } from '../parsers/workbook.js';
 import { showToast } from '../ui/toast.js';
@@ -109,7 +109,7 @@ export async function workerRun(type, payload) {
     for (let i = 0; i < csvs.length; i++) {
       const { data: rows, total, invalid } = parseHistLegacy(csvs[i]);
       totTotal += total; totInvalid += invalid;
-      for (const r of rows) { const k = r.pront + '|' + r.dateKey + '|' + r.hora; if (!seen.has(k)) { seen.add(k); all.push(r); } }
+      for (const r of rows) { const k = histDedupKey(r); if (!seen.has(k)) { seen.add(k); all.push(r); } }
       setProgress(50 + Math.round((i + 1) / csvs.length * 45), names[i] + ': ' + rows.length.toLocaleString('pt-BR') + ' registros');
       await new Promise(r => setTimeout(r, 0));
     }

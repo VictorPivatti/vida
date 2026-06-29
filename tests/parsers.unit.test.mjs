@@ -1,4 +1,4 @@
-import { parseHistLegacy } from '../src/js/parsers/hist.js';
+import { parseHistLegacy, histDedupKey } from '../src/js/parsers/hist.js';
 import { parseTriLegacy } from '../src/js/parsers/tri.js';
 import { parseCidLegacy } from '../src/js/parsers/cid.js';
 import { parseProcedimentosText } from '../src/js/parsers/proc.js';
@@ -49,6 +49,35 @@ const lines = [
 const recs = _parseExamesLines(lines);
 ok('exames: 1 guia', recs.length === 1);
 ok('exames: doctor', recs[0].doctor === 'DR SILVA A');
+
+// hist dedup key — blank pront must not collapse large files to ~1 row/hour
+function _genHistCsv(n, blankPront) {
+  const header = Array.from({ length: 21 }, (_, i) => 'col' + i).join(';');
+  const lines = [header];
+  for (let i = 0; i < n; i++) {
+    const c = Array(21).fill('');
+    c[3] = 'VERDE';
+    c[5] = blankPront ? '' : String(100000 + i);
+    c[6] = 'PACIENTE';
+    c[8] = 'NORMAL';
+    c[9] = `${String((i % 28) + 1).padStart(2, '0')}/03/2026 ${String(i % 24).padStart(2, '0')}:${String(i % 60).padStart(2, '0')}:00`;
+    c[15] = 'DR FULANO';
+    lines.push(c.join(';'));
+  }
+  return lines.join('\n');
+}
+function _dedup(rows, keyFn) {
+  const seen = new Set(), out = [];
+  for (const r of rows) { const k = keyFn(r); if (!seen.has(k)) { seen.add(k); out.push(r); } }
+  return out;
+}
+const _legacyKey = r => r.pront + '|' + r.dateKey + '|' + r.hora;
+const _big = parseHistLegacy(_genHistCsv(30000, true)).data;
+const _oldDedup = _dedup(_big, _legacyKey);
+const _newDedup = _dedup(_big, histDedupKey);
+ok('dedup: legacy key collapses blank-pront file', _oldDedup.length < 500);
+ok('dedup: histDedupKey keeps distinct rows', _newDedup.length > 500);
+ok('dedup: histDedupKey removes re-upload duplicates', _dedup(_big.concat(_big), histDedupKey).length === _newDedup.length);
 
 if (failed > 0) { console.error(failed + ' test(s) failed'); process.exit(1); }
 console.log('parsers.unit.test.mjs: all OK');
