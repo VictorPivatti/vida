@@ -1,4 +1,5 @@
 // render/index.js — Orchestrator: re-exports all render functions
+import { applyLayout } from '../ui/layout.js';
 import { renderGeral, renderExecutive, renderHeatmap } from './geral.js';
 import { renderIndicadores } from './indicadores.js';
 import { renderFluxo } from './fluxo.js';
@@ -145,4 +146,5 @@ export function renderActivePane() {
     case 'escala':        renderEscala(); break;
     case 'anotacoes':     renderAnotacoes(); break;
   }
+  requestAnimationFrame(() => applyLayout());
 }

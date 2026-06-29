@@ -107,6 +107,33 @@ async function _parseHistViaWorker(files) {
   });
 }
 
+// ── bufferToCsv — ArrayBuffer → texto CSV (XLS/XLSX/CSV) ─────────────────────
+async function bufferToCsv(buf, name) {
+  const hdr = new Uint8Array(buf, 0, 4);
+  const isBin = (hdr[0] === 0xD0 && hdr[1] === 0xCF) || (hdr[0] === 0x50 && hdr[1] === 0x4B);
+  console.log('[VIDA:hist] arquivo:', name, '| isBin:', isBin, '| magic: 0x' +
+    hdr[0].toString(16).padStart(2, '0') + hdr[1].toString(16).padStart(2, '0'));
+  let csv = null;
+  if (isBin && typeof XLSX !== 'undefined') {
+    try {
+      // eslint-disable-next-line no-undef
+      const wb = XLSX.read(new Uint8Array(buf), { type: 'array', raw: false });
+      const sh = wb.Sheets[wb.SheetNames[0]];
+      // eslint-disable-next-line no-undef
+      const arr = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: false });
+      csv = arr.map(r => r.join(';')).join('\n');
+      console.log('[VIDA:hist] XLSX.read OK | arquivo:', name, '| chars:', csv.length);
+    } catch (xlsErr) { console.warn('[workerRun] XLSX.read falhou:', xlsErr.message); }
+  }
+  if (!csv && isBin) {
+    csv = await xlsxExtract(buf);
+    console.log('[VIDA:hist] xlsxExtract result | arquivo:', name, '| csv:', csv ? ('string[' + csv.length + '] temPontoVirgula=' + csv.includes(';')) : null);
+  }
+  if (csv && !csv.includes(';')) csv = null;
+  if (!csv) csv = smartDecode(buf);
+  return csv;
+}
+
 // ── workerRun — async parsing orchestrator ────────────────────────────────────
 export async function workerRun(type, payload) {
   if (type === 'parseHist') {
@@ -116,29 +143,7 @@ export async function workerRun(type, payload) {
       const buf = payload.buffers[i], name = payload.names[i];
       setProgress(5 + Math.round(i / payload.buffers.length * 40), 'Lendo ' + name + '...');
       await new Promise(r => setTimeout(r, 0));
-      const hdr = new Uint8Array(buf, 0, 4);
-      const isBin = (hdr[0] === 0xD0 && hdr[1] === 0xCF) || (hdr[0] === 0x50 && hdr[1] === 0x4B);
-      console.log('[VIDA:hist] arquivo:', name, '| isBin:', isBin, '| magic: 0x' +
-        hdr[0].toString(16).padStart(2,'0') + hdr[1].toString(16).padStart(2,'0'));
-      let csv = null;
-      // XLSX.js primeiro — lida com ZIP64/streaming; xlsxExtract customizado pode travar
-      if (isBin && typeof XLSX !== 'undefined') {
-        try {
-          // eslint-disable-next-line no-undef
-          const wb = XLSX.read(new Uint8Array(buf), { type: 'array', raw: false });
-          const sh = wb.Sheets[wb.SheetNames[0]];
-          // eslint-disable-next-line no-undef
-          const arr = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: false });
-          csv = arr.map(r => r.join(';')).join('\n');
-          console.log('[VIDA:hist] XLSX.read OK | arquivo:', name, '| chars:', csv.length);
-        } catch (xlsErr) { console.warn('[workerRun] XLSX.read falhou:', xlsErr.message); }
-      }
-      if (!csv && isBin) {
-        csv = await xlsxExtract(buf);
-        console.log('[VIDA:hist] xlsxExtract result | arquivo:', name, '| csv:', csv ? ('string[' + csv.length + '] temPontoVirgula=' + csv.includes(';')) : null);
-      }
-      if (csv && !csv.includes(';')) csv = null;
-      if (!csv) csv = smartDecode(buf);
+      const csv = await bufferToCsv(buf, name);
       _checkLayoutFingerprint('hist', csv, name);
       csvs.push(csv); names.push(name);
     }
@@ -187,7 +192,7 @@ export async function workerRun(type, payload) {
     for (let i = 0; i < payload.buffers.length; i++) {
       setProgress(10 + Math.round(i / payload.buffers.length * 80), 'Lendo ' + payload.names[i] + '...');
       await new Promise(r => setTimeout(r, 0));
-      const cidCsv = smartDecode(payload.buffers[i]);
+      const cidCsv = await bufferToCsv(payload.buffers[i], payload.names[i]);
       _checkLayoutFingerprint('cid', cidCsv, payload.names[i]);
       const parsed = parseCidFromText(cidCsv);
       const lineCount = Math.max(0, cidCsv.split(/\r?\n/).filter(l => l.trim()).length - 1);
@@ -232,7 +237,7 @@ export async function fileToBuffer(file, onProgress) {
   const size = file.size || 0;
   if (!size) return new ArrayBuffer(0);
 
-  const report = (loaded, total) => onProgress?.(loaded, total);
+  const report = (loaded, total) => { if (typeof onProgress === 'function') onProgress(loaded, total); };
 
   const isSpreadsheet = /\.xlsx?$/i.test(file.name || '');
   // Stream sempre que disponível para planilhas (FileReader trava em XLSX Vivver ~1–3 MB)

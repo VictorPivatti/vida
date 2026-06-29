@@ -1140,6 +1140,12 @@
     }
     .chart-grid>.card{grid-column:span 6}
     .chart-grid>.card.full{grid-column:1/-1}
+    @media(min-width:981px){
+      .chart-grid>.card[data-layout-cols="4"]{grid-column:span 4!important}
+      .chart-grid>.card[data-layout-cols="6"]{grid-column:span 6!important}
+      .chart-grid>.card[data-layout-cols="8"]{grid-column:span 8!important}
+      .chart-grid>.card[data-layout-cols="full"]{grid-column:1/-1!important}
+    }
     @media(min-width:1280px){
       #pane-geral .chart-grid>.card:nth-child(1){grid-column:span 8}
       #pane-geral .chart-grid>.card:nth-child(2),

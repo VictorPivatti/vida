@@ -6,20 +6,95 @@ import { state } from '../state.js';
 import { $ } from '../utils/dom.js';
 
 // ── Chart.js plugin: target/meta line ───────────────────────
+function hexToRgb(hex) {
+  const h = hex.replace('#', '');
+  const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+
+function drawMetaPill(ctx, x, y, label, color, align) {
+  const font = "600 11px 'Plus Jakarta Sans',system-ui,sans-serif";
+  ctx.font = font;
+  const tw = ctx.measureText(label).width;
+  const padX = 8;
+  const rh = 18;
+  const rw = tw + padX * 2;
+  const rr = 4;
+  const rx = align === 'right' ? x - rw : x;
+  const ry = y - rh / 2;
+
+  const rgb = hexToRgb(color.startsWith('#') ? color : '#9aa6b6');
+  ctx.fillStyle = state.theme === 'dark'
+    ? `rgba(${rgb.r},${rgb.g},${rgb.b},.22)`
+    : `rgba(${rgb.r},${rgb.g},${rgb.b},.12)`;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(rx, ry, rw, rh, rr);
+  else ctx.rect(rx, ry, rw, rh);
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, align === 'right' ? x - padX : x + padX, y);
+}
+
 export const targetLinePlugin = {
-  id:"targetLine",
-  afterDraw(chart,args,opts){
-    const lines=opts?.lines||[];
-    if(!lines.length)return;
-    const {ctx,chartArea:{left,right},scales}=chart, y=scales.y;
-    if(!y)return;
-    lines.forEach(line=>{
-      if(line.value==null||Number.isNaN(line.value))return;
-      const py=y.getPixelForValue(line.value);
-      if(py<chart.chartArea.top||py>chart.chartArea.bottom)return;
-      const lc=line.color||"#9aa6b6";
-      ctx.save();ctx.strokeStyle=lc;ctx.lineWidth=1.5;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(left,py);ctx.lineTo(right,py);ctx.stroke();ctx.setLineDash([]);
-      const lbl=line.label||"meta";ctx.font="500 10px 'Plus Jakarta Sans',system-ui,sans-serif";const tw=ctx.measureText(lbl).width;const px2=right-6;const py2=py-6;const rx=px2-tw-8,ry=py2-10,rw=tw+10,rh=14,rr=3;ctx.fillStyle=state.theme==="dark"?"#18202a":"#ffffff";ctx.beginPath();if(ctx.roundRect){ctx.roundRect(rx,ry,rw,rh,rr);}else{ctx.moveTo(rx+rr,ry);ctx.lineTo(rx+rw-rr,ry);ctx.arcTo(rx+rw,ry,rx+rw,ry+rr,rr);ctx.lineTo(rx+rw,ry+rh-rr);ctx.arcTo(rx+rw,ry+rh,rx+rw-rr,ry+rh,rr);ctx.lineTo(rx+rr,ry+rh);ctx.arcTo(rx,ry+rh,rx,ry+rh-rr,rr);ctx.lineTo(rx,ry+rr);ctx.arcTo(rx,ry,rx+rr,ry,rr);ctx.closePath();}ctx.fill();ctx.fillStyle=lc;ctx.strokeStyle=lc;ctx.lineWidth=.75;ctx.stroke();ctx.fillStyle=state.theme==="dark"?"#8896a8":"#515e70";ctx.textAlign="right";ctx.fillText(lbl,px2,py2);ctx.restore();
+  id: 'targetLine',
+  afterDraw(chart, _args, opts) {
+    const lines = opts?.lines || [];
+    if (!lines.length) return;
+    const { ctx, chartArea: { left, right, top, bottom }, scales } = chart;
+    const yScale = scales.y;
+    if (!yScale) return;
+
+    const visible = [];
+    lines.forEach(line => {
+      if (line.value == null || Number.isNaN(line.value)) return;
+      const py = yScale.getPixelForValue(line.value);
+      if (py < top || py > bottom) return;
+      const color = line.color || '#9aa6b6';
+      visible.push({ line, py, color, label: line.label || 'meta' });
+
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(left, py);
+      ctx.lineTo(right, py);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    });
+
+    if (!visible.length) return;
+
+    const minGap = 4;
+    const rh = 18;
+    const placements = visible.map(v => ({ ...v, labelY: v.py }));
+    placements.sort((a, b) => a.py - b.py);
+    for (let i = 1; i < placements.length; i++) {
+      const prev = placements[i - 1];
+      const cur = placements[i];
+      const minY = prev.labelY + rh + minGap;
+      if (cur.labelY < minY) cur.labelY = minY;
+      if (cur.labelY > bottom - rh / 2) cur.labelY = bottom - rh / 2;
+    }
+    for (let i = placements.length - 2; i >= 0; i--) {
+      const next = placements[i + 1];
+      const cur = placements[i];
+      const maxY = next.labelY - rh - minGap;
+      if (cur.labelY > maxY) cur.labelY = maxY;
+      if (cur.labelY < top + rh / 2) cur.labelY = top + rh / 2;
+    }
+
+    const labelX = right - 4;
+    placements.forEach(p => {
+      ctx.save();
+      drawMetaPill(ctx, labelX, p.labelY, p.label, p.color, 'right');
+      ctx.restore();
     });
   }
 };
@@ -51,6 +126,17 @@ export function chart(id,cfg){
   const existingEmpty=el.parentElement&&el.parentElement.querySelector('.chart-empty-state');
   if(existingEmpty)existingEmpty.remove();
   cfg.plugins=[...(cfg.plugins||[]),targetLinePlugin];
+  const metaLines=cfg.options?.plugins?.targetLine?.lines;
+  if(metaLines?.length){
+    cfg.options=cfg.options||{};
+    cfg.options.layout=cfg.options.layout||{};
+    const pad=cfg.options.layout.padding||{};
+    const extra=metaLines.length>1?88:72;
+    cfg.options.layout.padding={
+      ...(typeof pad==='number'?{top:0,right:pad,bottom:0,left:0}:pad),
+      right:Math.max(typeof pad==='number'?pad:(pad.right||0),extra)
+    };
+  }
   // Chart is a CDN global (window.Chart)
   if (typeof Chart === 'undefined') { console.warn('[charts] Chart.js não carregado — gráfico omitido:', id); return; }
   state.charts[id]=new Chart(el,cfg);

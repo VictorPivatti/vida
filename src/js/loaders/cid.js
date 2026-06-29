@@ -16,7 +16,9 @@ export async function loadCid(files) {
   setProgress(5, 'Lendo CID...');
   try {
     const fileArr = [...files];
-    const buffers = await Promise.all(fileArr.map(fileToBuffer));
+    const buffers = await Promise.all(fileArr.map(f => fileToBuffer(f, (loaded, total) => {
+      setProgress(5 + Math.round(loaded / total * 35), `Lendo ${f.name}… ${Math.round(loaded / total * 100)}%`);
+    })));
     const result = await workerRun('parseCid', { buffers, names: fileArr.map(f => f.name) });
     if (result.total != null) {
       state.quality.push({ type: 'CID', total: result.total, invalid: result.invalid ?? 0 });
