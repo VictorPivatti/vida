@@ -5,6 +5,37 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [v3.5.1] — 2026-06-29
+
+### Corrigido — Alta prioridade
+
+- **`$` não exposto em `window` (8 handlers quebrados)** — No bundle IIFE, `$` ficava no closure do módulo e não em `window`, causando `ReferenceError` nos botões CTA de empty-state (carregar procedimentos, exames, metas) e no botão de metas. Adicionado `$` ao `Object.assign(window, ...)` em `initGlobals()`
+- **`deletarAnotacao` apagava a anotação errada** — A lista renderizava ordenada por data decrescente (`b.k - a.k`) mas `deletarAnotacao(i)` usava o índice da lista não ordenada, causando perda de dado do usuário. Corrigido: ordenação aplicada antes do `splice`
+- **Qualidade do Histórico e CID nunca populada** — `workerRun` retornava apenas `{ rows }`, descartando `total`/`invalid` do parser; `state.quality` permanecia vazio. O worker agora propaga os contadores; o path de fallback acumula `total`/`invalid` de `parseHistLegacy`; `loadHist` e `loadCid` fazem `state.quality.push(...)` na main thread. A mensagem "(X de Y válidos)" no toast de carregamento, o chip de qualidade na topbar e o painel Qualidade passam a exibir dados de Histórico e CID
+
+### Corrigido — Prioridade média
+
+- **`triOk` sempre 0 nos agregados mensais** — `monthlyStats` não tinha acesso à meta de triagem e deixava `triOk` zerado. Corrigido: lê `metaTri` do DOM e incrementa por linha, igualando a lógica dos KPIs-card. Gráfico mensal de triagem, tabela de Indicadores e coluna "Triagem na meta (%)" do export Resumo Mensal deixam de exibir 0%
+- **Deltas "vs período anterior" desativados em Indicadores, Fluxo e Retornos** — `prev` estava hardcoded como `[]` nos três módulos. Adicionado helper `previousRows()` em cada um (mesmo algoritmo de `geral.js`): filtra `state.raw` pelo período de mesma duração imediatamente anterior, respeitando o filtro de turno ativo
+- **`exportXLSX` travava o botão indefinidamente em caso de erro** — O `try/catch` envolvia o `setTimeout` mas não o callback; erros assíncronos (XLSX ausente, arquivo inválido) não eram capturados, `hideLoading()` não era chamado e `#exportBtn` ficava `disabled` permanentemente. `try/catch` e reset do botão movidos para dentro do callback
+- **Toast com tipo `'wn'` inexistente** — `loaders/hist.js`, `tri.js` e `proc.js` usavam `'wn'` em vez de `'warn'`; avisos de "layout diferente do esperado" renderizavam sem cor de alerta. Corrigido para `'warn'`
+- **Export de médicos — colunas "Atend./plantão D/N" sempre vazias** — `export.js` lia `r.mediaPlantaoD`/`r.mediaPlantaoN`, mas `metrics/med.js` expõe `mediaD`/`mediaN`. Nomes alinhados
+
+### Corrigido — Robustez e LGPD
+
+- **"Continuar de onde parou" não revalidava TTL** — `VidaDB.dataExpired()` era checado apenas na abertura da aba; aba aberta > 12h e clique posterior em "Continuar" restaurava dados já expirados. Re-checagem adicionada no `onclick` do banner com limpeza automática e aviso antes de qualquer carregamento
+- **Painel Retornos ≤72h exportado em PDF sem marca d'água** — O painel exibe prontuários de pacientes mas não tinha `confidencial: true`; era exportado sem o banner `⚠ CONFIDENCIAL`. Corrigido (CID já estava marcado desde v3.4.0)
+- **`new Chart()` sem guarda de CDN** — `ReferenceError` quando Chart.js não carregava offline; guard `typeof Chart === 'undefined'` adicionado com aviso de console
+- **`XLSX.utils.book_new()` sem guarda de CDN** — `ReferenceError` quando XLSX.js não carregava offline; substituído por exceção legível ("Biblioteca XLSX não carregada. Verifique a conexão e recarregue a página.")
+- **Race condition no IndexedDB em troca rápida de arquivo** — `VidaDB.clear('atendimentos')` era aguardado na thread principal mas o `bulkPut` era fire-and-forget; dois carregamentos em sequência rápida podiam intercalar `clear`/`bulkPut` do primeiro com o segundo. `clear` movido para dentro do IIFE de persistência — `clear + bulkPut` agora sempre atômicos por chamada
+- **`metaManchester(null)` — TypeError** — `cor.charAt(0)` lançava exceção quando `cor` era `null`/`undefined` com `tEspMed` presente. Guard `if (!cor) return 60` adicionado na entrada da função
+
+### Cosmético
+
+- **`state.charts[id]` retinha referência à instância destruída** — `chart()` chamava `destroy()` mas não deletava a chave antes do `return` no caminho `allEmpty`; `destroy()` em instância já destruída é no-op, sem impacto funcional. `delete state.charts[id]` adicionado logo após o `destroy()`
+
+---
+
 ## [v3.5.0] — 2026-06-29
 
 ### Arquitetura modular (esbuild)
