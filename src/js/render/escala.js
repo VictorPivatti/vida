@@ -1,6 +1,6 @@
 // render/escala.js — Escala/Dimensionamento pane rendering
 import { state } from '../state.js';
-import { $, fmt, norm, kpi } from '../utils/dom.js';
+import { $, fmt, fmtN, norm, kpi } from '../utils/dom.js';
 import { chart, gridColor, tickColor, axes } from '../ui/charts.js';
 
 export function renderEscala() {
@@ -29,12 +29,12 @@ export function renderEscala() {
   const horasDeficit = byH.filter(r => r.deficit > 0).length;
   const maxDeficit = Math.max(...byH.map(r => r.deficit));
   const topDef = byH.find(r => r.deficit === maxDeficit);
-  const mediaMedicos = (byH.reduce((s, r) => s + r.medAtivos, 0) / 24).toFixed(1);
+  const mediaMedicos = fmtN(byH.reduce((s, r) => s + r.medAtivos, 0) / 24, 1);
   $('kpisEscala').innerHTML = [
     kpi('Médicos distintos', fmt(new Set(d.filter(r => r.prof).map(r => r.prof)).size), 'ativos no período', '#1357a6'),
     kpi('Média médicos/hora', mediaMedicos, 'base histórica do período', '#38ac8b'),
     kpi('Horas em déficit', fmt(horasDeficit), 'de 24 slots diários', '#c8493e'),
-    kpi('Pico de déficit', maxDeficit > 0 ? (maxDeficit.toFixed(1) + ' atend/h') : '—', topDef ? `${topDef.h}h — requer reforço` : 'cobertura adequada', '#e8a93b'),
+    kpi('Pico de déficit', maxDeficit > 0 ? (fmtN(maxDeficit, 1) + ' atend/h') : '—', topDef ? `${topDef.h}h — requer reforço` : 'cobertura adequada', '#e8a93b'),
   ].join('');
   const labels = byH.map(r => r.h + 'h');
   chart('chartEscalaHora', { type: 'bar', data: { labels, datasets: [{ label: 'Volume médio/hora', data: byH.map(r => +r.volMedio.toFixed(1)), backgroundColor: 'rgba(68,128,194,.55)', borderRadius: 3 }, { label: 'Capacidade instalada', data: byH.map(r => +r.capacidade.toFixed(1)), backgroundColor: 'rgba(47,158,126,.42)', borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tickColor(), usePointStyle: true } }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y}` } } }, scales: { ...axes() } } });
@@ -42,11 +42,11 @@ export function renderEscala() {
     <th>Hora</th><th>Vol. médio</th><th>Méd. ativos</th><th>Cap. instalada</th>
     <th>Déficit/Superávit</th><th>Pressão</th><th>Ação sugerida</th>
   </tr></thead><tbody>${byH.map(r => {
-    const pct100 = (r.pressao * 100).toFixed(0) + '%';
+    const pct100 = fmtN(r.pressao * 100, 0) + '%';
     const defStr = r.deficit > 0.5
-      ? `<span class="erc">▲ +${r.deficit.toFixed(1)} atend/h descobertos</span>`
+      ? `<span class="erc">▲ +${fmtN(r.deficit, 1)} atend/h descobertos</span>`
       : r.deficit < -0.5
-        ? `<span class="okc">▼ ${r.deficit.toFixed(1)} atend/h folga</span>`
+        ? `<span class="okc">▼ ${fmtN(r.deficit, 1)} atend/h folga</span>`
         : `<span class="wnc">≈ equilibrado</span>`;
     const acao = r.deficit > 1 ? '⚠ Escalar médico adicional'
       : r.deficit > 0 ? '↑ Monitorar pressão'
@@ -55,9 +55,9 @@ export function renderEscala() {
     const cls = r.deficit > 1 ? 'escala-err' : r.deficit > 0 ? 'escala-warn' : 'escala-ok';
     return `<tr>
       <td class="mono">${r.h}h</td>
-      <td class="mono">${r.volMedio.toFixed(1)}</td>
+      <td class="mono">${fmtN(r.volMedio, 1)}</td>
       <td class="mono">${r.medAtivos}</td>
-      <td class="mono">${r.capacidade.toFixed(1)}</td>
+      <td class="mono">${fmtN(r.capacidade, 1)}</td>
       <td class="mono">${defStr}</td>
       <td class="mono ${r.pressao > 1 ? 'erc' : r.pressao > 0.8 ? 'wnc' : 'okc'}">${pct100}</td>
       <td class="${cls}" style="font-size:11px">${acao}</td>

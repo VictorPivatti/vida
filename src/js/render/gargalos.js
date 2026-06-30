@@ -36,7 +36,7 @@ export function renderGargalos() {
     kpi('Maior espera médica', medPicoMax ? Math.round(medPicoMax.tEspMed) + ' min' : '-', picoLabel(medPicoMax), '#e8a93b'),
     kpi('Maior espera triagem', triPicoMax ? Math.round(triPicoMax.tEspTri) + ' min' : '-', picoLabel(triPicoMax), '#1357a6'),
     kpi('Maior volume horario', topVol ? fmt(topVol.n) : '-', label(topVol), '#38ac8b'),
-    kpi('Maior carga estimada', topCarga ? topCarga.carga.toFixed(1) : '-', `${label(topCarga)} - atend × permanência`, '#c8493e')
+    kpi('Maior carga estimada', topCarga ? fmtN(topCarga.carga, 1) : '-', `${label(topCarga)} - atend × permanência`, '#c8493e')
   ].join('');
 
   const vAll = state.filt.filter(r => r.cor === 'VERMELHO');
@@ -71,7 +71,7 @@ export function renderGargalos() {
           <div class="risco-kpis" style="margin-bottom:${vN > 0 ? '10' : '0'}px">
             <div class="risco-kpi"><div class="risco-kpi-label">Total VERMELHO</div><div class="risco-kpi-value" style="color:${borderColor}">${fmt(vTotal)}</div></div>
             ${vN > 0 ? `
-            <div class="risco-kpi"><div class="risco-kpi-label">Fora do protocolo</div><div class="risco-kpi-value" style="color:${borderColor}">${fmt(vN)} <span style="font-size:14px">(${vPct}%)</span></div></div>
+            <div class="risco-kpi"><div class="risco-kpi-label">Fora do protocolo</div><div class="risco-kpi-value" style="color:${borderColor}">${fmt(vN)} <span style="font-size:14px">(${fmtN(vPct, 1)}%)</span></div></div>
             <div class="risco-kpi"><div class="risco-kpi-label">Espera média</div><div class="risco-kpi-value">${vAvg} min</div></div>
             <div class="risco-kpi"><div class="risco-kpi-label">Espera máxima</div><div class="risco-kpi-value">${Math.round(vMax)} min</div></div>
             ` : ''}
@@ -89,7 +89,7 @@ export function renderGargalos() {
   }
 
   const rank = [...buckets].sort((a, b) => (b.medAvg || 0) + (b.triAvg || 0) + b.carga / 2 - ((a.medAvg || 0) + (a.triAvg || 0) + a.carga / 2)).slice(0, 30);
-  $('tableGargalos').innerHTML = `<thead><tr><th>Dia/hora</th><th>Volume</th><th>Espera triagem</th><th>Espera médico</th><th>Total médio</th><th>Amarelo+</th><th>Carga</th></tr></thead><tbody>${rank.map(x => `<tr><td class="mono">${DOW[x.diaSem]} ${x.hora}h</td><td class="mono">${fmt(x.n)}</td><td class="mono">${x.triAvg == null ? '-' : Math.round(x.triAvg) + ' min'}</td><td class="mono ${x.medAvg > meta('metaMed') ? 'erc' : ''}">${x.medAvg == null ? '-' : Math.round(x.medAvg) + ' min'}</td><td class="mono">${x.totAvg == null ? '-' : Math.round(x.totAvg) + ' min'}</td><td class="mono">${x.gravePct.toFixed(1)}%</td><td class="mono">${x.carga.toFixed(1)}</td></tr>`).join('')}</tbody>`;
+  $('tableGargalos').innerHTML = `<thead><tr><th>Dia/hora</th><th>Volume</th><th>Espera triagem</th><th>Espera médico</th><th>Total médio</th><th>Amarelo+</th><th>Carga</th></tr></thead><tbody>${rank.map(x => `<tr><td class="mono">${DOW[x.diaSem]} ${x.hora}h</td><td class="mono">${fmt(x.n)}</td><td class="mono">${x.triAvg == null ? '-' : Math.round(x.triAvg) + ' min'}</td><td class="mono ${x.medAvg > meta('metaMed') ? 'erc' : ''}">${x.medAvg == null ? '-' : Math.round(x.medAvg) + ' min'}</td><td class="mono">${x.totAvg == null ? '-' : Math.round(x.totAvg) + ' min'}</td><td class="mono">${fmtN(x.gravePct, 1)}%</td><td class="mono">${fmtN(x.carga, 1)}</td></tr>`).join('')}</tbody>`;
   const medTop = [...buckets].filter(x => x.medAvg != null).sort((a, b) => b.medAvg - a.medAvg).slice(0, 10).reverse();
   chart('chartGargMed', { type: 'bar', data: { labels: medTop.map(label), datasets: [{ data: medTop.map(x => Math.round(x.medAvg)), backgroundColor: medTop.map(x => x.medAvg > meta('metaMed') ? '#c8493e' : '#38ac8b'), borderRadius: 3 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, targetLine: { lines: [{ value: meta('metaMed'), label: 'meta', color: '#9aa6b6' }] } }, scales: axes() } });
   const cargaTop = [...buckets].sort((a, b) => b.carga - a.carga).slice(0, 10).reverse();

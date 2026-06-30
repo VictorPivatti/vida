@@ -28,10 +28,10 @@ export function renderFluxo() {
   const pCons = prevVal(avg(prev, r => r.tConsulta), prev, m.length, pm.length);
   const pTot = prevVal(avg(prev, r => r.tTotal), prev, m.length, pm.length);
   $('kpisFluxo').innerHTML = [
-    kpi('Espera triagem', triAvg != null ? Math.round(triAvg) + ' min' : '-', `meta <= ${meta('metaTri')} min`, '#1357a6', metricDelta(triAvg, pTri, 'min', true)),
-    kpi('Espera médico', medAvg != null ? Math.round(medAvg) + ' min' : '-', `meta <= ${meta('metaMed')} min`, '#e8a93b', metricDelta(medAvg, pMed, 'min', true)),
+    kpi('Espera triagem', triAvg != null ? Math.round(triAvg) + ' min' : '-', `meta ≤ ${meta('metaTri')} min`, '#1357a6', metricDelta(triAvg, pTri, 'min', true)),
+    kpi('Espera médico', medAvg != null ? Math.round(medAvg) + ' min' : '-', `meta ≤ ${meta('metaMed')} min`, '#e8a93b', metricDelta(medAvg, pMed, 'min', true)),
     kpi('Consulta', consAvg != null ? Math.round(consAvg) + ' min' : '-', 'duracao media', '#7b61c4', metricDelta(consAvg, pCons, 'min', true)),
-    kpi('Total', totAvg != null ? Math.round(totAvg) + ' min' : '-', `meta <= ${meta('metaTotal')} min`, '#c8493e', metricDelta(totAvg, pTot, 'min', true))
+    kpi('Total', totAvg != null ? Math.round(totAvg) + ' min' : '-', `meta ≤ ${meta('metaTotal')} min`, '#c8493e', metricDelta(totAvg, pTot, 'min', true))
   ].join('');
   const fluxoVals = m.flatMap(x => [x.triAvg, x.medAvg, x.totAvg]).filter(Number.isFinite);
   chart('chartTempos', { type: 'line', data: { labels: m.map(x => monthLabel(x.k)), datasets: [{ label: 'Espera triagem', data: m.map(x => x.triAvg), borderColor: '#1357a6', tension: .3, spanGaps: true }, { label: 'Espera médico', data: m.map(x => x.medAvg), borderColor: '#e8a93b', tension: .3, spanGaps: true }, { label: 'Total', data: m.map(x => x.totAvg), borderColor: '#c8493e', tension: .3, spanGaps: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tickColor(), usePointStyle: true } }, targetLine: { lines: [{ value: meta('metaTri'), label: 'meta triagem', color: '#1357a6' }, { value: meta('metaMed'), label: 'meta médico', color: '#e8a93b' }, { value: meta('metaTotal'), label: 'meta total', color: '#c8493e' }] } }, scales: { ...axes(), y: { ...axes().y, suggestedMax: Math.max(meta('metaTri'), meta('metaMed'), meta('metaTotal'), ...fluxoVals, 1) * 1.15 } } } });
