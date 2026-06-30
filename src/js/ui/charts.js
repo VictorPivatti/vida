@@ -57,7 +57,7 @@ export const targetLinePlugin = {
       if (line.value == null || Number.isNaN(line.value)) return;
       const py = yScale.getPixelForValue(line.value);
       if (py < top || py > bottom) return;
-      const color = line.color || '#9aa6b6';
+      const color = '#9aa6b6';
       visible.push({ line, py, color, label: line.label || 'meta' });
 
       ctx.save();

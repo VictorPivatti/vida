@@ -182,7 +182,7 @@ export function renderGeral() {
   ].join('');
   const byM = group(d, r => r.anoMes), keys = Object.keys(byM).map(Number).sort();
   const volVals = keys.map(k => byM[k]);
-  chart('chartMensal', { type: 'bar', data: { labels: keys.map(monthLabel), datasets: [{ data: volVals, backgroundColor: '#1357a6', borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, targetLine: { lines: [{ value: meta('metaVol'), label: 'meta volume', color: '#9aa6b6' }] } }, scales: { ...axes(), y: { ...axes().y, suggestedMax: Math.max(meta('metaVol'), ...volVals, 1) * 1.15 } } } });
+  chart('chartMensal', { type: 'bar', data: { labels: keys.map(monthLabel), datasets: [{ data: volVals, backgroundColor: '#1357a6', borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, targetLine: { lines: [{ value: meta('metaVol'), label: 'META VOLUME' }] } }, scales: { ...axes(), y: { ...axes().y, suggestedMax: Math.max(meta('metaVol'), ...volVals, 1) * 1.15 } } } });
   const byDow = group(d, r => r.diaSem);
   chart('chartDow', { type: 'bar', data: { labels: DOWO.map(i => DOW[i]), datasets: [{ data: DOWO.map(i => byDow[i] || 0), backgroundColor: '#2f9e7e', borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: axes() } });
   const byH = group(d, r => r.hora);
