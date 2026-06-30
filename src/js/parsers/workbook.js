@@ -1,4 +1,5 @@
 // parsers/workbook.js — low-level I/O and encoding helpers
+import { rowToCsv } from '../utils/csv-escape.js';
 // NOTE: smartDecode, xlsxExtract, sheetData, readWorkbook depend on browser APIs
 // (TextDecoder, FileReader, DecompressionStream, XLSX CDN global).
 
@@ -224,6 +225,6 @@ export async function sheetData(file) {
   const sh = wb.Sheets[wb.SheetNames[0]];
   // eslint-disable-next-line no-undef
   const rows = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: true });
-  const csv = rows.map(r => r.map(v => String(v ?? '')).join(';')).join('\n');
+  const csv = rows.map(r => rowToCsv(r)).join('\n');
   return { rows, csv };
 }

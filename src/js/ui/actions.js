@@ -6,7 +6,7 @@ import { PREF_KEY, UC_KEY } from '../state.js';
 import { $, esc, norm, fmt } from '../utils/dom.js';
 import { ymd } from '../utils/dates.js';
 import { applyFilters, dateRange } from '../filters.js';
-import { renderAll, renderActivePane } from '../render/index.js';
+import { renderAll, renderActivePane, markDirtyAll } from '../render/index.js';
 import { buildExecutiveCoverData } from '../render/geral.js';
 import { renderOnboardingPanel } from './onboarding-panel.js';
 import { isPdfExportBlocked, markPdfExportUnavailable, clearPdfExportBlock, refreshOfflineGuards, setExportInProgress } from './offline.js';
@@ -50,11 +50,43 @@ export async function resetApp() {
   location.reload();
 }
 
+export const PREF_FIELD_IDS = [
+  'metaTri', 'metaMed', 'metaTotal', 'metaRet', 'metaEvasao', 'metaVol', 'capMed', 'capTri',
+  'metaVermelho', 'metaLaranja', 'metaAmarelo', 'metaVerde', 'metaAzul', 'metaBranco',
+];
+
+function _readPrefsRaw() {
+  try {
+    if (window.localStorage) {
+      const r = window.localStorage.getItem(PREF_KEY);
+      if (r) return r;
+    }
+  } catch (e) {}
+  try {
+    const hit = document.cookie.split('; ').find(row => row.indexOf(PREF_KEY + '=') === 0);
+    return hit ? decodeURIComponent(hit.split('=').slice(1).join('=')) : null;
+  } catch (e) {}
+  return null;
+}
+
+export function loadPrefs() {
+  try {
+    const raw = _readPrefsRaw();
+    if (!raw) return;
+    const prefs = JSON.parse(raw);
+    PREF_FIELD_IDS.forEach(id => {
+      if (prefs[id] != null) {
+        const el = $(id);
+        if (el) el.value = prefs[id];
+      }
+    });
+  } catch (e) {}
+}
+
 export function savePrefs() {
   try {
-    const ids = ['metaTri', 'metaMed', 'metaTotal', 'metaRet', 'metaVol', 'capMed', 'capTri'];
     const prefs = { theme: state.theme };
-    ids.forEach(id => { const el = $(id); if (el) prefs[id] = el.value; });
+    PREF_FIELD_IDS.forEach(id => { const el = $(id); if (el) prefs[id] = el.value; });
     _writePrefsRaw(JSON.stringify(prefs));
   } catch (e) {}
 }
@@ -244,6 +276,7 @@ export async function exportarPDF() {
     refreshOfflineGuards();
   }
   showLoading('Gerando PDF — aguarde...');
+    markDirtyAll();
     const UC = _getUC();
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });

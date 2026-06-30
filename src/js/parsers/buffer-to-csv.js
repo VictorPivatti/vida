@@ -1,6 +1,7 @@
 // parsers/buffer-to-csv.js — ArrayBuffer → CSV text (XLS/XLSX/CSV)
 
 import { smartDecode, xlsxExtract } from './workbook.js';
+import { rowToCsv } from '../utils/csv-escape.js';
 
 /**
  * Convert an ArrayBuffer to CSV-like text for parsers.
@@ -25,7 +26,7 @@ export async function bufferToCsv(buf, name, opts = {}) {
       const sh = wb.Sheets[wb.SheetNames[0]];
       // eslint-disable-next-line no-undef
       const arr = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: false });
-      csv = arr.map(r => r.join(';')).join('\n');
+      csv = arr.map(r => rowToCsv(r)).join('\n');
       console.log('[VIDA:hist] XLSX.read OK | arquivo:', name, '| chars:', csv.length);
     } catch (xlsErr) { console.warn('[workerRun] XLSX.read falhou:', xlsErr.message); }
   }

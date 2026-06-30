@@ -11,7 +11,7 @@
 
 import { toggleLayoutEdit, resetLayout, applyDensity } from './ui/layout.js';
 import {
-  setHistFileName, resetApp, savePrefs, setTheme,
+  setHistFileName, resetApp, savePrefs, loadPrefs, setTheme,
   showKpiSkeletons, updateUploadStatuses, updateSourceChips, updateQualityChip,
   updateTriBtn, shortcut, copyReport, downloadReport, exportarPDF,
 } from './ui/actions.js';
@@ -28,8 +28,8 @@ import { renderEvasao, renderRecepTable } from './render/triagem.js';
 import { renderCidTrend, renderCidTrendAlerts, renderCidTable, setTrendFilter } from './render/cid.js';
 import { renderMedTable } from './render/medicos.js';
 import { renderNotifGrid, setNotifGrupo } from './render/notificaveis.js';
-import { deletarAnotacao } from './render/anotacoes.js';
-import { buscaProntuario } from './render/pacientes.js';
+import { deletarAnotacao, salvarAnotacao, limparAnotForm } from './render/anotacoes.js';
+import { buscaProntuario, showTopRetornos } from './render/pacientes.js';
 import { AUDIT_RULES } from './render/auditoria.js';
 import { prevVal } from './metrics/previous-period.js';
 import { togglePresentationMode, initPresentationMode } from './ui/presentation.js';
@@ -435,6 +435,7 @@ export function initGlobals() {
     setHistFileName,
     resetApp,
     savePrefs,
+    loadPrefs,
     showKpiSkeletons,
     updateUploadStatuses,
     updateSourceChips,
@@ -454,9 +455,12 @@ export function initGlobals() {
 
     // ── Annotations
     deletarAnotacao,
+    salvarAnotacao,
+    limparAnotForm,
 
     // ── Patients
     buscaProntuario,
+    showTopRetornos,
 
     // ── File loaders (A.1)
     loadHist,

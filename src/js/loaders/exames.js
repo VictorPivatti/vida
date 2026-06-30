@@ -7,6 +7,7 @@ import { state } from '../state.js';
 import { parseExamesPdf } from '../parsers/exames.js';
 import { showToast } from '../ui/toast.js';
 import { fmt } from '../utils/dom.js';
+import { markDirty } from '../render/index.js';
 
 // ── loadPdfJs (lazy CDN loader) ───────────────────────────────────────────────
 function loadPdfJs() {
@@ -33,9 +34,9 @@ export async function loadExamesPdf(file) {
     if (!records || !records.length) { showToast('Nenhuma guia encontrada no PDF', 'err'); return; }
     state.examesRaw = records;
     try { if (typeof window.updateUploadStatuses === 'function') window.updateUploadStatuses(); } catch (e) {}
+    markDirty('exames');
     showToast('Exames carregados: ' + fmt(records.length) + ' guias', 'ok', 3000);
-    const activePane = document.querySelector('.nav-item.active')?.dataset?.pane;
-    if (activePane === 'exames' && typeof window.renderExames === 'function') window.renderExames();
+    if (typeof window.renderActivePane === 'function') window.renderActivePane();
   } catch (e) {
     console.error('[VIDA] Erro ao processar PDF de exames:', e);
     showToast('Erro ao processar PDF: ' + e.message, 'err', 6000);

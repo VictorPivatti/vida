@@ -17,7 +17,10 @@ import { fmt } from '../utils/dom.js';
 import { populateMedicoFilter } from '../filters.js';
 import { hideExpiredHomeNotice } from '../ui/home-notice.js';
 import { validateUploadFiles } from '../ui/file-guard.js';
+import { clearAuxiliaryData } from './aux-clear.js';
 import { maybePromptFirstRunMetas } from '../ui/first-run-metas.js';
+
+let _histLoadActive = false;
 
 // ── Layout fingerprint check ──────────────────────────────────────────────────
 function _checkLayoutFingerprint(type, csv, name) {
@@ -278,17 +281,24 @@ export async function fileToBuffer(file, onProgress) {
 export async function loadHist(fileOrFiles) {
   const files = fileOrFiles instanceof FileList ? [...fileOrFiles] : Array.isArray(fileOrFiles) ? fileOrFiles : fileOrFiles ? [fileOrFiles] : [];
   if (!files.length) return;
-  try {
-    await validateUploadFiles(files, { kind: 'hist' });
-  } catch (e) {
-    if (e.message !== 'Importação cancelada.') showToast(e.message, 'warn');
+  if (_histLoadActive) {
+    showToast('Aguarde — outro carregamento de histórico em andamento.', 'warn');
     return;
   }
-  showLoading('Lendo histórico...');
-  setProgress(0, 'Lendo ' + files.length + ' arquivo(s)...');
+  _histLoadActive = true;
   try {
+    try {
+      await validateUploadFiles(files, { kind: 'hist' });
+    } catch (e) {
+      if (e.message !== 'Importação cancelada.') showToast(e.message, 'warn');
+      return;
+    }
+    showLoading('Lendo histórico...');
+    setProgress(0, 'Lendo ' + files.length + ' arquivo(s)...');
+    try {
     state.quality = [];
     const _isFirstLoad = state.raw.length === 0;
+    const _replacing = state.raw.length > 0;
     let result;
     const names = files.map(f => f.name);
     // 1) Worker lê File diretamente (off main thread — nao freezes iCloud)
@@ -319,6 +329,7 @@ export async function loadHist(fileOrFiles) {
     if (result.total != null) {
       state.quality.push({ type: 'Histórico', total: result.total, invalid: result.invalid ?? 0 });
     }
+    if (_replacing) await clearAuxiliaryData();
     state.raw = result.rows;
     state.files.hist = files.length === 1 ? files[0].name : files.length + ' arquivos';
     (async () => {
@@ -378,11 +389,14 @@ export async function loadHist(fileOrFiles) {
     if (tri && typeof window.loadTri === 'function') await window.loadTri(tri);
     const cid = state.pending.cid || (document.getElementById('cidFileUp') ? document.getElementById('cidFileUp').files : null);
     if (cid && cid.length && typeof window.loadCid === 'function') await window.loadCid(cid);
-  } catch (err) {
-    hideLoading();
-    showToast('Erro ao ler histórico: ' + err.message, 'err');
-    const status = document.getElementById('status');
-    if (status) { status.textContent = 'Erro: ' + err.message; status.className = 'status mono error-state'; }
-    console.error(err);
+    } catch (err) {
+      hideLoading();
+      showToast('Erro ao ler histórico: ' + err.message, 'err');
+      const status = document.getElementById('status');
+      if (status) { status.textContent = 'Erro: ' + err.message; status.className = 'status mono error-state'; }
+      console.error(err);
+    }
+  } finally {
+    _histLoadActive = false;
   }
 }

@@ -210,7 +210,7 @@ export function bindEvents() {
   const examesBtn = $('examesBtn');
   const examesFile = $('examesFile');
   if (examesBtn && examesFile) {
-    examesBtn.onclick = () => examesFile.click();
+    examesBtn.onclick = () => { examesFile.click(); window.toggleUploadMenu?.(); };
     examesFile.onchange = e => {
       const f = e.target.files[0];
       if (f) window.loadExamesPdf?.(f);
@@ -218,9 +218,12 @@ export function bindEvents() {
   }
 
   // ── Other upload buttons ──────────────────────────────────────────────────
-  const triBtn = $('triBtn');   if (triBtn)  triBtn.onclick  = () => $('triFile')?.click();
-  const cidBtn = $('cidBtn');   if (cidBtn)  cidBtn.onclick  = () => $('cidFile')?.click();
-  const procBtn = $('procBtn'); if (procBtn) procBtn.onclick = () => $('procFile')?.click();
+  const triBtn = $('triBtn');
+  if (triBtn) triBtn.onclick = () => { $('triFile')?.click(); window.toggleUploadMenu?.(); };
+  const cidBtn = $('cidBtn');
+  if (cidBtn) cidBtn.onclick = () => { $('cidFile')?.click(); window.toggleUploadMenu?.(); };
+  const procBtn = $('procBtn');
+  if (procBtn) procBtn.onclick = () => { $('procFile')?.click(); window.toggleUploadMenu?.(); };
 
   const triFile  = $('triFile');  if (triFile)  triFile.onchange  = e => window.loadTri?.(e.target.files[0]);
   const cidFile  = $('cidFile');  if (cidFile)  cidFile.onchange  = e => window.loadCid?.(e.target.files);
@@ -251,9 +254,12 @@ export function bindEvents() {
   // ── History file-switch (topbar) ──────────────────────────────────────────
   const hsw = $('histFileSwitch');
   if (hsw) {
-    hsw.addEventListener('change', e => {
+    hsw.addEventListener('change', async e => {
       if (!e.target.files.length) return;
-      VidaDB.clear('atendimentos').catch(() => {}).finally(() => window.loadHist?.(e.target.files));
+      try {
+        await VidaDB.clear('atendimentos');
+      } catch (err) { /* ignore */ }
+      window.loadHist?.(e.target.files);
       e.target.value = '';
     });
   }
@@ -311,10 +317,39 @@ export function bindEvents() {
   const frEl = $('filtroRisco');
   if (frEl) frEl.addEventListener('change', () => window.applyFilters?.());
 
-  ['metaTri', 'metaMed', 'metaTotal', 'metaRet', 'metaVol', 'capMed', 'capTri'].forEach(id => {
+  ['metaTri', 'metaMed', 'metaTotal', 'metaRet', 'metaEvasao', 'metaVol', 'capMed', 'capTri',
+    'metaVermelho', 'metaLaranja', 'metaAmarelo', 'metaVerde', 'metaAzul', 'metaBranco'].forEach(id => {
     const el = $(id);
     if (el) el.addEventListener('change', () => window.savePrefs?.());
   });
+
+  // ── Pacientes ─────────────────────────────────────────────────────────────
+  const btnBuscaPront = $('btnBuscaPront');
+  const searchPront = $('searchPront');
+  const runBuscaPront = () => window.buscaProntuario?.(searchPront?.value?.trim() || '');
+  if (btnBuscaPront) btnBuscaPront.onclick = runBuscaPront;
+  if (searchPront) {
+    searchPront.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); runBuscaPront(); }
+    });
+  }
+  const btnProntTop = $('btnProntTop');
+  if (btnProntTop) btnProntTop.onclick = () => window.showTopRetornos?.();
+  const pacienteResult = $('pacienteResult');
+  if (pacienteResult) {
+    pacienteResult.addEventListener('click', e => {
+      const btn = e.target.closest('.btn-pront-hist');
+      if (!btn?.dataset.pront) return;
+      if (searchPront) searchPront.value = btn.dataset.pront;
+      window.buscaProntuario?.(btn.dataset.pront);
+    });
+  }
+
+  // ── Anotações ─────────────────────────────────────────────────────────────
+  const btnSalvarAnot = $('btnSalvarAnot');
+  if (btnSalvarAnot) btnSalvarAnot.onclick = () => window.salvarAnotacao?.();
+  const btnLimparAnot = $('btnLimparAnot');
+  if (btnLimparAnot) btnLimparAnot.onclick = () => window.limparAnotForm?.();
 
   // ── Search inputs ─────────────────────────────────────────────────────────
   const searchMed = $('searchMed');
@@ -342,6 +377,7 @@ export function bindEvents() {
   initExpiredHomeNotice();
   bindExpiredHomeNotice();
   renderHomeSourceChecklist();
+  window.loadPrefs?.();
 }
 
 // ── _execLoadFromDB ────────────────────────────────────────────────────────────

@@ -2,6 +2,7 @@
 // Injetado em __HIST_WORKER_CODE__ por scripts/build.cjs (prefixo importScripts XLSX).
 import { parseHistLegacy, histDedupKey } from '../parsers/hist.js';
 import { parseCidFromText } from '../parsers/cid.js';
+import { rowToCsv } from '../utils/csv-escape.js';
 
 function bufToCsv(ab) {
   const hdr = new Uint8Array(ab, 0, 4);
@@ -13,7 +14,7 @@ function bufToCsv(ab) {
     const sh = wb.Sheets[wb.SheetNames[0]];
     // eslint-disable-next-line no-undef
     const arr = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: false });
-    return arr.map(r => r.join(';')).join('\n');
+    return arr.map(r => rowToCsv(r)).join('\n');
   }
   const utf8 = new TextDecoder('utf-8', { fatal: false }).decode(ab);
   if (!(utf8.match(/�/g) || []).length || utf8.length < 100) return utf8;

@@ -4,6 +4,9 @@
 
 import { state } from '../state.js';
 import { $ } from '../utils/dom.js';
+import { showToast } from './toast.js';
+
+let _chartWarned = false;
 
 // ── Chart.js plugin: target/meta line ───────────────────────
 function hexToRgb(hex) {
@@ -106,7 +109,6 @@ export function axes(){return{x:{grid:{color:gridColor()},ticks:{color:tickColor
 export function chart(id,cfg){
   if(state.charts[id]){ state.charts[id].destroy(); delete state.charts[id]; }
   const el=$(id);if(!el)return;
-  // Verificar se todos os datasets estão vazios
   const allEmpty=cfg.data&&cfg.data.datasets&&cfg.data.datasets.length>0&&
     cfg.data.datasets.every(d=>!d.data||!d.data.some(v=>v!=null&&v!==0));
   if(allEmpty){
@@ -138,7 +140,14 @@ export function chart(id,cfg){
     };
   }
   // Chart is a CDN global (window.Chart)
-  if (typeof Chart === 'undefined') { console.warn('[charts] Chart.js não carregado — gráfico omitido:', id); return; }
+  if (typeof Chart === 'undefined') {
+    if (!_chartWarned) {
+      _chartWarned = true;
+      showToast('Gráficos indisponíveis — Chart.js não carregou. Conecte-se e recarregue (F5).', 'warn', 6000);
+    }
+    console.warn('[charts] Chart.js não carregado — gráfico omitido:', id);
+    return;
+  }
   state.charts[id]=new Chart(el,cfg);
 }
 

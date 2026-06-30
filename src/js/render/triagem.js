@@ -162,7 +162,7 @@ export function renderEvasao(triFilt) {
       return { m, label: monthLabel(m), taxa };
     });
     const trendWithData = trendData.filter(x => x.taxa != null);
-    const metaEv = meta('metaRet') || 10;
+    const metaEv = meta('metaEvasao') || 10;
     if (trendWithData.length >= 2) {
       chart('chartEvasaoTrend', { type: 'line', data: { labels: trendData.map(x => x.label), datasets: [{ label: 'Taxa de evasão (%)', data: trendData.map(x => x.taxa), borderColor: '#c8493e', backgroundColor: 'rgba(200,73,62,.08)', fill: true, tension: .35, pointRadius: 4, pointBackgroundColor: '#c8493e', spanGaps: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, targetLine: { lines: [{ value: metaEv, label: `meta ${metaEv}%`, color: '#e8a93b' }] } }, scales: { x: { grid: { color: gridColor() }, ticks: { color: tickColor() } }, y: { grid: { color: gridColor() }, ticks: { color: tickColor(), callback: v => v + '%' }, suggestedMin: 0, suggestedMax: Math.max(metaEv * 1.5, ...trendData.map(x => x.taxa || 0), 15) } } } });
     }

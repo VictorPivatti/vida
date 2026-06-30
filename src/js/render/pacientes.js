@@ -16,6 +16,10 @@ export function renderPacientes() {
   renderTopRetornos();
 }
 
+export function showTopRetornos() {
+  renderTopRetornos();
+}
+
 export function buscaProntuario(q) {
   const res = $('pacienteResult'); if (!res) return;
   if (!state.raw.length) { res.innerHTML = '<div class="card" style="padding:24px;text-align:center;color:var(--mut)">Carregue o histórico primeiro.</div>'; return; }
@@ -79,7 +83,7 @@ function renderTopRetornos() {
         <td class="mono">${r.visitas}</td>
         <td class="mono erc">${r.rets}</td>
         <td class="mono">${r.ultima.toLocaleDateString('pt-BR')}</td>
-        <td><button type="button" class="btn" style="font-size:10px;padding:3px 8px" onclick="document.getElementById('searchPront').value='${esc(r.pront)}';buscaProntuario('${esc(r.pront)}')">Ver histórico</button></td>
+        <td><button type="button" class="btn btn-pront-hist" style="font-size:10px;padding:3px 8px" data-pront="${esc(r.pront)}">Ver histórico</button></td>
       </tr>`).join('')}
       </tbody>
     </table></div></div>`;

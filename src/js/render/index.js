@@ -14,9 +14,9 @@ import { renderProcedimentos } from './procedimentos.js';
 import { renderEnfermagem } from './enfermagem.js';
 import { renderExames } from './exames.js';
 import { renderAuditoria } from './auditoria.js';
-import { renderPacientes, buscaProntuario } from './pacientes.js';
+import { renderPacientes, buscaProntuario, showTopRetornos } from './pacientes.js';
 import { renderEscala } from './escala.js';
-import { renderAnotacoes, deletarAnotacao } from './anotacoes.js';
+import { renderAnotacoes, deletarAnotacao, salvarAnotacao, limparAnotForm } from './anotacoes.js';
 import { renderRelatorio, renderPrintCover } from './relatorio.js';
 import { renderNotificaveis, DOENCAS_NOTIFICAVEIS } from './notificaveis.js';
 import { state } from '../state.js';
@@ -38,9 +38,9 @@ export { renderProcedimentos };
 export { renderEnfermagem };
 export { renderExames };
 export { renderAuditoria };
-export { renderPacientes, buscaProntuario };
+export { renderPacientes, buscaProntuario, showTopRetornos };
 export { renderEscala };
-export { renderAnotacoes, deletarAnotacao };
+export { renderAnotacoes, deletarAnotacao, salvarAnotacao, limparAnotForm };
 export { renderRelatorio };
 export { renderNotificaveis, DOENCAS_NOTIFICAVEIS };
 
@@ -68,7 +68,7 @@ export function updateNavAlerts() {
     return recep > 0 ? ev / recep * 100 : null;
   }).filter(v => v != null);
   const taxaMedia = taxasEvasao.length ? taxasEvasao.reduce((a, b) => a + b, 0) / taxasEvasao.length : null;
-  if (taxaMedia != null && taxaMedia > meta('metaRet')) alerts['triagem'] = true;
+  if (taxaMedia != null && taxaMedia > meta('metaEvasao')) alerts['triagem'] = true;
 
   document.querySelectorAll('.nav-item[data-pane]').forEach(btn => {
     const pane = btn.dataset.pane;

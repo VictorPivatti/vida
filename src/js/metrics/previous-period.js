@@ -33,7 +33,8 @@ export function previousRows(raw = state.raw, opts = {}) {
 /** Retorna valor anterior só se cobertura ≥ 50% do período atual. */
 export function prevVal(val, prevRowsArr, curMonths, prevMonths) {
   if (val == null || !Number.isFinite(val)) return null;
-  if (!prevMonths || (curMonths > 0 && prevMonths < curMonths * 0.5)) return null;
+  if (!curMonths) return null;
+  if (!prevMonths || prevMonths < curMonths * 0.5) return null;
   if (!prevRowsArr || prevRowsArr.length < curMonths * 10) return null;
   return val;
 }

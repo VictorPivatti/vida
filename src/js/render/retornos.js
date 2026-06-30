@@ -5,7 +5,8 @@ import { avg } from '../utils/stats.js';
 import { monthLabel } from '../utils/dates.js';
 import { chart, gridColor, tickColor, axes } from '../ui/charts.js';
 import { returnsFor, returnsWithin, returns72, monthReturnRate } from '../metrics/returns.js';
-import { previousRows } from '../metrics/previous-period.js';
+import { previousRows, prevVal } from '../metrics/previous-period.js';
+import { monthlyStats } from '../metrics/monthly.js';
 
 function meta(id) { return Number(document.getElementById(id)?.value) || 0; }
 
@@ -23,8 +24,10 @@ export function renderRetornos() {
   const { byP, ret } = returns72(), d = state.filt;
   const patients = Object.keys(byP).length, multi = Object.values(byP).filter(v => v.length > 1).length;
   const prev = previousRows(), prevRet = returnsFor(prev).ret;
+  const pm = monthlyStats(prev), m = monthlyStats(d);
   const retRate = d.length ? ret.length / d.length * 100 : null;
-  const prevRate = prev.length ? prevRet.length / prev.length * 100 : null;
+  const rawPrevRate = prev.length ? prevRet.length / prev.length * 100 : null;
+  const prevRate = prevVal(rawPrevRate, prev, m.length, pm.length);
   $('kpisRet').innerHTML = [
     kpi('Retornos ≤72h', fmt(ret.length), `${pct(ret.length, d.length)} eventos/atend. — meta < ${meta('metaRet')}%`, '#c8493e', metricDelta(retRate, prevRate, 'pp', true)),
     kpi('Pacientes unicos', fmt(patients), 'prontuários distintos', '#1357a6'),

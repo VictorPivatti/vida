@@ -6,7 +6,7 @@ import { monthLabel } from '../utils/dates.js';
 import { chart, gridColor, tickColor, axes } from '../ui/charts.js';
 import { CONFIG, RISK_ORDER, RISK_COLOR } from '../constants.js';
 import { monthlyStats } from '../metrics/monthly.js';
-import { previousRows } from '../metrics/previous-period.js';
+import { previousRows, prevVal } from '../metrics/previous-period.js';
 
 function meta(id) { return Number(document.getElementById(id)?.value) || 0; }
 
@@ -21,14 +21,19 @@ function metricDelta(cur, prev, unit = '', inverse = false) {
 
 export function renderFluxo() {
   const d = state.filt, prev = previousRows();
+  const m = monthlyStats(d), pm = monthlyStats(prev);
   const triAvg = avg(d, r => r.tEspTri), medAvg = avg(d, r => r.tEspMed), consAvg = avg(d, r => r.tConsulta), totAvg = avg(d, r => r.tTotal);
+  const pTri = prevVal(avg(prev, r => r.tEspTri), prev, m.length, pm.length);
+  const pMed = prevVal(avg(prev, r => r.tEspMed), prev, m.length, pm.length);
+  const pCons = prevVal(avg(prev, r => r.tConsulta), prev, m.length, pm.length);
+  const pTot = prevVal(avg(prev, r => r.tTotal), prev, m.length, pm.length);
   $('kpisFluxo').innerHTML = [
-    kpi('Espera triagem', triAvg != null ? Math.round(triAvg) + ' min' : '-', `meta <= ${meta('metaTri')} min`, '#1357a6', metricDelta(triAvg, avg(prev, r => r.tEspTri), 'min', true)),
-    kpi('Espera médico', medAvg != null ? Math.round(medAvg) + ' min' : '-', `meta <= ${meta('metaMed')} min`, '#e8a93b', metricDelta(medAvg, avg(prev, r => r.tEspMed), 'min', true)),
-    kpi('Consulta', consAvg != null ? Math.round(consAvg) + ' min' : '-', 'duracao media', '#7b61c4', metricDelta(consAvg, avg(prev, r => r.tConsulta), 'min', true)),
-    kpi('Total', totAvg != null ? Math.round(totAvg) + ' min' : '-', `meta <= ${meta('metaTotal')} min`, '#c8493e', metricDelta(totAvg, avg(prev, r => r.tTotal), 'min', true))
+    kpi('Espera triagem', triAvg != null ? Math.round(triAvg) + ' min' : '-', `meta <= ${meta('metaTri')} min`, '#1357a6', metricDelta(triAvg, pTri, 'min', true)),
+    kpi('Espera médico', medAvg != null ? Math.round(medAvg) + ' min' : '-', `meta <= ${meta('metaMed')} min`, '#e8a93b', metricDelta(medAvg, pMed, 'min', true)),
+    kpi('Consulta', consAvg != null ? Math.round(consAvg) + ' min' : '-', 'duracao media', '#7b61c4', metricDelta(consAvg, pCons, 'min', true)),
+    kpi('Total', totAvg != null ? Math.round(totAvg) + ' min' : '-', `meta <= ${meta('metaTotal')} min`, '#c8493e', metricDelta(totAvg, pTot, 'min', true))
   ].join('');
-  const m = monthlyStats(d), fluxoVals = m.flatMap(x => [x.triAvg, x.medAvg, x.totAvg]).filter(Number.isFinite);
+  const fluxoVals = m.flatMap(x => [x.triAvg, x.medAvg, x.totAvg]).filter(Number.isFinite);
   chart('chartTempos', { type: 'line', data: { labels: m.map(x => monthLabel(x.k)), datasets: [{ label: 'Espera triagem', data: m.map(x => x.triAvg), borderColor: '#1357a6', tension: .3, spanGaps: true }, { label: 'Espera médico', data: m.map(x => x.medAvg), borderColor: '#e8a93b', tension: .3, spanGaps: true }, { label: 'Total', data: m.map(x => x.totAvg), borderColor: '#c8493e', tension: .3, spanGaps: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tickColor(), usePointStyle: true } }, targetLine: { lines: [{ value: meta('metaTri'), label: 'meta triagem', color: '#1357a6' }, { value: meta('metaMed'), label: 'meta médico', color: '#e8a93b' }, { value: meta('metaTotal'), label: 'meta total', color: '#c8493e' }] } }, scales: { ...axes(), y: { ...axes().y, suggestedMax: Math.max(meta('metaTri'), meta('metaMed'), meta('metaTotal'), ...fluxoVals, 1) * 1.15 } } } });
   const risks = group(d, r => r.cor), keys = RISK_ORDER.filter(k => risks[k]).reverse();
   chart('chartRisco', { type: 'bar', data: { labels: keys, datasets: [{ data: keys.map(k => risks[k]), backgroundColor: keys.map(k => RISK_COLOR[k] || '#64748b'), borderRadius: 3 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${fmt(c.parsed.x)} atend. (${pct(c.parsed.x, d.length)})` } } }, scales: { x: { grid: { color: gridColor() }, ticks: { color: tickColor() } }, y: { grid: { color: gridColor() }, ticks: { color: tickColor(), font: { size: 10 } } } } } });

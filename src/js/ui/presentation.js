@@ -23,10 +23,6 @@ export function togglePresentationMode(force) {
     document.body.dataset.presentationPrevTheme = _wasDark() ? 'dark' : 'light';
     if (typeof window.setTheme === 'function') window.setTheme('light', { save: false, render: true });
   } else {
-    const prev = document.body.dataset.presentationPrevTheme;
-    if (prev && typeof window.setTheme === 'function') {
-      window.setTheme(prev, { save: false, render: true });
-    }
     delete document.body.dataset.presentationPrevTheme;
   }
   try { localStorage.setItem(PREF_KEY, on ? '1' : '0'); } catch (e) {}
