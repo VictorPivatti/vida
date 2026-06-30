@@ -5,6 +5,17 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [Unreleased] — design polish P0–P3
+
+### Alterado
+
+- **P0 — Tipografia:** IBM Plex Mono restrito a números/códigos. Removido de 14 classes (eyebrows, nav, subtítulos, textos de apoio). Adicionado utilitário `.num` com `font-variant-numeric:tabular-nums`. `.k-value` (KPI herói) migrado de Plus Jakarta Sans para Mono.
+- **P1 — pt-BR:** `.toFixed()` substituído por `fmtN()` em escala.js, gargalos.js, triagem.js. Operadores `<=`/`>=` trocados por `≤`/`≥` tipográficos em fluxo.js e indicadores.js. Títulos de página em sentence case (`Evasão mensal (%)`, `Auditoria de dados`, `Qualidade dos dados`, `Anotações por período`).
+- **P2 — Linhas de meta:** `targetLinePlugin` usa sempre `#9aa6b6` (neutro). Labels de meta em caixa alta (`META ESPERA`, `META VOLUME`, `META TOTAL`, etc.). Label dinâmica de evasão usa `fmtN` para formatação pt-BR.
+- **P3 — Emoji:** `🚨⚠️✅` substituídos por SVGs inline (Lucide alert-circle, triangle-alert, circle-check) em gargalos.js. Símbolo `⚠` removido de escala.js (célula já sinalizada por CSS).
+
+---
+
 ## [v3.5.1] — 2026-06-29
 
 ### Corrigido — Alta prioridade
