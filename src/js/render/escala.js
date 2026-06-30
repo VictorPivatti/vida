@@ -48,7 +48,7 @@ export function renderEscala() {
       : r.deficit < -0.5
         ? `<span class="okc">▼ ${fmtN(r.deficit, 1)} atend/h folga</span>`
         : `<span class="wnc">≈ equilibrado</span>`;
-    const acao = r.deficit > 1 ? '⚠ Escalar médico adicional'
+    const acao = r.deficit > 1 ? 'Escalar médico adicional'
       : r.deficit > 0 ? '↑ Monitorar pressão'
         : r.pressao < 0.5 ? '↓ Pode redistribuir'
           : '✓ Cobertura adequada';

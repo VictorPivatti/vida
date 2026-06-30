@@ -8,6 +8,10 @@ import { DOW } from '../constants.js';
 
 function meta(id) { return Number(document.getElementById(id)?.value) || 0; }
 
+const SVG_CRIT = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+const SVG_WARN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
+const SVG_CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>';
+
 function hourBuckets(rows) {
   const map = {};
   rows.forEach(r => {
@@ -58,13 +62,13 @@ export function renderGargalos() {
       const isWarn = vPct != null && vPct > 0 && vPct < 20;
       const bgColor = isCrit ? 'rgba(200,73,62,0.12)' : isWarn ? 'rgba(232,169,59,0.10)' : 'rgba(47,158,126,0.12)';
       const borderColor = isCrit ? '#c8493e' : isWarn ? '#e8a93b' : '#38ac8b';
-      const icon = isCrit ? '🚨' : isWarn ? '⚠️' : '✅';
+      const icon = isCrit ? SVG_CRIT : isWarn ? SVG_WARN : SVG_CHECK;
       const title = isCrit ? 'Alerta crítico: VERMELHO aguardando além do protocolo' : isWarn ? 'Atenção: VERMELHO com espera superior a 10 min detectado' : 'Protocolo VERMELHO cumprido no período';
       const semDadoNote = vSemDado > 0 ? `<span class="risco-alert-note" style="margin-left:12px">${fmt(vSemDado)} VERMELHO sem dado de espera registrado</span>` : '';
       alertDiv.innerHTML = `
         <div class="risco-alert" style="border-color:${borderColor};background:${bgColor}">
           <div class="risco-alert-hd">
-            <span style="font-size:20px">${icon}</span>
+            <span style="color:${borderColor};display:flex;align-items:center;flex:none">${icon}</span>
             <strong style="font-size:13px;color:${borderColor}">${title}</strong>
             ${semDadoNote}
           </div>
