@@ -9,6 +9,7 @@ import { norm } from './parsers/workbook.js';
 import { ymd } from './utils/dates.js';
 import { $, esc, shortName } from './utils/dom.js';
 import { renderAll } from './render/index.js';
+import { syncTopbarStatus } from './ui/topbar-status.js';
 
 // ── setupDates ────────────────────────────────────────────────────────────────
 export function setupDates() {
@@ -52,7 +53,7 @@ export function applyFilters() {
     (!sKey || r.dateKey >= sKey) && (!eKey || r.dateKey <= eKey)
   );
   const recordBadge = $('recordBadge');
-  if (recordBadge) recordBadge.textContent = `${state.filt.length.toLocaleString('pt-BR')} registros`;
+  if (recordBadge) syncTopbarStatus();
   renderAll();
 }
 

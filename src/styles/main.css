@@ -744,11 +744,14 @@
       .topbar-section-title{font-size:13px!important}
       .density-btn{display:none!important}
       #layoutEditBtn,#printBtn{display:none!important}
-      .topbar-actions .file-name{max-width:100px!important;font-size:10px!important}
-      .topbar-row2 .pill[data-shortcut]{display:none!important}
-      .topbar-row2 #filtroMedico,.topbar-row2 #filtroRisco,.topbar-row2 .flabel:nth-of-type(n+4){display:none!important}
-      .tb-source-chips-wrap.is-visible{display:flex!important;align-items:center;gap:4px;margin-left:auto;flex-shrink:0}
-      #dbStatsBadge{display:none!important}
+      .topbar-actions .file-name{display:none!important}
+      .topbar-cluster-export{border-left:none;padding-left:0}
+      .topbar-status{
+        max-width:none;border-left:none;padding:4px 10px;
+        border-top:1px solid var(--bdr);width:100%;justify-content:flex-end
+      }
+      .topbar-row2{flex-wrap:wrap}
+      .topbar-filters-scroll{width:100%;padding:4px 10px}
     }
     @media(max-width:560px){
       .up-wordmark{top:max(16px,env(safe-area-inset-top));left:16px}
@@ -851,16 +854,53 @@
       padding:2px 6px;border-radius:99px;letter-spacing:.04em;
       font-family:'IBM Plex Mono',monospace;flex:none
     }
-    .topbar-actions{display:flex;gap:4px;align-items:center;flex:none}
+    .topbar-actions{display:flex;gap:8px;align-items:center;flex:none;flex-wrap:nowrap}
+    .topbar-cluster{
+      display:flex;align-items:center;gap:3px;flex:none;
+      padding:2px;border-radius:8px
+    }
+    .topbar-cluster-tools{
+      background:var(--sur2);border:1px solid var(--bdr);padding:3px
+    }
+    .topbar-cluster-tools .btn-icon{
+      border-color:transparent;background:transparent;padding:5px 6px
+    }
+    .topbar-cluster-tools .btn-icon:hover{
+      background:var(--sur3);border-color:var(--bdr2);transform:none;box-shadow:none
+    }
+    .topbar-cluster-export{
+      gap:4px;padding-left:4px;border-left:1px solid var(--bdr2)
+    }
+    .topbar-cluster-data .btn{font-weight:600}
     /* Linha 2: filtros */
     .topbar-row2{
-      display:flex;align-items:center;
-      padding:4px 14px;gap:5px;
-      overflow-x:auto;overflow-y:hidden;
-      scrollbar-width:none;min-height:32px;
-      background:var(--bg)
+      display:flex;align-items:stretch;
+      padding:0;gap:0;
+      min-height:38px;
+      background:var(--bg);
+      border-top:1px solid var(--bdr)
     }
-    .topbar-row2::-webkit-scrollbar{display:none}
+    .topbar-filters-scroll{
+      display:flex;align-items:center;
+      padding:5px 12px;gap:6px;
+      flex:1;min-width:0;
+      overflow-x:auto;overflow-y:hidden;
+      scrollbar-width:none
+    }
+    .topbar-filters-scroll::-webkit-scrollbar{display:none}
+    .topbar-status{
+      display:flex;align-items:center;gap:6px;flex:none;
+      padding:5px 14px 5px 12px;
+      border-left:1px solid var(--bdr2);
+      background:var(--sur);
+      max-width:min(42vw,420px)
+    }
+    .topbar-status .badge-records{
+      font-family:'IBM Plex Mono',monospace;font-size:10px;
+      max-width:160px;overflow:hidden;text-overflow:ellipsis
+    }
+    .topbar-status .tb-source-chips-wrap{margin-left:0}
+    .tb-stats-legacy{display:none!important}
     .topbar-sep{width:1px;height:12px;background:var(--bdr2);flex:none}
     .topbar-filters{display:contents}
     .flabel{
@@ -899,7 +939,6 @@
       display:inline-flex;align-items:center;gap:5px
     }
     #recordBadge{margin-left:0}
-    #dbStatsBadge{margin-left:auto}
     .btn{
       border:1px solid var(--bdr2);background:var(--sur2);color:var(--txt2);
       border-radius:var(--radius);padding:4px 12px;font-size:11px;font-weight:500;
@@ -1152,7 +1191,7 @@
     body.presentation-mode .topbar-row2 .pill[data-shortcut],
     body.presentation-mode .topbar-row2 #filtroMedico,
     body.presentation-mode .topbar-row2 #filtroRisco,
-    body.presentation-mode .topbar-row2 .density-btn,
+    body.presentation-mode .topbar-filters-scroll,
     body.presentation-mode #layoutEditBtn,
     body.presentation-mode #exportBtn,
     body.presentation-mode #newBtn,
@@ -1161,7 +1200,7 @@
     body.presentation-mode .grid{gap:18px}
     body.presentation-mode .k-value{font-size:clamp(28px,3vw,36px)!important}
     body.presentation-mode .onboarding-panel{display:none!important}
-    .tb-source-chips-wrap{display:none;align-items:center;gap:4px;margin-left:auto}
+    .tb-source-chips-wrap{display:none;align-items:center;gap:4px}
     .tb-source-chips-wrap.is-visible{display:flex}
 
     /* Banner offline / CDN ausente */

@@ -266,7 +266,8 @@
           <input id="triFile" class="hidden" type="file" accept=".xlsx,.xls,.csv">
           <input id="cidFile" class="hidden" type="file" accept=".xlsx,.xls,.csv" multiple>
           <input id="histFileSwitch" class="hidden" type="file" accept=".xlsx,.xls,.csv" multiple>
-          <div class="file-name" id="fileName" style="display:flex;align-items:center;gap:6px;max-width:220px;overflow:hidden"></div>
+          <div class="file-name" id="fileName" hidden></div>
+          <div class="topbar-cluster topbar-cluster-data">
           <div class="upload-dropdown" id="uploadDropdown">
             <button type="button" class="btn" id="uploadMenuBtn" onclick="toggleUploadMenu()" aria-haspopup="true" aria-expanded="false" aria-controls="uploadMenuList">
 <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -297,29 +298,35 @@
               </button>
             </div>
           </div>
+          </div>
           <input id="examesFile" class="hidden" type="file" accept=".pdf">
           <input id="procFile" class="hidden" type="file" accept=".xls,.xlsx,.csv">
+          <div class="topbar-cluster topbar-cluster-tools" role="group" aria-label="Ferramentas">
           <button type="button" class="btn btn-icon" onclick="openUnitConfig()" title="Configurar unidade" aria-label="Configurar unidade">
-<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></button>
+<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v8h20v-8a2 2 0 0 0-2-2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></button>
           <button type="button" class="btn btn-icon" id="metasBtn" title="Configurar metas" aria-label="Configurar metas">
 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
           <button type="button" class="btn btn-icon" id="layoutEditBtn" title="Editar layout dos cards" aria-label="Editar layout" onclick="toggleLayoutEdit()">
 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
           <button type="button" class="btn btn-icon" id="themeBtn" title="Alternar tema" aria-label="Alternar tema">
 <svg aria-hidden="true" id="themeBtnIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
-          <button type="button" class="btn btn-icon pill" id="presentationBtn" title="Modo apresentação — oculta menus e amplia KPIs (Shift+P)" aria-label="Modo apresentação" aria-pressed="false">
-<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></button>
+          <button type="button" class="btn btn-icon" id="presentationBtn" title="Modo apresentação — oculta menus e amplia KPIs (Shift+P)" aria-label="Modo apresentação" aria-pressed="false">
+<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
+          </div>
+          <div class="topbar-cluster topbar-cluster-export" role="group" aria-label="Exportar">
           <button type="button" class="btn export requires-cdn requires-cdn-xlsx" id="exportBtn" aria-label="Exportar XLSX">
 <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>XLSX</button>
           <button type="button" class="btn primary requires-cdn requires-cdn-pdf" id="printBtn" aria-label="Exportar PDF">
 <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF</button>
+          </div>
           <button type="button" class="btn btn-icon" id="newBtn" title="Trocar base de dados (limpa o banco e volta à tela de upload)" aria-label="Trocar base de dados">
 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></button>
         </div>
       </div>
 
-      <!-- Linha 2: filtros -->
+      <!-- Linha 2: filtros + status -->
       <div class="topbar-row2">
+        <div class="topbar-filters-scroll">
         <span class="flabel">Período</span>
         <input class="field" id="dateStart" type="date">
         <span style="font-size:11px;color:var(--mut);flex:none">→</span>
@@ -351,7 +358,8 @@
           <option value="AZUL">● Azul</option>
           <option value="BRANCO">● Branco</option>
         </select>
-        <div class="topbar-sep"></div>
+        </div>
+        <div class="topbar-status" aria-label="Status dos dados">
                 <div id="tbSourceChips" class="tb-source-chips-wrap">
           <span class="tb-source-chip" id="tbChipHist" title="Histórico de atendimentos">Hist</span>
           <span class="tb-source-chip" id="tbChipTri"  title="Triagem">Tri</span>
@@ -359,10 +367,11 @@
           <span class="tb-source-chip" id="tbChipProc" title="Procedimentos (BPA)">Proc</span>
           <span class="tb-source-chip" id="tbChipExam" title="Exames laboratoriais">Exam</span>
         </div>
-        <span id="dbStatsBadge" class="badge" style="display:none;background:rgba(34,211,238,.08);border-color:rgba(34,211,238,.25);color:#22d3ee" title=""></span>
+        <span id="dbStatsBadge" class="badge tb-stats-legacy" hidden aria-hidden="true"></span>
         <span id="qualityChip" class="quality-chip" style="display:none" title="Linhas ignoradas no parse — verifique o formato do arquivo"></span>
         <span id="ttlBadge" class="ttl-badge" style="display:none" onclick="toggleTtlMenu(event)" title="Tempo até os dados expirarem (TTL 12h — proteção LGPD). Clique para opções."></span>
-        <span class="badge" id="recordBadge" aria-live="polite">0 registros</span>
+        <span class="badge badge-records" id="recordBadge" aria-live="polite">0 registros</span>
+        </div>
       </div>
 
     </header>

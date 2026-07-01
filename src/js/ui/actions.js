@@ -15,6 +15,7 @@ import { showLoading, hideLoading, setProgress } from './progress.js';
 import { showToast } from './toast.js';
 import { applyTheme } from './theme.js';
 import { renderHomeSourceChecklist } from './home-sources.js';
+import { syncTopbarStatus } from './topbar-status.js';
 
 // ── Private helpers ───────────────────────────────────────────────────────────
 
@@ -34,6 +35,14 @@ function _getUC() {
 export function setHistFileName(name) {
   const el = $('fileName');
   if (!el) return;
+  if (!name || /^banco local/i.test(name)) {
+    el.innerHTML = '';
+    el.hidden = true;
+    syncTopbarStatus();
+    return;
+  }
+  el.hidden = false;
+  el.style.display = 'flex';
   el.innerHTML =
     `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1" title="${esc(name)}">${esc(name)}</span>` +
     `<button type="button" onclick="document.getElementById('histFileSwitch').click()" title="Trocar arquivo de histórico" aria-label="Trocar arquivo" ` +
@@ -41,6 +50,7 @@ export function setHistFileName(name) {
     `onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity='.55'">` +
     `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">` +
     `<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><line x1="12" y1="3" x2="12" y2="15"/></svg></button>`;
+  syncTopbarStatus();
 }
 
 export async function resetApp() {

@@ -10,6 +10,7 @@
 // module implementations in Task 9.
 
 import { toggleLayoutEdit, resetLayout } from './ui/layout.js';
+import { syncTopbarStatus } from './ui/topbar-status.js';
 import {
   setHistFileName, resetApp, savePrefs, loadPrefs, setTheme,
   showKpiSkeletons, updateUploadStatuses, updateSourceChips, updateQualityChip,
@@ -433,6 +434,7 @@ export function initGlobals() {
 
     // ── Actions (restored ghost functions)
     setHistFileName,
+    syncTopbarStatus,
     resetApp,
     savePrefs,
     loadPrefs,
