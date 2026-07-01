@@ -89,6 +89,13 @@ export function cleanRisk(v) {
   if (s.includes('VERDE')) return 'VERDE';
   if (s.includes('AZUL')) return 'AZUL';
   if (s.includes('BRANCO')) return 'BRANCO';
+  // Descrições textuais exportadas pelo Vivver (formato com colunas extras)
+  if (s.includes('EMERGENCIA') || s.includes('ALERTA_EXTREMO')) return 'VERMELHO';
+  if (s.includes('MUITO_URGENTE')) return 'LARANJA';
+  if (s.includes('URGENCIA') && !s.includes('NAO') && !s.includes('POUCO') && !s.includes('MUITO')) return 'AMARELO';
+  if (s.includes('SEM_RISCO') || s.includes('POUCO_URGENTE')) return 'VERDE';
+  if (s.includes('CRONICO') || s.includes('CASO_SOCIAL') || s.includes('NAO_URGENTE')) return 'AZUL';
+  if (s.includes('SEM_CLASSIFICACAO') || s.includes('SEM_TRIAGEM')) return 'BRANCO';
   return String(v || 'SEM CLASSIFICACAO').trim().toUpperCase();
 }
 
@@ -106,7 +113,9 @@ export function isEvasao(tipo, prof) {
 function val(row, idx) { return idx == null ? '' : row[idx]; }
 
 function inferColTypes(rows) {
-  const sample = rows.slice(1, 41), ncols = (rows[0] || []).length, types = {};
+  const sample = rows.slice(1, 41);
+  const ncols = Math.max((rows[0] || []).length, ...sample.map(r => r.length));
+  const types = {};
   for (let c = 0; c < ncols; c++) {
     let dates = 0, durs = 0, risks = 0, names = 0, nums = 0, total = 0;
     sample.forEach(row => {
@@ -138,6 +147,18 @@ function indexHeaders(header, type, rows) {
     if (idx < 0) idx = names.findIndex(h => wanted.some(w => h.includes(w) || w.includes(h)));
     out[field] = idx >= 0 ? idx : null;
   });
+  // Quando o cabeçalho tem menos colunas que os dados (Vivver exporta header desatualizado),
+  // verificar se o arquivo é o formato posicional conhecido (cor[3], data[9]).
+  // Se for, usar FALLBACK diretamente em vez de confiar nos índices do cabeçalho errado.
+  if (rows && rows.length > 1 && type === 'hist' && FALLBACK.hist) {
+    const _row1 = rows[1] || [];
+    if (_row1.length > header.length) {
+      const _looksLegacy =
+        /^(VERDE|AMARELO|LARANJA|VERMELHO|AZUL|BRANCO)$/i.test(String(_row1[3]).trim()) &&
+        !!parseDate(_row1[9]);
+      if (_looksLegacy) return { ...FALLBACK.hist };
+    }
+  }
   const missing = Object.entries(out).filter(([, v]) => v == null).map(([k]) => k);
   if (missing.length && rows && rows.length > 1) {
     const colTypes = inferColTypes(rows);
