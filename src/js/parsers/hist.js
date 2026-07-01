@@ -206,7 +206,7 @@ export function parseHistLegacy(csv) {
     rows.push({
       sourceLine: i + 1, pront: String(p[5] || '').trim(), cor: cleanRisk(legacyText(p[3])),
       _nomeRaw: fixStr(legacyText(p[6]).trim()).normalize('NFC'),
-      prof: fixStr(legacyText(p[15]).trim()).normalize('NFC'), tipo: legacyText(p[8]).trim(),
+      prof: fixStr(legacyText(p[15]).trim()).normalize('NFC').toUpperCase(), tipo: legacyText(p[8]).trim(),
       evadido: isEvasao(legacyText(p[8]).trim(), legacyText(p[15]).trim()),
       idade: Number.parseFloat(String(p[7]).replace(',', '.')) || null,
       dh, dhAcol, dhAtend, dateKey: ymd(_dhAjL), ano: _dhAjL.getFullYear(), mes: _dhAjL.getMonth() + 1,
@@ -245,7 +245,7 @@ export function parseHist(rows, addQuality = true) {
     data.push({
       sourceLine: line + 2, pront: String(val(row, idx.pront) || '').trim(), cor: cleanRisk(val(row, idx.cor)),
       _nomeRaw: fixStr(String(val(row, idx.paciente) || '').trim()).normalize('NFC'),
-      prof: fixStr(String(val(row, idx.prof) || '').trim()).normalize('NFC'), tipo: tipoRaw, evadido,
+      prof: fixStr(String(val(row, idx.prof) || '').trim()).normalize('NFC').toUpperCase(), tipo: tipoRaw, evadido,
       idade: Number.parseFloat(String(val(row, idx.idade)).replace(',', '.')) || null,
       dh, dhAcol, dhAtend, dateKey: ymd(_da), ano: _da.getFullYear(), mes: _da.getMonth() + 1,
       anoMes: monthKey(_da), hora: dh.getHours(), diaSem: _da.getDay(), turno: _t,
