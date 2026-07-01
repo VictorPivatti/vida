@@ -12,7 +12,8 @@ export function saveLayout() {
     if (!grid) return;
     layout[id] = [...grid.children].map(card => ({
       title: card.querySelector('.card-title')?.textContent?.trim()?.substring(0, 50) || '',
-      cols: card.dataset.layoutCols || 'auto'
+      cols: card.dataset.layoutCols || 'auto',
+      height: card.style.height || null,
     }));
   });
   try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout)); } catch(e) {}
@@ -35,6 +36,7 @@ export function applyLayout() {
     savedOrder.forEach(s => {
       const card = cardByTitle.get(s.title);
       if (card && s.cols !== 'auto') applyCardSize(card, s.cols);
+      if (card && s.height) card.style.height = s.height;
     });
     // Reordenar
     savedOrder.forEach(s => {
@@ -82,8 +84,56 @@ function addLayoutControls(card) {
   });
   card.appendChild(ctrl);
 
+  // Alça de redimensionamento (canto inferior direito)
+  const rh = document.createElement('div');
+  rh.className = 'card-resize-handle';
+  rh.title = 'Arrastar para redimensionar';
+  card.appendChild(rh);
+  attachResizeHandle(card, rh);
+
   // Drag & drop
   card.draggable = false; // ativado só em modo edit
+}
+
+function attachResizeHandle(card, handle) {
+  handle.addEventListener('mousedown', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX, startY = e.clientY;
+    const rect = card.getBoundingClientRect();
+    const startW = rect.width, startH = rect.height;
+    const grid = card.closest('.chart-grid');
+    const gridW = grid.getBoundingClientRect().width;
+    const gap = parseFloat(getComputedStyle(grid).columnGap) || 16;
+    const colW = (gridW - gap * 11) / 12;
+
+    card.classList.add('resizing');
+
+    const onMove = ev => {
+      const dx = ev.clientX - startX, dy = ev.clientY - startY;
+      // Largura: snap para o span de colunas mais próximo (mín 2, máx 12)
+      const newW = Math.max(startW + dx, colW * 2 + gap);
+      const span = Math.max(2, Math.min(12, Math.round((newW + gap) / (colW + gap))));
+      card.style.gridColumn = `span ${span}`;
+      card.dataset.layoutCols = String(span);
+      card.querySelectorAll('.card-size-btn').forEach(btn =>
+        btn.classList.toggle('active', btn.dataset.cols === String(span))
+      );
+      // Altura: direto em px (mín 120px)
+      card.style.height = `${Math.max(120, Math.round(startH + dy))}px`;
+    };
+
+    const onUp = () => {
+      card.classList.remove('resizing');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      window.dispatchEvent(new Event('resize'));
+      saveLayout();
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
 }
 
 function enableDragDrop(grid) {

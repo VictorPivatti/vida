@@ -1420,6 +1420,16 @@
     }
     .layout-edit-mode .card-drag-handle{display:flex}
     .card-drag-handle:active{cursor:grabbing}
+    .card-resize-handle{
+      display:none;position:absolute;bottom:4px;right:4px;
+      width:16px;height:16px;cursor:se-resize;z-index:10;
+      background-image:radial-gradient(circle,var(--txt2) 1.2px,transparent 1.2px);
+      background-size:4px 4px;background-position:right bottom;
+      opacity:.4;border-radius:2px
+    }
+    .layout-edit-mode .card-resize-handle{display:block}
+    .card-resize-handle:hover{opacity:.85}
+    .card.resizing{transition:none!important;user-select:none}
     .card-size-btn{
       background:var(--sur2);border:1px solid var(--bdr);
       border-radius:4px;padding:2px 6px;font-size:9px;
