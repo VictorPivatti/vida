@@ -312,7 +312,7 @@
     .up-wordmark-text{display:flex;flex-direction:column;gap:1px}
     .up-wordmark-name{
       font-size:12px;font-weight:700;
-      letter-spacing:.22em;color:var(--txt);
+      letter-spacing:.06em;color:var(--txt);
       line-height:1
     }
     .up-wordmark-sub{
