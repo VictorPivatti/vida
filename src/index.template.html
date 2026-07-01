@@ -259,7 +259,10 @@
         </button>
         <div class="topbar-section">
           <span class="topbar-section-mark" aria-hidden="true"><img src="assets/vida-mark.svg" width="20" height="20" alt=""></span>
-          <h1 id="topbarSectionTitle" class="topbar-section-title">Visão geral</h1>
+          <div class="topbar-section-text">
+            <h1 id="topbarSectionTitle" class="topbar-section-title">Visão geral</h1>
+            <p id="topbarSectionDesc" class="topbar-section-desc">Indicadores-chave de demanda, ritmo e pressão assistencial no período selecionado</p>
+          </div>
         </div>
         <!-- id mantido por compatibilidade com JS -->
         <span id="topbarUnitSub" style="display:none"></span>
@@ -397,45 +400,45 @@
       <!-- Sidebar de navegação -->
       <nav class="sidebar" role="navigation" aria-label="Navegação principal">
         <div class="nav-group">Operação</div>
-        <button type="button" class="nav-item active" data-label="Visão geral" data-pane="geral" aria-current="page">
+        <button type="button" class="nav-item active" data-label="Visão geral" data-desc="Indicadores-chave de demanda, ritmo e pressão assistencial no período selecionado" data-pane="geral" aria-current="page">
 <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Visão geral</span></button>
-        <button type="button" class="nav-item" data-label="Indicadores" data-pane="indicadores">
+        <button type="button" class="nav-item" data-label="Indicadores" data-desc="Conformidade de tempos de espera, triagem e protocolo Manchester" data-pane="indicadores">
 <svg aria-hidden="true" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Indicadores</span></button>
-        <button type="button" class="nav-item" data-label="Fluxo" data-pane="fluxo">
+        <button type="button" class="nav-item" data-label="Fluxo" data-desc="Ritmo operacional, classificação de risco e permanência prolongada" data-pane="fluxo">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m15 7 5 5-5 5"/><path d="M9 7H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h5"/></svg><span>Fluxo</span></button>
-        <button type="button" class="nav-item" data-label="Gargalos" data-pane="gargalos">
+        <button type="button" class="nav-item" data-label="Gargalos" data-desc="Horários críticos, filas e desvios de protocolo" data-pane="gargalos">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 3H6a2 2 0 0 0-2 2v3c0 1.1.9 2 2 2h2"/><path d="M16 3h2a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/><path d="M12 3v2"/><path d="M12 19v2"/><path d="M8 10c0 3.3 2.7 4 4 4s4-.7 4-4"/><path d="M8 14H4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h2"/><path d="M16 14h4a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg><span>Gargalos</span></button>
         <div class="nav-divider"></div>
         <div class="nav-group">Equipe</div>
-        <button type="button" class="nav-item" data-label="Médicos" data-pane="medicos">
+        <button type="button" class="nav-item" data-label="Médicos" data-desc="Produção individual, perfil de risco e desempenho por plantão" data-pane="medicos">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg><span>Médicos</span></button>
-        <button type="button" class="nav-item" data-label="Triagem" data-pane="triagem">
+        <button type="button" class="nav-item" data-label="Triagem" data-desc="Desempenho da classificação de risco" data-pane="triagem">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3h6"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9"/><path d="m9 12 2 2 4-4"/></svg><span>Triagem</span></button>
-        <button type="button" class="nav-item" data-label="Procedimentos" data-pane="procedimentos">
+        <button type="button" class="nav-item" data-label="Procedimentos" data-desc="Procedimentos realizados por profissional — BPA individualizado" data-pane="procedimentos">
 <svg aria-hidden="true" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg><span>Procedimentos</span></button>
-        <button type="button" class="nav-item" data-label="Enfermagem" data-pane="enfermagem">
+        <button type="button" class="nav-item" data-label="Enfermagem" data-desc="Triagens por enfermeiro, produção de técnicos e conformidade assistencial" data-pane="enfermagem">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M11 2a2 2 0 0 0-2 2v5H4a2 2 0 0 0-2 2v2c0 1.1.9 2 2 2h5v5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-5h5a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-5V4a2 2 0 0 0-2-2z"/></svg><span>Enfermagem</span></button>
-        <button type="button" class="nav-item" data-label="Exames Lab." data-pane="exames">
+        <button type="button" class="nav-item" data-label="Exames Lab." data-desc="Autolac — Lista de Conferência por Convênio" data-pane="exames">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg><span>Exames Lab.</span></button>
-        <button type="button" class="nav-item" data-label="Retornos ≤72h" data-pane="retornos">
+        <button type="button" class="nav-item" data-label="Retornos ≤72h" data-desc="Reincidência precoce e casos críticos potencialmente evitáveis" data-pane="retornos">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg><span>Retornos ≤72h</span></button>
         <div class="nav-divider"></div>
         <div class="nav-group">Análise</div>
-        <button type="button" class="nav-item" data-label="Evolução" data-pane="evolucao">
+        <button type="button" class="nav-item" data-label="Evolução" data-desc="Tendências mensais e comparativo ano a ano" data-pane="evolucao">
 <svg aria-hidden="true" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg><span>Evolução</span></button>
-        <button type="button" class="nav-item" data-label="CID / Diagnósticos" data-pane="cid">
+        <button type="button" class="nav-item" data-label="CID / Diagnósticos" data-desc="Análise por diagnóstico e CID-10" data-pane="cid">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span>CID / Diagnósticos</span></button>
         <div class="nav-divider"></div>
         <div class="nav-group">Pacientes & Escala</div>
-        <button type="button" class="nav-item" data-label="Pacientes" data-pane="pacientes">
+        <button type="button" class="nav-item" data-label="Pacientes" data-desc="Busca individual por prontuário e histórico de visitas" data-pane="pacientes">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Pacientes</span></button>
-        <button type="button" class="nav-item" data-label="Escala / Dimensionamento" data-pane="escala">
+        <button type="button" class="nav-item" data-label="Escala / Dimensionamento" data-desc="Déficit e superávit de cobertura médica por hora — base COFEN 543/2017" data-pane="escala">
 <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg><span>Escala / Dimensionamento</span></button>
         <div class="nav-divider"></div>
         <div class="nav-group">Sistema</div>
-        <button type="button" class="nav-item" data-label="Auditoria" data-pane="auditoria">
+        <button type="button" class="nav-item" data-label="Auditoria" data-desc="Validação de consistência, outliers e estimativa de impacto nos indicadores" data-pane="auditoria">
 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg><span>Auditoria</span></button>
-        <button type="button" class="nav-item" data-label="Qualidade" data-pane="qualidade">
+        <button type="button" class="nav-item" data-label="Qualidade" data-desc="Integridade, completude e consistência entre as fontes de dados" data-pane="qualidade">
 <svg aria-hidden="true" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>Qualidade</span></button>
       </nav>
 
@@ -444,7 +447,7 @@
         <main id="main-content">
           <div class="print-cover" id="printCover"></div>
 
-      <section class="pane active" id="pane-geral" aria-labelledby="pane-geral-title">
+      <section class="pane active" id="pane-geral" aria-labelledby="topbarSectionTitle">
         <div class="page-header"><h1 id="pane-geral-title" class="page-title">Visão geral</h1><p class="page-desc">Indicadores-chave de demanda, ritmo e pressão assistencial no período selecionado</p></div>
         <div class="onboarding-panel" id="onboardingPanel" style="display:none">
           <div class="onboarding-panel-head">
