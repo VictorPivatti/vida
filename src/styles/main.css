@@ -1299,9 +1299,34 @@
     .chart-grid{
       display:grid;grid-template-columns:repeat(12,minmax(0,1fr));
       gap:var(--card-gap);margin-bottom:var(--card-gap);grid-auto-flow:dense;
-      align-items:start
+      align-items:stretch
     }
-    .chart-grid>.card{grid-column:span 6}
+    .chart-grid>.card{
+      grid-column:span 6;
+      display:flex;flex-direction:column;min-width:0;min-height:0
+    }
+    .chart-grid>.card .card-title{flex:none}
+    .chart-grid>.card>.chart,
+    .chart-grid>.card>.table-wrap,
+    .chart-grid>.card>.search+.table-wrap{
+      flex:1 1 auto;min-height:0
+    }
+    .chart-grid>.card>.chart{
+      height:clamp(160px,28vh,320px);flex:none
+    }
+    .chart-grid>.card>.chart.tall{
+      height:clamp(200px,34vh,400px)
+    }
+    .chart-grid>.card>.chart.small{
+      height:clamp(130px,22vh,260px)
+    }
+    .chart-grid>.card.card-has-height>.chart,
+    .chart-grid>.card.card-has-height>.table-wrap{
+      flex:1 1 0;height:auto!important;min-height:80px;overflow:auto
+    }
+    .chart-grid>.card.card-has-height .table-wrap{
+      max-height:none
+    }
     .chart-grid>.card.full{grid-column:1/-1}
     @media(min-width:981px){
       .chart-grid>.card[data-layout-cols="4"]{grid-column:span 4!important}
@@ -1383,7 +1408,8 @@
     .card{
       background:var(--sur);border:1px solid var(--bdr);border-radius:var(--radius-lg);
       padding:18px 22px;box-shadow:var(--shadow-sm);overflow:hidden;
-      transition:border-color var(--t-fast),box-shadow var(--t-fast)
+      transition:border-color var(--t-fast),box-shadow var(--t-fast);
+      min-height:0
     }
     .card:hover{border-color:var(--bdr2);box-shadow:var(--shadow-md)}
     .card.full{grid-column:1/-1}

@@ -9,7 +9,7 @@
 // available, or provide a minimal safe fallback. They will be replaced by real
 // module implementations in Task 9.
 
-import { toggleLayoutEdit, resetLayout, applyDensity } from './ui/layout.js';
+import { toggleLayoutEdit, resetLayout } from './ui/layout.js';
 import {
   setHistFileName, resetApp, savePrefs, loadPrefs, setTheme,
   showKpiSkeletons, updateUploadStatuses, updateSourceChips, updateQualityChip,
@@ -486,8 +486,6 @@ export function initGlobals() {
     exportMedXlsx,
 
     // ── Density (A.3)
-    applyDensity,
-
     // ── Date range (A.4)
     dateRange,
 

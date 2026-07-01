@@ -2,6 +2,7 @@
 
 import { $ } from '../utils/dom.js';
 import { LAYOUT_KEY } from '../state.js';
+import { resizeChartsInCard } from './charts.js';
 import { showToast } from './toast.js';
 
 export function saveLayout() {
@@ -36,7 +37,10 @@ export function applyLayout() {
     savedOrder.forEach(s => {
       const card = cardByTitle.get(s.title);
       if (card && s.cols !== 'auto') applyCardSize(card, s.cols);
-      if (card && s.height) card.style.height = s.height;
+      if (card && s.height) {
+        card.style.height = s.height;
+        _syncCardHeightClass(card);
+      }
     });
     // Reordenar
     savedOrder.forEach(s => {
@@ -44,15 +48,24 @@ export function applyLayout() {
       if (card) grid.appendChild(card);
     });
   });
+  document.querySelectorAll('.chart-grid > .card').forEach(card => {
+    _syncCardHeightClass(card);
+    resizeChartsInCard(card);
+  });
 }
 
 function applyCardSize(card, cols) {
   card.dataset.layoutCols = cols;
   card.style.gridColumn = cols === 'full' ? '1 / -1' : `span ${cols}`;
-  // Atualizar botões ativos
   card.querySelectorAll('.card-size-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.cols === cols);
   });
+  requestAnimationFrame(() => resizeChartsInCard(card));
+}
+
+function _syncCardHeightClass(card) {
+  const h = card.style.height;
+  card.classList.toggle('card-has-height', !!(h && h !== 'auto'));
 }
 
 function addLayoutControls(card) {
@@ -121,12 +134,16 @@ function attachResizeHandle(card, handle) {
       );
       // Altura: direto em px (mín 120px)
       card.style.height = `${Math.max(120, Math.round(startH + dy))}px`;
+      _syncCardHeightClass(card);
+      requestAnimationFrame(() => resizeChartsInCard(card));
     };
 
     const onUp = () => {
       card.classList.remove('resizing');
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
+      _syncCardHeightClass(card);
+      resizeChartsInCard(card);
       window.dispatchEvent(new Event('resize'));
       saveLayout();
     };
@@ -200,6 +217,7 @@ export function toggleLayoutEdit() {
   });
 
   if (!_layoutEditActive) {
+    document.querySelectorAll('.chart-grid > .card').forEach(resizeChartsInCard);
     showToast('Layout salvo.', 'ok', 2500);
   }
 }
@@ -207,20 +225,4 @@ export function toggleLayoutEdit() {
 export function resetLayout() {
   try { localStorage.removeItem(LAYOUT_KEY); } catch(e) {}
   location.reload();
-}
-
-// ── Density ────────────────────────────────────────────────────────────────────
-const DENSITY = {
-  compact: { kpi: '160px', gap: '8px' },
-  normal:  { kpi: '190px', gap: '16px' },
-  wide:    { kpi: '260px', gap: '24px' },
-};
-
-export function applyDensity(d) {
-  const v = DENSITY[d] || DENSITY.normal;
-  const r = document.documentElement.style;
-  r.setProperty('--kpi-min', v.kpi);
-  r.setProperty('--card-gap', v.gap);
-  document.querySelectorAll('.density-btn').forEach(b => b.classList.toggle('active-pill', b.dataset.density === d));
-  try { localStorage.setItem('upa_density', d); } catch (e) {}
 }

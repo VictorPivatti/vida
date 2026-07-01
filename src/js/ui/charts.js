@@ -151,4 +151,18 @@ export function chart(id,cfg){
   state.charts[id]=new Chart(el,cfg);
 }
 
+export function resizeChartsInCard(card) {
+  if (!card) return;
+  card.querySelectorAll('canvas').forEach(cv => {
+    const ch = state.charts[cv.id];
+    if (ch && typeof ch.resize === 'function') ch.resize();
+  });
+}
+
+export function resizeAllCharts() {
+  Object.values(state.charts).forEach(c => {
+    if (c && typeof c.resize === 'function') c.resize();
+  });
+}
+
 export function destroyCharts(){Object.values(state.charts).forEach(c=>c.destroy());state.charts={}}

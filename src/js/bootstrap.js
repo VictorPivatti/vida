@@ -18,7 +18,6 @@ import { refreshDbStats } from './storage/dbstats.js';
 import { updateTtlCountdown } from './ui/ttl.js';
 import { deriveTriFromHist } from './loaders/hist.js';
 import { markDirty } from './render/index.js';
-import { applyDensity } from './ui/layout.js';
 
 // ── loadUnitConfig ─────────────────────────────────────────────────────────────
 // Mirrors the script-block function of the same name.
@@ -364,13 +363,7 @@ export function bindEvents() {
   if (dlBtn) dlBtn.addEventListener('click', () => window.downloadReport?.());
 
   // ── Densidade dos cards (topbar) ──────────────────────────────────────────
-  document.querySelectorAll('.density-btn').forEach(btn => {
-    btn.addEventListener('click', () => applyDensity(btn.dataset.density));
-  });
-  try {
-    const saved = localStorage.getItem('upa_density');
-    if (saved) applyDensity(saved);
-  } catch (e) {}
+  // removido — controles de densidade não usados
 
   // ── Recepcionados (bootstrap only — persists across page loads) ───────────
   loadRecepcionados();
