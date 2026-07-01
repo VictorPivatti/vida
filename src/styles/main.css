@@ -872,9 +872,9 @@
       gap:4px;padding-left:4px;border-left:1px solid var(--bdr2)
     }
     .topbar-cluster-data .btn{font-weight:600}
-    /* Linha 2: filtros */
+    /* Linha 2: filtros + status (duas faixas — evita sobreposição) */
     .topbar-row2{
-      display:flex;align-items:stretch;
+      display:flex;align-items:center;flex-wrap:wrap;
       padding:0;gap:0;
       min-height:38px;
       background:var(--bg);
@@ -883,23 +883,25 @@
     .topbar-filters-scroll{
       display:flex;align-items:center;
       padding:5px 12px;gap:6px;
-      flex:1;min-width:0;
+      flex:1 1 100%;width:100%;min-width:0;box-sizing:border-box;
       overflow-x:auto;overflow-y:hidden;
       scrollbar-width:none
     }
     .topbar-filters-scroll::-webkit-scrollbar{display:none}
     .topbar-status{
-      display:flex;align-items:center;gap:6px;flex:none;
-      padding:5px 14px 5px 12px;
-      border-left:1px solid var(--bdr2);
-      background:var(--sur);
-      max-width:min(42vw,420px)
+      display:flex;align-items:center;flex-wrap:wrap;
+      gap:5px 8px;
+      flex:1 1 100%;width:100%;min-width:0;box-sizing:border-box;
+      padding:3px 12px 5px;
+      border-top:1px solid var(--bdr);
+      background:transparent;
+      justify-content:flex-end
     }
     .topbar-status .badge-records{
       font-family:'IBM Plex Mono',monospace;font-size:10px;
-      max-width:160px;overflow:hidden;text-overflow:ellipsis
+      flex:none;max-width:none;overflow:hidden;text-overflow:ellipsis
     }
-    .topbar-status .tb-source-chips-wrap{margin-left:0}
+    .topbar-status .tb-source-chips-wrap{margin-left:0;margin-right:auto}
     .tb-stats-legacy{display:none!important}
     .topbar-sep{width:1px;height:12px;background:var(--bdr2);flex:none}
     .topbar-filters{display:contents}
@@ -1200,8 +1202,9 @@
     body.presentation-mode .grid{gap:18px}
     body.presentation-mode .k-value{font-size:clamp(28px,3vw,36px)!important}
     body.presentation-mode .onboarding-panel{display:none!important}
-    .tb-source-chips-wrap{display:none;align-items:center;gap:4px}
+    .tb-source-chips-wrap{display:none;align-items:center;flex-wrap:wrap;gap:3px;margin-right:auto}
     .tb-source-chips-wrap.is-visible{display:flex}
+    .topbar-status .ttl-badge,.topbar-status .quality-chip,.topbar-status .badge-records{flex:none}
 
     /* Banner offline / CDN ausente */
     .offline-bar{
