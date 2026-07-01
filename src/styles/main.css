@@ -1023,6 +1023,15 @@
     }
     .unit-menu-item.active svg,.unit-menu-item.active-pill svg,.unit-menu-item[aria-pressed="true"] svg{color:var(--ac)}
 
+    /* ── Risco: paleta dentro do seletor ── */
+    .risk-select{position:relative;display:inline-flex;align-items:center;flex:none}
+    .risk-swatches{
+      position:absolute;left:9px;top:50%;transform:translateY(-50%);
+      display:inline-flex;gap:3px;pointer-events:none;z-index:1
+    }
+    .risk-swatches i{width:7px;height:13px;border-radius:3px;display:block}
+    .field.risk-all{padding-left:44px}
+
     /* ── Período: segmented control ── */
     .segmented{
       display:inline-flex;align-items:center;flex:none;

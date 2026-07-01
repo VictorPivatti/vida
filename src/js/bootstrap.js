@@ -322,10 +322,14 @@ export function bindEvents() {
   const frEl = $('filtroRisco');
   if (frEl) {
     const RISCO_COR = { VERMELHO: '#c8493e', LARANJA: '#e07a35', AMARELO: '#e8a93b', VERDE: '#2f9e7e', AZUL: '#3a7ca5', BRANCO: '#94a3b8' };
+    const frSwatches = $('riscoSwatches');
     const paintRisco = () => {
       const cor = RISCO_COR[frEl.value];
       frEl.style.color = cor || '';
       frEl.style.fontWeight = cor ? '700' : '';
+      const isAll = !cor;
+      frEl.classList.toggle('risk-all', isAll);
+      if (frSwatches) frSwatches.style.display = isAll ? 'inline-flex' : 'none';
     };
     frEl.addEventListener('change', () => { paintRisco(); window.applyFilters?.(); });
     paintRisco();

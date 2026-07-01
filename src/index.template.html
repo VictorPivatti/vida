@@ -360,15 +360,18 @@
         <datalist id="filtroMedicoList"></datalist>
           <span id="filtroMedicoCount" style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--ac);background:var(--ac-glow);border:1px solid var(--ac);border-radius:99px;padding:1px 7px;display:none;white-space:nowrap"></span>
         <span class="flabel">Risco</span>
-        <select class="field" id="filtroRisco" style="max-width:110px">
-          <option value="all">Todos</option>
-          <option value="VERMELHO" style="color:#c8493e">● Vermelho</option>
-          <option value="LARANJA" style="color:#e07a35">● Laranja</option>
-          <option value="AMARELO" style="color:#e8a93b">● Amarelo</option>
-          <option value="VERDE" style="color:#2f9e7e">● Verde</option>
-          <option value="AZUL" style="color:#3a7ca5">● Azul</option>
-          <option value="BRANCO" style="color:#94a3b8">● Branco</option>
-        </select>
+        <span class="risk-select">
+          <span class="risk-swatches" id="riscoSwatches" aria-hidden="true"><i style="background:#c8493e"></i><i style="background:#e07a35"></i><i style="background:#2f9e7e"></i></span>
+          <select class="field risk-all" id="filtroRisco" style="max-width:140px">
+            <option value="all">Todos</option>
+            <option value="VERMELHO" style="color:#c8493e">▮ Vermelho</option>
+            <option value="LARANJA" style="color:#e07a35">▮ Laranja</option>
+            <option value="AMARELO" style="color:#e8a93b">▮ Amarelo</option>
+            <option value="VERDE" style="color:#2f9e7e">▮ Verde</option>
+            <option value="AZUL" style="color:#3a7ca5">▮ Azul</option>
+            <option value="BRANCO" style="color:#94a3b8">▮ Branco</option>
+          </select>
+        </span>
         </div>
         <div class="topbar-status" aria-label="Status dos dados">
                 <div id="tbSourceChips" class="tb-source-chips-wrap">
