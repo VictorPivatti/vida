@@ -1,4 +1,5 @@
 import { parseHistLegacy, histDedupKey, cleanRisk, parseHist } from '../src/js/parsers/hist.js';
+import { fixMojibake, fixMojibakeMac } from '../src/js/parsers/workbook.js';
 import { parseTriLegacy } from '../src/js/parsers/tri.js';
 import { parseCidLegacy } from '../src/js/parsers/cid.js';
 import { parseProcedimentosText } from '../src/js/parsers/proc.js';
@@ -113,6 +114,15 @@ ok('parseHist: pront correto após offset', _vivver[0].pront === '70000');
 ok('parseHist: cor correta após offset', _vivver[0].cor === 'VERDE');
 ok('parseHist: dh válida após offset', _vivver[0].dh instanceof Date && !isNaN(_vivver[0].dh));
 ok('parseHist: prof correto após offset', _vivver[0].prof === 'DR TESTE');
+
+// fixMojibakeMac — Mac OS Roman mojibake (new)
+ok('fixMojibakeMac: JO√£O → JOãO', fixMojibakeMac('JO√£O') === 'JOãO');
+ok('fixMojibakeMac: B√°RBARA → BáRBARA', fixMojibakeMac('B√°RBARA') === 'BáRBARA');
+ok('fixMojibakeMac: GUIMAR√ÉES → GUIMARÃES', fixMojibakeMac('GUIMAR√ÉES') === 'GUIMARÃES');
+ok('fixMojibakeMac: PATR√≠CIA → PATRíCIA', fixMojibakeMac('PATR√≠CIA') === 'PATRíCIA');
+ok('fixMojibakeMac: GON√ßALVES → GONçALVES', fixMojibakeMac('GON√ßALVES') === 'GONçALVES');
+ok('fixMojibakeMac: no-op on plain string', fixMojibakeMac('JOAO DA SILVA') === 'JOAO DA SILVA');
+ok('fixMojibakeMac: no-op on already-correct Ã', fixMojibakeMac('GUIMARÃES') === 'GUIMARÃES');
 
 if (failed > 0) { console.error(failed + ' test(s) failed'); process.exit(1); }
 console.log('parsers.unit.test.mjs: all OK');

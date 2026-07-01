@@ -5,7 +5,8 @@
 // the ESM-importable copy for tests and future app.js integration.
 
 import { CONFIG, ALIAS, FALLBACK } from '../constants.js';
-import { norm, fixMojibake } from './workbook.js';
+import { norm, fixMojibake, fixMojibakeMac } from './workbook.js';
+function fixStr(s) { const t = fixMojibake(s); return t !== s ? t : fixMojibakeMac(s); }
 import { ymd, monthKey } from '../utils/dates.js';
 import { state } from '../state.js';
 
@@ -204,8 +205,8 @@ export function parseHistLegacy(csv) {
     const _dhAjL = (_turnoL === 'N' && dh.getHours() < 7) ? new Date(dh.getTime() - 864e5) : dh;
     rows.push({
       sourceLine: i + 1, pront: String(p[5] || '').trim(), cor: cleanRisk(legacyText(p[3])),
-      _nomeRaw: fixMojibake(legacyText(p[6]).trim()).normalize('NFC'),
-      prof: fixMojibake(legacyText(p[15]).trim()).normalize('NFC'), tipo: legacyText(p[8]).trim(),
+      _nomeRaw: fixStr(legacyText(p[6]).trim()).normalize('NFC'),
+      prof: fixStr(legacyText(p[15]).trim()).normalize('NFC'), tipo: legacyText(p[8]).trim(),
       evadido: isEvasao(legacyText(p[8]).trim(), legacyText(p[15]).trim()),
       idade: Number.parseFloat(String(p[7]).replace(',', '.')) || null,
       dh, dhAcol, dhAtend, dateKey: ymd(_dhAjL), ano: _dhAjL.getFullYear(), mes: _dhAjL.getMonth() + 1,
@@ -243,8 +244,8 @@ export function parseHist(rows, addQuality = true) {
     const _da = (_t === 'N' && dh.getHours() < 7) ? new Date(dh.getTime() - 864e5) : dh;
     data.push({
       sourceLine: line + 2, pront: String(val(row, idx.pront) || '').trim(), cor: cleanRisk(val(row, idx.cor)),
-      _nomeRaw: String(val(row, idx.paciente) || '').trim(),
-      prof: String(val(row, idx.prof) || '').trim(), tipo: tipoRaw, evadido,
+      _nomeRaw: fixStr(String(val(row, idx.paciente) || '').trim()).normalize('NFC'),
+      prof: fixStr(String(val(row, idx.prof) || '').trim()).normalize('NFC'), tipo: tipoRaw, evadido,
       idade: Number.parseFloat(String(val(row, idx.idade)).replace(',', '.')) || null,
       dh, dhAcol, dhAtend, dateKey: ymd(_da), ano: _da.getFullYear(), mes: _da.getMonth() + 1,
       anoMes: monthKey(_da), hora: dh.getHours(), diaSem: _da.getDay(), turno: _t,
