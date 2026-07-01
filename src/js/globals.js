@@ -14,22 +14,21 @@ import { syncTopbarStatus } from './ui/topbar-status.js';
 import {
   setHistFileName, resetApp, savePrefs, loadPrefs, setTheme,
   showKpiSkeletons, updateUploadStatuses, updateSourceChips, updateQualityChip,
-  updateTriBtn, shortcut, copyReport, downloadReport, exportarPDF,
+  updateTriBtn, shortcut, exportarPDF,
 } from './ui/actions.js';
 import {
   renderAll, renderActivePane, markDirty, renderNotificaveis,
   renderGeral, renderExecutive, renderHeatmap,
   renderIndicadores, renderFluxo, renderGargalos, renderMedicos,
-  renderRetornos, renderEvolucao, renderAnoAano, renderRelatorio,
+  renderRetornos, renderEvolucao, renderAnoAano,
   renderTriagem, renderCid, renderCruzamento, renderQuality,
   renderProcedimentos, renderEnfermagem, renderExames,
-  renderAuditoria, renderPacientes, renderEscala, renderAnotacoes,
+  renderAuditoria, renderPacientes, renderEscala,
 } from './render/index.js';
 import { renderEvasao, renderRecepTable } from './render/triagem.js';
 import { renderCidTrend, renderCidTrendAlerts, renderCidTable, setTrendFilter } from './render/cid.js';
 import { renderMedTable } from './render/medicos.js';
 import { renderNotifGrid, setNotifGrupo } from './render/notificaveis.js';
-import { deletarAnotacao, salvarAnotacao, limparAnotForm } from './render/anotacoes.js';
 import { buscaProntuario, showTopRetornos } from './render/pacientes.js';
 import { AUDIT_RULES } from './render/auditoria.js';
 import { prevVal } from './metrics/previous-period.js';
@@ -408,7 +407,6 @@ export function initGlobals() {
     renderRetornos,
     renderEvolucao,
     renderAnoAano,
-    renderRelatorio,
     renderTriagem,
     renderCid,
     renderCruzamento,
@@ -419,7 +417,6 @@ export function initGlobals() {
     renderAuditoria,
     renderPacientes,
     renderEscala,
-    renderAnotacoes,
 
     // ── Unit config modal
     openUnitConfig,
@@ -477,8 +474,6 @@ export function initGlobals() {
     updateQualityChip,
     updateTriBtn,
     shortcut,
-    copyReport,
-    downloadReport,
     exportarPDF,
     togglePresentationMode,
     dismissOnboardingPanel,
@@ -487,11 +482,6 @@ export function initGlobals() {
     saveRecepcionados,
     renderRecepTable,
     renderEvasao,
-
-    // ── Annotations
-    deletarAnotacao,
-    salvarAnotacao,
-    limparAnotForm,
 
     // ── Patients
     buscaProntuario,

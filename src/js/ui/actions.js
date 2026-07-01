@@ -8,6 +8,7 @@ import { ymd } from '../utils/dates.js';
 import { applyFilters, dateRange } from '../filters.js';
 import { renderAll, renderActivePane, markDirtyAll } from '../render/index.js';
 import { buildExecutiveCoverData } from '../render/geral.js';
+import { buildReportText } from '../render/relatorio.js';
 import { renderOnboardingPanel } from './onboarding-panel.js';
 import { isPdfExportBlocked, markPdfExportUnavailable, clearPdfExportBlock, refreshOfflineGuards, setExportInProgress } from './offline.js';
 import { VidaDB } from '../storage/vidadb.js';
@@ -230,27 +231,6 @@ export function shortcut(k) {
   applyFilters();
 }
 
-export async function copyReport() {
-  const txt = $('reportText')?.value || '';
-  try {
-    await navigator.clipboard.writeText(txt);
-    const btn = $('copyReportBtn');
-    if (btn) { btn.textContent = 'Copiado'; setTimeout(() => { btn.textContent = 'Copiar texto'; }, 1200); }
-  } catch {
-    $('reportText')?.select();
-    document.execCommand?.('copy');
-  }
-}
-
-export function downloadReport() {
-  const blob = new Blob([$('reportText')?.value || ''], { type: 'text/plain;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'relatorio-gerencial-upa.txt';
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-}
-
 export async function exportarPDF() {
   if (!state.filt.length) { showToast('Carregue dados antes de exportar.', 'warn'); return; }
   if (isPdfExportBlocked()) {
@@ -261,38 +241,53 @@ export async function exportarPDF() {
   const _btnSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF';
   if (_pdfBtn) { _pdfBtn.disabled = true; _pdfBtn.style.opacity = '.5'; _pdfBtn.style.cursor = 'wait'; _pdfBtn.textContent = 'Gerando...'; }
   setExportInProgress(true);
+
+  // Restaurações diferidas (garantem estado limpo mesmo em erro)
+  const _prevTheme = state.theme;
+  const _origActive = document.querySelector('.nav-item.active')?.dataset?.pane;
+  const _Chart = window.Chart;
+  const _prevAnim = _Chart?.defaults ? _Chart.defaults.animation : undefined;
+  const _origGCS = window.getComputedStyle;
+  let _gcsPatched = false;
+
   try {
-  // Load CDN libs on demand
-  if (typeof html2canvas === 'undefined' || !window.jspdf) {
-    showToast('Carregando bibliotecas de PDF...', 'ok', 2000);
-    await new Promise((resolve, reject) => {
-      let loaded = 0;
-      const check = () => { if (++loaded === 2) resolve(); };
-      const err = () => reject(new Error('Falha ao carregar bibliotecas de PDF'));
-      if (typeof html2canvas === 'undefined') {
-        const s1 = document.createElement('script');
-        s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        s1.onload = check; s1.onerror = err;
-        document.head.appendChild(s1);
-      } else { check(); }
-      if (!window.jspdf) {
-        const s2 = document.createElement('script');
-        s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-        s2.onload = check; s2.onerror = err;
-        document.head.appendChild(s2);
-      } else { check(); }
-    });
-    clearPdfExportBlock();
-    refreshOfflineGuards();
-  }
-  showLoading('Gerando PDF — aguarde...');
-    markDirtyAll();
+    // Load CDN libs on demand
+    if (typeof html2canvas === 'undefined' || !window.jspdf) {
+      showToast('Carregando bibliotecas de PDF...', 'ok', 2000);
+      await new Promise((resolve, reject) => {
+        let loaded = 0;
+        const check = () => { if (++loaded === 2) resolve(); };
+        const err = () => reject(new Error('Falha ao carregar bibliotecas de PDF'));
+        if (typeof html2canvas === 'undefined') {
+          const s1 = document.createElement('script');
+          s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+          s1.onload = check; s1.onerror = err;
+          document.head.appendChild(s1);
+        } else { check(); }
+        if (!window.jspdf) {
+          const s2 = document.createElement('script');
+          s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+          s2.onload = check; s2.onerror = err;
+          document.head.appendChild(s2);
+        } else { check(); }
+      });
+      clearPdfExportBlock();
+      refreshOfflineGuards();
+    }
+    showLoading('Gerando PDF — aguarde...');
+
+    // Tema claro fixo na captura: cores corretas e melhor contraste em papel
+    if (_prevTheme !== 'light') setTheme('light', { save: false, render: true });
+    // Sem animação: garante que os gráficos estejam 100% desenhados na captura
+    if (_Chart?.defaults) _Chart.defaults.animation = false;
+
     const UC = _getUC();
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     const pdfW = pdf.internal.pageSize.getWidth();
     const pdfH = pdf.internal.pageSize.getHeight();
-    const margin = 8;
+    const margin = 10;
+    const _now = new Date().toLocaleString('pt-BR');
     const panes = [
       { id: 'pane-geral',       title: 'Visão geral' },
       { id: 'pane-indicadores', title: 'Indicadores' },
@@ -300,15 +295,14 @@ export async function exportarPDF() {
       { id: 'pane-retornos',    title: 'Retornos ≤72h', confidencial: true },
       { id: 'pane-cid',         title: 'CID / Notificáveis', confidencial: true },
     ];
-    const originalActive = document.querySelector('.nav-item.active')?.dataset?.pane;
-    // Patch: html2canvas 1.4.1 doesn't handle color(srgb ...) returned by Chrome's getComputedStyle
+
+    // Patch: html2canvas 1.4.1 não entende color(srgb ...) do getComputedStyle do Chrome
     const _patchColor = v => typeof v !== 'string' ? v :
       v.replace(/\bcolor\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\)/gi,
         (_, r, g, b, a) => {
           const ri = Math.round(r * 255), gi = Math.round(g * 255), bi = Math.round(b * 255);
           return a != null ? `rgba(${ri},${gi},${bi},${parseFloat(a)})` : `rgb(${ri},${gi},${bi})`;
         });
-    const _origGCS = window.getComputedStyle;
     window.getComputedStyle = (...args) => {
       const s = _origGCS.apply(window, args);
       return new Proxy(s, {
@@ -320,119 +314,151 @@ export async function exportarPDF() {
         },
       });
     };
-    let pagina = 0;
-    const totalPages = panes.length + 1;
+    _gcsPatched = true;
 
-    function _renderPdfCover(pdf, margin, pdfW, pdfH) {
-      const cover = buildExecutiveCoverData();
-      pdf.setFillColor(245, 246, 250);
-      pdf.rect(0, 0, pdfW, pdfH, 'F');
-      pdf.setFontSize(22);
-      pdf.setTextColor(15, 23, 42);
-      pdf.text('V.I.D.A.', margin, margin + 14);
-      pdf.setFontSize(11);
-      pdf.setTextColor(80, 90, 110);
-      pdf.text(cover.unitName, margin, margin + 22);
-      pdf.setFontSize(10);
-      pdf.text(`Período: ${cover.periodStart} – ${cover.periodEnd}`, margin, margin + 30);
-      if (cover.score) {
-        pdf.setFontSize(9);
-        pdf.text(`Score executivo: ${cover.score}`, pdfW - margin, margin + 14, { align: 'right' });
+    const _footer = () => {
+      pdf.setFontSize(6.5); pdf.setTextColor(150, 150, 160);
+      pdf.text(`V.I.D.A. · Uso interno · Não substitui notificação SINAN · Gerado em ${_now}`, pdfW / 2, pdfH - 4, { align: 'center' });
+    };
+
+    const _header = (title, confidencial) => {
+      pdf.setFontSize(8); pdf.setTextColor(120, 120, 130);
+      pdf.text(`V.I.D.A. — ${UC.nome || 'Unidade de Saúde'}`, margin, margin + 1);
+      pdf.setFontSize(13); pdf.setTextColor(20, 20, 30);
+      pdf.text(title, margin, margin + 8);
+      if (confidencial) {
+        pdf.setFillColor(255, 232, 232);
+        pdf.rect(margin, margin + 10.5, pdfW - margin * 2, 7, 'F');
+        pdf.setFontSize(6.5); pdf.setTextColor(160, 30, 30);
+        pdf.text('⚠ CONFIDENCIAL — Contém dados nominais de pacientes. Uso interno. Não divulgar fora da equipe de saúde autorizada.', margin + 2, margin + 15);
+        pdf.setTextColor(20, 20, 30);
       }
-      const gridY = margin + 40;
-      const cellW = (pdfW - margin * 2 - 8) / 2;
-      const cellH = 28;
-      cover.kpis.forEach((k, i) => {
-        const col = i % 2;
-        const row = Math.floor(i / 2);
-        const x = margin + col * (cellW + 8);
-        const y = gridY + row * (cellH + 8);
-        pdf.setDrawColor(220, 224, 232);
-        pdf.setFillColor(255, 255, 255);
-        pdf.roundedRect(x, y, cellW, cellH, 3, 3, 'FD');
-        pdf.setFontSize(8);
-        pdf.setTextColor(100, 110, 130);
-        pdf.text(k.label, x + 6, y + 10);
-        pdf.setFontSize(16);
-        pdf.setTextColor(20, 30, 50);
-        pdf.text(String(k.value), x + 6, y + 20);
-        pdf.setFontSize(7);
-        pdf.setTextColor(130, 140, 155);
-        pdf.text(k.sub || '', x + 6, y + 26);
-      });
-      const alertY = gridY + cellH * 2 + 24;
-      pdf.setFontSize(10);
-      pdf.setTextColor(20, 30, 50);
-      pdf.text('Prioridades do período', margin, alertY);
-      let ay = alertY + 8;
-      cover.alerts.forEach(([t, title, msg]) => {
-        const color = t === 'err' ? [200, 73, 62] : t === 'warn' ? [210, 145, 42] : [47, 158, 126];
-        pdf.setFillColor(...color);
-        pdf.circle(margin + 2, ay + 1.5, 1.2, 'F');
-        pdf.setFontSize(8.5);
-        pdf.setTextColor(30, 35, 50);
-        pdf.text(title, margin + 7, ay + 2.5);
-        pdf.setFontSize(7.5);
-        pdf.setTextColor(90, 100, 120);
-        const lines = pdf.splitTextToSize(msg, pdfW - margin * 2 - 8);
-        pdf.text(lines, margin + 7, ay + 7);
-        ay += 7 + lines.length * 3.5 + 4;
-      });
-      pdf.setFontSize(6.5);
-      pdf.setTextColor(150, 150, 160);
-      pdf.text(`V.I.D.A. · Uso interno · Não substitui notificação SINAN · Gerado em ${new Date().toLocaleString('pt-BR')}`, pdfW / 2, pdfH - 6, { align: 'center' });
+      _footer();
+    };
+
+    // ── Página 1: capa executiva ──────────────────────────────────────────
+    const cover = buildExecutiveCoverData();
+    pdf.setFillColor(245, 246, 250);
+    pdf.rect(0, 0, pdfW, pdfH, 'F');
+    pdf.setFontSize(22); pdf.setTextColor(15, 23, 42);
+    pdf.text('V.I.D.A.', margin, margin + 14);
+    pdf.setFontSize(11); pdf.setTextColor(80, 90, 110);
+    pdf.text(cover.unitName, margin, margin + 22);
+    pdf.setFontSize(10);
+    pdf.text(`Período: ${cover.periodStart} – ${cover.periodEnd}`, margin, margin + 30);
+    if (cover.score) {
+      pdf.setFontSize(9);
+      pdf.text(`Score executivo: ${cover.score}`, pdfW - margin, margin + 14, { align: 'right' });
+    }
+    const gridY = margin + 40;
+    const cellW = (pdfW - margin * 2 - 8) / 2;
+    const cellH = 28;
+    cover.kpis.forEach((k, i) => {
+      const col = i % 2, row = Math.floor(i / 2);
+      const x = margin + col * (cellW + 8), y = gridY + row * (cellH + 8);
+      pdf.setDrawColor(220, 224, 232); pdf.setFillColor(255, 255, 255);
+      pdf.roundedRect(x, y, cellW, cellH, 3, 3, 'FD');
+      pdf.setFontSize(8); pdf.setTextColor(100, 110, 130);
+      pdf.text(k.label, x + 6, y + 10);
+      pdf.setFontSize(16); pdf.setTextColor(20, 30, 50);
+      pdf.text(String(k.value), x + 6, y + 20);
+      pdf.setFontSize(7); pdf.setTextColor(130, 140, 155);
+      pdf.text(k.sub || '', x + 6, y + 26);
+    });
+    const alertY = gridY + cellH * 2 + 24;
+    pdf.setFontSize(10); pdf.setTextColor(20, 30, 50);
+    pdf.text('Prioridades do período', margin, alertY);
+    let ay = alertY + 8;
+    cover.alerts.forEach(([t, title, msg]) => {
+      const color = t === 'err' ? [200, 73, 62] : t === 'warn' ? [210, 145, 42] : [47, 158, 126];
+      pdf.setFillColor(...color);
+      pdf.circle(margin + 2, ay + 1.5, 1.2, 'F');
+      pdf.setFontSize(8.5); pdf.setTextColor(30, 35, 50);
+      pdf.text(title, margin + 7, ay + 2.5);
+      pdf.setFontSize(7.5); pdf.setTextColor(90, 100, 120);
+      const lines = pdf.splitTextToSize(msg, pdfW - margin * 2 - 8);
+      pdf.text(lines, margin + 7, ay + 7);
+      ay += 7 + lines.length * 3.5 + 4;
+    });
+    _footer();
+
+    // ── Página 2+: relatório gerencial (texto nativo, nítido) ─────────────
+    setProgress(8, 'Montando relatório gerencial');
+    {
+      const usableW = pdfW - margin * 2;
+      const top = margin + 14, bottom = pdfH - 10, lineH = 5;
+      pdf.setFont('helvetica', 'normal');
+      let yy;
+      const startPage = () => { pdf.addPage(); _header('Relatório gerencial', false); yy = top; };
+      startPage();
+      // Fontes padrão do jsPDF não têm alguns glifos Unicode — normaliza para ASCII
+      const _asciiSafe = t => t
+        .replace(/[\u2013\u2014]/g, '-').replace(/[\u2018\u2019]/g, "'")
+        .replace(/[\u201C\u201D]/g, '"').replace(/\u2026/g, '...')
+        .replace(/\u2264/g, '<=').replace(/\u2265/g, '>=')
+        .replace(/\u2192/g, '->').replace(/\u2022/g, '-');
+      const paras = _asciiSafe(buildReportText()).split('\n');
+      for (const para of paras) {
+        const lines = para.length ? pdf.splitTextToSize(para, usableW) : [''];
+        for (const ln of lines) {
+          if (yy > bottom) startPage();
+          pdf.setFontSize(10); pdf.setTextColor(40, 45, 60);
+          pdf.text(ln, margin, yy);
+          yy += lineH;
+        }
+      }
     }
 
-    try {
-      _renderPdfCover(pdf, margin, pdfW, pdfH);
-      pagina++;
-
-      for (const p of panes) {
-        const el = document.getElementById(p.id);
-        if (!el) continue;
-        document.querySelectorAll('.pane').forEach(x => x.classList.remove('active'));
-        document.querySelectorAll('.nav-item[data-pane]').forEach(x => x.classList.remove('active'));
-        el.classList.add('active');
-        document.querySelector(`.nav-item[data-pane="${p.id.replace('pane-', '')}"]`)?.classList.add('active');
-        renderActivePane();
-        await new Promise(r => setTimeout(r, 400));
-        setProgress((pagina / totalPages) * 90, `Capturando: ${p.title}`, `${pagina + 1}/${totalPages}`);
-        const canvas = await html2canvas(el, { // eslint-disable-line no-undef
-          backgroundColor: getComputedStyle(document.body).backgroundColor,
-          scale: 2.5, logging: false, useCORS: true, imageTimeout: 0,
-        });
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const ratio = canvas.width / canvas.height;
-        const _confH = p.confidencial ? 7 : 0;
-        let imgW = pdfW - margin * 2;
-        let imgH = imgW / ratio;
-        if (imgH > pdfH - margin * 2 - 14 - _confH) { imgH = pdfH - margin * 2 - 14 - _confH; imgW = imgH * ratio; }
-        if (pagina > 0) pdf.addPage();
-        pdf.setFontSize(8); pdf.setTextColor(120, 120, 130);
-        pdf.text(`V.I.D.A. — ${UC.nome || 'Unidade de Saúde'}`, margin, margin + 3);
-        pdf.text(`Página ${pagina + 1}/${totalPages}`, pdfW - margin, margin + 3, { align: 'right' });
-        pdf.setFontSize(13); pdf.setTextColor(20, 20, 30);
-        pdf.text(p.title, margin, margin + 10);
-        if (p.confidencial) {
-          pdf.setFillColor(255, 232, 232);
-          pdf.rect(margin, margin + 12, pdfW - margin * 2, _confH, 'F');
-          pdf.setFontSize(6.5); pdf.setTextColor(160, 30, 30);
-          pdf.text('⚠ CONFIDENCIAL — Contém dados nominais de pacientes. Uso interno. Não divulgar ou reproduzir fora da equipe de saúde autorizada.', margin + 2, margin + 16.5);
-          pdf.setTextColor(20, 20, 30);
-        }
-        pdf.addImage(imgData, 'JPEG', margin, margin + 13 + _confH, imgW, imgH);
-        pdf.setFontSize(6.5); pdf.setTextColor(150, 150, 160);
-        pdf.text(`V.I.D.A. · Uso interno · Não substitui notificação SINAN · Gerado em ${new Date().toLocaleString('pt-BR')}`, pdfW / 2, pdfH - 3, { align: 'center' });
-        pagina++;
+    // ── Páginas seguintes: capturas dos painéis (largura ajustada + paginação) ──
+    markDirtyAll();
+    const _addPanePaged = (canvas, title, confidencial) => {
+      const imgW = pdfW - margin * 2;
+      const pxPerMm = canvas.width / imgW;
+      const confH = confidencial ? 9 : 0;
+      const contentTop = margin + 12 + confH;
+      const availH = (pdfH - 8) - contentTop;      // altura útil por página (mm)
+      const sliceHpx = Math.max(1, Math.floor(availH * pxPerMm));
+      let y = 0, first = true;
+      while (y < canvas.height) {
+        const sh = Math.min(sliceHpx, canvas.height - y);
+        const tmp = document.createElement('canvas');
+        tmp.width = canvas.width; tmp.height = sh;
+        tmp.getContext('2d').drawImage(canvas, 0, y, canvas.width, sh, 0, 0, canvas.width, sh);
+        pdf.addPage();
+        _header(title + (first ? '' : ' (continuação)'), confidencial);
+        pdf.addImage(tmp.toDataURL('image/png'), 'PNG', margin, contentTop, imgW, sh / pxPerMm);
+        y += sh; first = false;
       }
-    } finally { window.getComputedStyle = _origGCS; }
-    if (originalActive) {
+    };
+
+    let idx = 0;
+    for (const p of panes) {
+      const el = document.getElementById(p.id);
+      if (!el) { idx++; continue; }
       document.querySelectorAll('.pane').forEach(x => x.classList.remove('active'));
       document.querySelectorAll('.nav-item[data-pane]').forEach(x => x.classList.remove('active'));
-      document.getElementById('pane-' + originalActive)?.classList.add('active');
-      document.querySelector(`.nav-item[data-pane="${originalActive}"]`)?.classList.add('active');
+      el.classList.add('active');
+      document.querySelector(`.nav-item[data-pane="${p.id.replace('pane-', '')}"]`)?.classList.add('active');
       renderActivePane();
+      // Aguarda o próximo frame + folga para os gráficos (sem animação) desenharem
+      await new Promise(r => requestAnimationFrame(() => setTimeout(r, 350)));
+      setProgress(10 + (idx / panes.length) * 85, `Capturando: ${p.title}`);
+      const canvas = await html2canvas(el, { // eslint-disable-line no-undef
+        backgroundColor: '#ffffff',
+        scale: 2, logging: false, useCORS: true, imageTimeout: 0,
+      });
+      _addPanePaged(canvas, p.title, p.confidencial);
+      idx++;
     }
+
+    // Numeração de páginas ao final (contagem dinâmica)
+    const pageCount = pdf.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      pdf.setPage(i);
+      pdf.setFontSize(7); pdf.setTextColor(150, 150, 160);
+      pdf.text(`Página ${i}/${pageCount}`, pdfW - margin, margin + 1, { align: 'right' });
+    }
+
     const { s, e } = dateRange();
     const periodo = (s ? s.toLocaleDateString('pt-BR').replace(/\//g, '-') : 'inicio') + '_a_' + (e ? e.toLocaleDateString('pt-BR').replace(/\//g, '-') : 'fim');
     pdf.save(`VIDA_relatorio_${periodo}.pdf`);
@@ -445,6 +471,18 @@ export async function exportarPDF() {
     showToast('Erro ao gerar PDF: ' + err.message, 'err');
     console.error(err);
   } finally {
+    if (_gcsPatched) window.getComputedStyle = _origGCS;
+    if (_Chart?.defaults) _Chart.defaults.animation = _prevAnim;
+    // Restaura tema e painel ativo originais
+    if (_prevTheme !== 'light') setTheme(_prevTheme, { save: false, render: true });
+    if (_origActive) {
+      document.querySelectorAll('.pane').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.nav-item[data-pane]').forEach(x => x.classList.remove('active'));
+      document.getElementById('pane-' + _origActive)?.classList.add('active');
+      document.querySelector(`.nav-item[data-pane="${_origActive}"]`)?.classList.add('active');
+      markDirtyAll();
+      renderActivePane();
+    }
     setExportInProgress(false);
     if (_pdfBtn) { _pdfBtn.disabled = false; _pdfBtn.style.opacity = ''; _pdfBtn.style.cursor = ''; _pdfBtn.innerHTML = _btnSvg; }
     refreshOfflineGuards();

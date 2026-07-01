@@ -16,8 +16,7 @@ import { renderExames } from './exames.js';
 import { renderAuditoria } from './auditoria.js';
 import { renderPacientes, buscaProntuario, showTopRetornos } from './pacientes.js';
 import { renderEscala } from './escala.js';
-import { renderAnotacoes, deletarAnotacao, salvarAnotacao, limparAnotForm } from './anotacoes.js';
-import { renderRelatorio, renderPrintCover } from './relatorio.js';
+import { renderPrintCover } from './relatorio.js';
 import { renderNotificaveis, DOENCAS_NOTIFICAVEIS } from './notificaveis.js';
 import { state } from '../state.js';
 import { showToast } from '../ui/toast.js';
@@ -40,8 +39,6 @@ export { renderExames };
 export { renderAuditoria };
 export { renderPacientes, buscaProntuario, showTopRetornos };
 export { renderEscala };
-export { renderAnotacoes, deletarAnotacao, salvarAnotacao, limparAnotForm };
-export { renderRelatorio };
 export { renderNotificaveis, DOENCAS_NOTIFICAVEIS };
 
 function meta(id) { return Number(document.getElementById(id)?.value) || 0; }
@@ -94,8 +91,8 @@ export function markDirty(panes) {
     const ALL_PANES = [
       'geral', 'indicadores', 'fluxo', 'gargalos', 'medicos',
       'procedimentos', 'enfermagem', 'exames', 'retornos', 'evolucao',
-      'relatorio', 'triagem', 'cid', 'auditoria', 'qualidade',
-      'pacientes', 'escala', 'anotacoes',
+      'triagem', 'cid', 'auditoria', 'qualidade',
+      'pacientes', 'escala',
     ];
     ALL_PANES.forEach(p => _dirtyPanes.add(p));
   }
@@ -137,14 +134,12 @@ export function renderActivePane() {
     case 'exames':        renderExames(); break;
     case 'retornos':      renderRetornos(); break;
     case 'evolucao':      renderEvolucao(); renderAnoAano(); break;
-    case 'relatorio':     renderRelatorio(); break;
     case 'triagem':       renderTriagem(); break;
     case 'cid':           renderCid(); break;
     case 'auditoria':     renderAuditoria(); break;
     case 'qualidade':     renderQuality(); renderCruzamento(); break;
     case 'pacientes':     renderPacientes(); break;
     case 'escala':        renderEscala(); break;
-    case 'anotacoes':     renderAnotacoes(); break;
   }
   requestAnimationFrame(() => applyLayout());
 }

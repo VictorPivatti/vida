@@ -53,9 +53,9 @@ try{
 // renderHeatmap exige argumento; renderExecutive exige 5 — chamados com parâmetros corretos
 const fns=[['renderGeral'],['renderIndicadores'],['renderFluxo'],['renderGargalos'],
   ['renderMedicos'],['renderProcedimentos'],['renderEnfermagem'],['renderExames'],
-  ['renderRetornos'],['renderEvolucao'],['renderAnoAano'],['renderRelatorio'],
+  ['renderRetornos'],['renderEvolucao'],['renderAnoAano'],
   ['renderTriagem'],['renderCid'],['renderAuditoria'],['renderQuality'],['renderCruzamento'],
-  ['renderPacientes'],['renderEscala'],['renderAnotacoes'],
+  ['renderPacientes'],['renderEscala'],
   ['renderHeatmap',()=>renderHeatmap(state.filt)],
   ['renderExecutive',()=>renderExecutive(100,10,60,5,40)]];
 for(const [name,call] of fns){

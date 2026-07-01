@@ -49,7 +49,7 @@ function topAlerts(d) {
   return alerts;
 }
 
-function buildReportText() {
+export function buildReportText() {
   const { s, e } = dateRange(), d = state.filt, m = monthlyStats(d), { ret } = returns72(), alerts = topAlerts(d);
   const days = new Set(d.map(r => r.dateKey)).size, tTri = avg(d, r => r.tEspTri), tMed = avg(d, r => r.tEspMed), tTot = avg(d, r => r.tTotal);
   const buckets = hourBuckets(d), topVol = [...buckets].sort((a, b) => b.n - a.n)[0];
@@ -69,11 +69,6 @@ function buildReportText() {
     : '\nEvasão: não rastreada neste relatório — o arquivo exportado contém apenas atendimentos concluídos. Para obter esse dado, exportar relatório de saídas/evasões separado do sistema.';
   const uniteName = (typeof UC !== 'undefined' && UC?.nome) || 'Unidade de Saúde';
   return `RELATÓRIO GERENCIAL - ${uniteName}\nPeríodo: ${s ? s.toLocaleDateString('pt-BR') : '-'} a ${e ? e.toLocaleDateString('pt-BR') : '-'}\nFiltros: ${turnoLabel} | ${medLabel} | ${riscoLabel}\n\nNo período analisado, a unidade realizou ${fmt(d.length)} atendimentos em ${fmt(days)} dias, com média diária de ${days ? fmt(Math.round(d.length / days)) : '-'} atendimentos. O tempo médio de espera para triagem foi ${tTri == null ? '-' : Math.round(tTri) + ' min'}, a espera média para atendimento médico foi ${tMed == null ? '-' : Math.round(tMed) + ' min'} e o tempo médio recepção-alta foi ${tTot == null ? '-' : Math.round(tTot) + ' min'}.${evasaoLinha}\n\nRetornos: foram identificados ${fmt(ret.length)} retornos em até 72h, correspondendo a ${ret.length && d.length ? pct(ret.length, d.length) : '0%'} dos atendimentos. A meta configurada é inferior a ${meta('metaRet')}%. \n\nPrincipais gargalos:\n- Maior espera médica: ${medLine}.\n- Maior volume horario: ${volLine}.\n\nPontos de atenção:\n${alerts.slice(0, 5).map((a, i) => `${i + 1}. ${a[1]} - ${a[2]}`).join('\n')}\n\nLeitura gerencial sugerida:\n${(tMed != null && tMed > meta('metaMed')) ? 'A espera médica está acima da meta e deve ser priorizada na revisão de fluxo e escala.' : 'A espera médica está dentro ou próxima da meta configurada.'} ${(ret.length / d.length * 100) > meta('metaRet') ? 'A taxa de retorno em até 72h esta acima da meta e merece revisao clinico-assistencial dos casos recorrentes.' : 'A taxa de retorno em até 72h nao ultrapassou a meta configurada.'} ${(m.length >= 2) ? 'Comparar mensalmente esses indicadores ajuda a identificar piora precoce e justificar intervenções.' : ''}`;
-}
-
-export function renderRelatorio() {
-  const el = $('reportText');
-  if (el) el.value = buildReportText();
 }
 
 export function renderPrintCover() {

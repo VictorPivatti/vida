@@ -350,23 +350,11 @@ export function bindEvents() {
     });
   }
 
-  // ── Anotações ─────────────────────────────────────────────────────────────
-  const btnSalvarAnot = $('btnSalvarAnot');
-  if (btnSalvarAnot) btnSalvarAnot.onclick = () => window.salvarAnotacao?.();
-  const btnLimparAnot = $('btnLimparAnot');
-  if (btnLimparAnot) btnLimparAnot.onclick = () => window.limparAnotForm?.();
-
   // ── Search inputs ─────────────────────────────────────────────────────────
   const searchMed = $('searchMed');
   if (searchMed) searchMed.addEventListener('input', () => window.renderMedTable?.(window.medRows?.()));
   const searchCid = $('searchCid');
   if (searchCid) searchCid.addEventListener('input', () => window.renderCidTable?.());
-
-  // ── Report buttons ────────────────────────────────────────────────────────
-  const copyBtn = $('copyReportBtn');
-  if (copyBtn) copyBtn.addEventListener('click', () => window.copyReport?.());
-  const dlBtn = $('downloadReportBtn');
-  if (dlBtn) dlBtn.addEventListener('click', () => window.downloadReport?.());
 
   // ── Densidade dos cards (topbar) ──────────────────────────────────────────
   // removido — controles de densidade não usados

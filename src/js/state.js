@@ -5,7 +5,6 @@ export const UC_KEY = 'upa_dash_unit_config';
 export const TTL_KEY = 'vida_db_ts';
 export const LAYOUT_KEY = 'vida_layout_v1';
 export const PREF_KEY = 'upa_dash_prefs';
-export const ANOT_KEY = 'upa_dash_anotacoes';
 
 // Application state — single mutable object shared across modules
 // triSource: "none" | "hist" | "file" | "db"  (db = restaurado do IndexedDB)

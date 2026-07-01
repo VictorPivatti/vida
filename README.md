@@ -164,7 +164,6 @@ Habilita o painel **Exames Lab.** com ranking por médico solicitante, volume e 
 |--------|-------------|-------------------|
 | **Evolução** | Tendência mensal, projeção e comparativo ano a ano | Histórico |
 | **CID / Diagnósticos** | Diagnósticos sentinela, ranking de CIDs, capítulos por mês | CID |
-| **Relatório** | Texto gerencial exportável | Histórico |
 
 ### Pacientes & Escala
 
@@ -172,7 +171,6 @@ Habilita o painel **Exames Lab.** com ranking por médico solicitante, volume e 
 |--------|-------------|-------------------|
 | **Pacientes** | Busca por prontuário, histórico individual | Histórico |
 | **Escala / Dimensionamento** | Déficit/superávit por hora, base COFEN 543/2017 | Histórico |
-| **Anotações** | Registro de observações por período | — |
 
 ### Exames
 
@@ -224,9 +222,8 @@ Use o menu lateral esquerdo para alternar entre os painéis. Cada painel é carr
 
 ### Passo 7 — Exportar resultados
 
-- **PDF:** botão `↓ PDF` no canto superior direito — exporta o painel atual com cabeçalho da unidade
+- **PDF:** botão `↓ PDF` no canto superior direito — gera o relatório completo: capa executiva, texto gerencial e os painéis-chave com cabeçalho da unidade
 - **XLSX:** botão `XLSX` — exporta os dados filtrados em planilha
-- **Relatório:** painel *Relatório* → texto gerencial pronto para copiar ou exportar
 
 ### Passo 8 — Configurar metas e unidade
 
