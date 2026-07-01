@@ -1038,10 +1038,6 @@
     .segmented .pill:hover{background:var(--sur3);color:var(--txt);box-shadow:none}
     .segmented .pill.active-pill{background:var(--ac);color:#fff;box-shadow:none}
 
-    /* ── Risco: amostras de cor do protocolo ── */
-    .risk-swatches{display:inline-flex;gap:2px;flex:none}
-    .risk-swatches i{width:7px;height:12px;border-radius:2px;display:block}
-
     /* ─────────────────────────────────────────────────────────────
        SIDEBAR
     ───────────────────────────────────────────────────────────── */

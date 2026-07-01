@@ -320,7 +320,16 @@ export function bindEvents() {
     fmEl.addEventListener('input', () => { clearTimeout(_fmT); _fmT = setTimeout(() => window.applyFilters?.(), 250); });
   }
   const frEl = $('filtroRisco');
-  if (frEl) frEl.addEventListener('change', () => window.applyFilters?.());
+  if (frEl) {
+    const RISCO_COR = { VERMELHO: '#c8493e', LARANJA: '#e07a35', AMARELO: '#e8a93b', VERDE: '#2f9e7e', AZUL: '#3a7ca5', BRANCO: '#94a3b8' };
+    const paintRisco = () => {
+      const cor = RISCO_COR[frEl.value];
+      frEl.style.color = cor || '';
+      frEl.style.fontWeight = cor ? '700' : '';
+    };
+    frEl.addEventListener('change', () => { paintRisco(); window.applyFilters?.(); });
+    paintRisco();
+  }
 
   ['metaTri', 'metaMed', 'metaTotal', 'metaRet', 'metaEvasao', 'metaVol', 'capMed', 'capTri',
     'metaVermelho', 'metaLaranja', 'metaAmarelo', 'metaVerde', 'metaAzul', 'metaBranco'].forEach(id => {
