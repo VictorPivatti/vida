@@ -224,7 +224,7 @@ export function shortcut(k) {
   else if (k === '30d') s.setDate(s.getDate() - 29);
   else if (k === '3m') s.setMonth(s.getMonth() - 2, 1);
   else if (k === 'year') s = new Date(max.getFullYear(), 0, 1);
-  else s = new Date(state.raw[0].dh);
+  else if (k !== '1d') s = new Date(state.raw[0].dh);
   $('dateStart').value = ymd(s);
   $('dateEnd').value = ymd(e);
   applyFilters();
