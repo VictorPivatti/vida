@@ -129,6 +129,8 @@ function _applyUnitConfig(UC) {
   }
   const sbsub = $('sidebarUnitSub');
   if (sbsub) sbsub.textContent = UC.nome || 'UPA Tiago Cardoso Santos';
+  const menuName = $('unitMenuName');
+  if (menuName) menuName.textContent = UC.nome || 'UPA Tiago Cardoso Santos';
   const unitTag = $('upUnitNameTag');
   if (unitTag) {
     const parts = [];
@@ -260,6 +262,33 @@ function toggleUploadMenu() {
     }, 0);
     updateUploadStatuses();
   }
+}
+
+// ── Unit / settings menu ────────────────────────────────────────────────────
+function toggleUnitMenu() {
+  const dd = document.getElementById('unitDropdown');
+  if (!dd) return;
+  const isOpen = dd.classList.toggle('open');
+  const btn = document.getElementById('unitMenuBtn');
+  if (btn) btn.setAttribute('aria-expanded', isOpen);
+  if (isOpen) {
+    setTimeout(() => {
+      document.addEventListener('click', function closeMenu(e) {
+        if (!dd.contains(e.target)) {
+          dd.classList.remove('open');
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+        document.removeEventListener('click', closeMenu);
+      });
+    }, 0);
+  }
+}
+function closeUnitMenu() {
+  const dd = document.getElementById('unitDropdown');
+  if (!dd) return;
+  dd.classList.remove('open');
+  const btn = document.getElementById('unitMenuBtn');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
 }
 
 // ── TTL menu ──────────────────────────────────────────────────────────────────
@@ -409,6 +438,10 @@ export function initGlobals() {
 
     // ── Upload menu
     toggleUploadMenu,
+
+    // ── Unit / settings menu
+    toggleUnitMenu,
+    closeUnitMenu,
 
     // ── TTL
     toggleTtlMenu,

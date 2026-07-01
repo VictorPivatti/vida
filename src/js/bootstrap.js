@@ -237,6 +237,12 @@ export function bindEvents() {
   if (presentationBtn) presentationBtn.onclick = () => window.togglePresentationMode?.();
   const newBtn   = $('newBtn');   if (newBtn)   newBtn.onclick   = () => window.resetApp?.();
 
+  // ── Unit menu: fecha ao clicar em qualquer item ───────────────────────────
+  const unitMenuList = $('unitMenuList');
+  if (unitMenuList) unitMenuList.addEventListener('click', e => {
+    if (e.target.closest('button')) window.closeUnitMenu?.();
+  });
+
   document.querySelectorAll('[data-theme-choice]').forEach(btn => {
     btn.addEventListener('click', () => window.setTheme?.(btn.dataset.themeChoice));
   });

@@ -258,6 +258,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
         <div class="topbar-section">
+          <span class="topbar-section-mark" aria-hidden="true"><img src="assets/vida-mark.svg" width="20" height="20" alt=""></span>
           <h1 id="topbarSectionTitle" class="topbar-section-title">Visão geral</h1>
         </div>
         <!-- id mantido por compatibilidade com JS -->
@@ -301,26 +302,33 @@
           </div>
           <input id="examesFile" class="hidden" type="file" accept=".pdf">
           <input id="procFile" class="hidden" type="file" accept=".xls,.xlsx,.csv">
-          <div class="topbar-cluster topbar-cluster-tools" role="group" aria-label="Ferramentas">
-          <button type="button" class="btn btn-icon" onclick="openUnitConfig()" title="Configurar unidade" aria-label="Configurar unidade">
-<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v8h20v-8a2 2 0 0 0-2-2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></button>
-          <button type="button" class="btn btn-icon" id="metasBtn" title="Configurar metas" aria-label="Configurar metas">
-<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
-          <button type="button" class="btn btn-icon" id="layoutEditBtn" title="Editar layout dos cards" aria-label="Editar layout" onclick="toggleLayoutEdit()">
-<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
-          <button type="button" class="btn btn-icon" id="themeBtn" title="Alternar tema" aria-label="Alternar tema">
-<svg aria-hidden="true" id="themeBtnIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
-          <button type="button" class="btn btn-icon" id="presentationBtn" title="Modo apresentação — oculta menus e amplia KPIs (Shift+P)" aria-label="Modo apresentação" aria-pressed="false">
-<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
-          </div>
           <div class="topbar-cluster topbar-cluster-export" role="group" aria-label="Exportar">
-          <button type="button" class="btn export requires-cdn requires-cdn-xlsx" id="exportBtn" aria-label="Exportar XLSX">
+          <button type="button" class="btn requires-cdn requires-cdn-xlsx" id="exportBtn" aria-label="Exportar XLSX">
 <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>XLSX</button>
           <button type="button" class="btn primary requires-cdn requires-cdn-pdf" id="printBtn" aria-label="Exportar PDF">
 <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF</button>
           </div>
           <button type="button" class="btn btn-icon" id="newBtn" title="Trocar base de dados (limpa o banco e volta à tela de upload)" aria-label="Trocar base de dados">
 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></button>
+          <div class="topbar-unit" id="unitDropdown">
+            <button type="button" class="unit-btn" id="unitMenuBtn" onclick="toggleUnitMenu()" aria-haspopup="true" aria-expanded="false" aria-controls="unitMenuList" title="Unidade e configurações">
+<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v8h20v-8a2 2 0 0 0-2-2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+              <span class="unit-name" id="unitMenuName">UPA Tiago Cardoso Santos</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="unitMenuChev" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="unit-menu" id="unitMenuList" role="menu" aria-label="Unidade e configurações">
+              <button type="button" class="unit-menu-item" role="menuitem" onclick="openUnitConfig()">
+<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v8h20v-8a2 2 0 0 0-2-2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>Configurar unidade</button>
+              <button type="button" class="unit-menu-item" id="metasBtn" role="menuitem">
+<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Configurar metas</button>
+              <button type="button" class="unit-menu-item" id="layoutEditBtn" role="menuitem" onclick="toggleLayoutEdit()">
+<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Editar layout</button>
+              <button type="button" class="unit-menu-item" id="themeBtn" role="menuitem">
+<svg aria-hidden="true" id="themeBtnIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>Alternar tema</button>
+              <button type="button" class="unit-menu-item" id="presentationBtn" role="menuitem" title="Modo apresentação — oculta menus e amplia KPIs (Shift+P)" aria-pressed="false">
+<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>Modo apresentação</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -331,12 +339,14 @@
         <input class="field" id="dateStart" type="date">
         <span style="font-size:11px;color:var(--mut);flex:none">→</span>
         <input class="field" id="dateEnd" type="date">
-        <button type="button" class="pill" data-shortcut="1d">1d</button>
-        <button type="button" class="pill" data-shortcut="7d">7d</button>
-        <button type="button" class="pill" data-shortcut="30d">30d</button>
-        <button type="button" class="pill" data-shortcut="3m">3m</button>
-        <button type="button" class="pill" data-shortcut="year">Ano</button>
-        <button type="button" class="pill" data-shortcut="all">Tudo</button>
+        <div class="segmented" role="group" aria-label="Atalhos de período">
+          <button type="button" class="pill" data-shortcut="1d">1d</button>
+          <button type="button" class="pill" data-shortcut="7d">7d</button>
+          <button type="button" class="pill" data-shortcut="30d">30d</button>
+          <button type="button" class="pill" data-shortcut="3m">3m</button>
+          <button type="button" class="pill" data-shortcut="year">Ano</button>
+          <button type="button" class="pill" data-shortcut="all">Tudo</button>
+        </div>
         <div class="topbar-sep"></div>
         <span class="flabel">Turno</span>
         <select class="field" id="turno">
@@ -350,6 +360,7 @@
         <datalist id="filtroMedicoList"></datalist>
           <span id="filtroMedicoCount" style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--ac);background:var(--ac-glow);border:1px solid var(--ac);border-radius:99px;padding:1px 7px;display:none;white-space:nowrap"></span>
         <span class="flabel">Risco</span>
+        <span class="risk-swatches" aria-hidden="true"><i style="background:#c8493e"></i><i style="background:#e8722e"></i><i style="background:#e8a93b"></i><i style="background:#2f9e7e"></i><i style="background:#4aa3c9"></i></span>
         <select class="field" id="filtroRisco" style="max-width:88px">
           <option value="all">Todos</option>
           <option value="VERMELHO">● Vermelho</option>
