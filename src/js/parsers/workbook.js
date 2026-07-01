@@ -87,7 +87,11 @@ export const _MACROMAN_REV = new Map([
  */
 export function fixMojibakeMac(str) {
   if (!str || typeof str !== 'string') return str;
-  if (!str.includes('√')) return str;
+  // Detect √ (U+221A = MacRoman byte 0xC3) via numeric codepoint to avoid
+  // double-escaping when the worker bundle is JSON.stringify'd by the build script.
+  let hasSqrt = false;
+  for (let _k = 0; _k < str.length; _k++) { if (str.charCodeAt(_k) === 0x221A) { hasSqrt = true; break; } }
+  if (!hasSqrt) return str;
   try {
     const bytes = [];
     for (const ch of str) {
