@@ -207,6 +207,27 @@ try {
   __ok('parseHist — triagem_atendimento (250 min) lido corretamente com teto=720 (fix teto=200)');
 } catch(e) { __fail('parseHist tEspMed campo direto teto=720', e.message); }
 
+// ─── Caso 11: anoMes calendário vs dateKey plantão ───────────────────────
+try {
+  var csv11 = ['h0;h1;h2;cor;h4;pront;paciente;idade;tipo;dh_rec;dh_acol;dh_atend;h12;h13;h14;prof;tEspTri;tDurTri;tEspMed;tConsulta;tTotal;h21;h22;h23;h24;h25;h26;h27;h28',
+    ';;;;AMARELO;;1001;30;NORMAL;01/06/2026 02:30;01/06/2026 02:35;01/06/2026 03:10;;;;;DR TESTE;00:05:00;00:05:00;00:35:00;00:15:00;01:00:00;;;;;;;'].join('\\n');
+  var r11 = parseHistLegacy(csv11);
+  if (!r11.data.length) throw new Error('nenhuma linha parseada');
+  var row11 = r11.data[0];
+  if (row11.dateKey !== '2026-05-31') throw new Error('dateKey plantão esperado 2026-05-31, obtido ' + row11.dateKey);
+  if (row11.anoMes !== 202606) throw new Error('anoMes calendário esperado 202606, obtido ' + row11.anoMes);
+  __ok('parseHistLegacy — anoMes calendário (jun) com dateKey plantão (mai-31)');
+} catch(e) { __fail('parseHistLegacy — anoMes calendário vs dateKey plantão', e.message); }
+
+// ─── Caso 12: parseDuration — guard day-fraction ─────────────────────────
+try {
+  if (parseDuration(0.5) !== 0.5) throw new Error('0.5 deveria ser 0.5 min, não day-fraction');
+  var frac45 = 45 / 1440;
+  if (parseDuration(frac45) !== 45) throw new Error('frac 45min esperado 45, obtido ' + parseDuration(frac45));
+  if (parseDuration('0,5') !== 0.5) throw new Error('string 0,5 deveria ser 0.5');
+  __ok('parseDuration — day-fraction só para frações Excel plausíveis');
+} catch(e) { __fail('parseDuration — guard day-fraction', e.message); }
+
 </script>`;
 
 html = html.replace('</body>', TESTS_SCRIPT + '</body>');

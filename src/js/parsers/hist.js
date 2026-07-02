@@ -6,6 +6,7 @@
 
 import { CONFIG, ALIAS, FALLBACK } from '../constants.js';
 import { norm, fixMojibake, fixMojibakeMac } from './workbook.js';
+import { csvRowsFromText } from '../utils/csv-parse.js';
 function fixStr(s) { const t = fixMojibake(s); return t !== s ? t : fixMojibakeMac(s); }
 import { ymd, monthKey } from '../utils/dates.js';
 import { state } from '../state.js';
@@ -14,7 +15,7 @@ import { state } from '../state.js';
 
 /** Split a semicolon-delimited CSV string into array of rows (arrays of strings). */
 export function csvRows(csv) {
-  return String(csv ?? '').split(/\r?\n/).filter(l => l.trim()).map(l => l.split(';'));
+  return csvRowsFromText(String(csv ?? ''), ';');
 }
 
 /** Dedup key for hist rows — full timestamp + prof avoids collapsing rows when pront is blank. */
@@ -62,7 +63,13 @@ export function parseDate(v) {
  */
 export function parseDuration(v) {
   if (v == null || v === '') return null;
-  if (typeof v === 'number' && Number.isFinite(v)) return v < 1 ? Math.round(v * 24 * 60) : v;
+  if (typeof v === 'number' && Number.isFinite(v)) {
+    if (v > 0 && v < 1) {
+      const asMin = Math.round(v * 24 * 60);
+      if (asMin >= 1 && asMin < CONFIG.MAX_MINUTES) return asMin;
+    }
+    return v;
+  }
   const s = String(v).trim();
   if (!s || s === '0' || s === '00:00' || s === '00:00:00') return 0;
   let m = s.match(/^(\d+):(\d{2}):(\d{2})(?:[.,]\d+)?$/);
@@ -190,8 +197,8 @@ function indexHeaders(header, type, rows) {
  * Format: 29 semicolon-separated fields per line.
  * Returns {data, total, invalid, msg}.
  */
-export function parseHistLegacy(csv) {
-  const rows = [], lines = csvRows(csv); let invalid = 0;
+export function parseHistLegacy(csvOrRows) {
+  const rows = [], lines = Array.isArray(csvOrRows) ? csvOrRows : csvRows(csvOrRows); let invalid = 0;
   for (let i = 1; i < lines.length; i++) {
     const p = lines[i]; if (p.length < 20) continue;
     const dh = parseDate(p[9]); if (!dh) { invalid++; continue; }
@@ -209,8 +216,8 @@ export function parseHistLegacy(csv) {
       prof: fixStr(legacyText(p[15]).trim()).normalize('NFC').toUpperCase(), tipo: legacyText(p[8]).trim(),
       evadido: isEvasao(legacyText(p[8]).trim(), legacyText(p[15]).trim()),
       idade: Number.parseFloat(String(p[7]).replace(',', '.')) || null,
-      dh, dhAcol, dhAtend, dateKey: ymd(_dhAjL), ano: _dhAjL.getFullYear(), mes: _dhAjL.getMonth() + 1,
-      anoMes: monthKey(_dhAjL), hora: dh.getHours(), diaSem: _dhAjL.getDay(), turno: _turnoL,
+      dh, dhAcol, dhAtend, dateKey: ymd(_dhAjL), ano: dh.getFullYear(), mes: dh.getMonth() + 1,
+      anoMes: monthKey(dh), hora: dh.getHours(), diaSem: _dhAjL.getDay(), turno: _turnoL,
       tEspTri: safeMinutes(parseDuration(p[16]), 300),
       tDurTri: _tDurTri,
       tTotal: safeMinutes(parseDuration(p[20]), CONFIG.MAX_MINUTES),
@@ -247,8 +254,8 @@ export function parseHist(rows, addQuality = true) {
       _nomeRaw: fixStr(String(val(row, idx.paciente) || '').trim()).normalize('NFC'),
       prof: fixStr(String(val(row, idx.prof) || '').trim()).normalize('NFC').toUpperCase(), tipo: tipoRaw, evadido,
       idade: Number.parseFloat(String(val(row, idx.idade)).replace(',', '.')) || null,
-      dh, dhAcol, dhAtend, dateKey: ymd(_da), ano: _da.getFullYear(), mes: _da.getMonth() + 1,
-      anoMes: monthKey(_da), hora: dh.getHours(), diaSem: _da.getDay(), turno: _t,
+      dh, dhAcol, dhAtend, dateKey: ymd(_da), ano: dh.getFullYear(), mes: dh.getMonth() + 1,
+      anoMes: monthKey(dh), hora: dh.getHours(), diaSem: _da.getDay(), turno: _t,
       tEspTri, tDurTri: _tDurTriH,
       tTotal: safeMinutes(parseDuration(val(row, idx.tTotal)), CONFIG.MAX_MINUTES),
       tConsulta: safeMinutes(parseDuration(val(row, idx.tConsulta)), 300),
@@ -265,11 +272,17 @@ export function parseHist(rows, addQuality = true) {
  * Returns the chosen data array.
  */
 export function chooseParsed(type, modern, legacy) {
+  function fieldFilled(r, field) {
+    const v = r[field];
+    if (v == null || !String(v).trim()) return false;
+    if (field === 'cor' && String(v).trim().toUpperCase() === 'SEM CLASSIFICACAO') return false;
+    return true;
+  }
   function completeness(rows) {
     if (!rows.length) return 0;
     const sample = rows.slice(0, 200);
     const criticals = { 'Histórico': ['dh', 'prof', 'cor'], 'Triagem': ['dh', 'cor'], 'CID': ['dh', 'cid'] }[type] || ['dh'];
-    const filled = sample.reduce((s, r) => s + criticals.filter(f => r[f] != null && String(r[f]).trim()).length, 0);
+    const filled = sample.reduce((s, r) => s + criticals.filter(f => fieldFilled(r, f)).length, 0);
     return (filled / (sample.length * criticals.length)) * 0.7 + (rows.length / Math.max(modern.total, legacy.total, 1)) * 0.3;
   }
   const mScore = completeness(modern.data), lScore = completeness(legacy.data);

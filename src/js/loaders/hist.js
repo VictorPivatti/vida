@@ -6,7 +6,8 @@
 import { state } from '../state.js';
 import { parseHistLegacy, safeMinutes, histDedupKey } from '../parsers/hist.js';
 import { parseCidFromText } from '../parsers/cid.js';
-import { bufferToCsv } from '../parsers/buffer-to-csv.js';
+import { bufferToHistData, bufferToCsv } from '../parsers/buffer-to-csv.js';
+import { rowToCsv } from '../utils/csv-escape.js';
 import { showToast } from '../ui/toast.js';
 import { showLoading, hideLoading, setProgress } from '../ui/progress.js';
 import { setUploadStage } from '../ui/upload-stages.js';
@@ -128,14 +129,15 @@ async function _parseHistViaWorker(files) {
 export async function workerRun(type, payload) {
   if (type === 'parseHist') {
     // Fase A (main thread): buffer → CSV string; precisa da lib XLSX para .xls/.xlsx
-    const csvs = [], names = [];
+    const inputs = [], names = [];
     for (let i = 0; i < payload.buffers.length; i++) {
       const buf = payload.buffers[i], name = payload.names[i];
       setUploadStage('reading', name, i, payload.buffers.length);
       await new Promise(r => setTimeout(r, 0));
-      const csv = await bufferToCsv(buf, name, { onConverting: () => setUploadStage('converting', name) });
-      _checkLayoutFingerprint('hist', csv, name);
-      csvs.push(csv); names.push(name);
+      const { rows, csv } = await bufferToHistData(buf, name, { onConverting: () => setUploadStage('converting', name) });
+      const fpLine = rows?.[0] ? rowToCsv(rows[0]) : (csv || '').split(/\r?\n/)[0] || '';
+      _checkLayoutFingerprint('hist', fpLine + '\n', name);
+      inputs.push(rows || csv); names.push(name);
     }
     setUploadStage('parsing');
     // Fase B: tenta Worker real (desbloqueia UI); cai para main thread em ambientes sem Worker
@@ -159,8 +161,8 @@ export async function workerRun(type, payload) {
             console.error('[VIDA:worker] onerror | message:', e.message, '| filename:', e.filename, '| lineno:', e.lineno);
             w.terminate(); rej(new Error(e.message || 'Worker parse error'));
           };
-          console.log('[VIDA:worker] postMessage | csvs:', csvs.length, '| names:', names, '| mode: hist');
-          w.postMessage({ csvs, names, mode: 'hist' });
+          console.log('[VIDA:worker] postMessage | inputs:', inputs.length, '| names:', names, '| mode: hist');
+          w.postMessage({ inputs, names, mode: 'hist' });
         });
         return result;
       } catch (workerErr) { console.warn('[workerRun] Worker falhou, fallback main thread:', workerErr.message); }
@@ -168,11 +170,11 @@ export async function workerRun(type, payload) {
     // Fallback main thread
     let totTotal = 0, totInvalid = 0;
     const all = [], seen = new Set();
-    for (let i = 0; i < csvs.length; i++) {
-      const { data: rows, total, invalid } = parseHistLegacy(csvs[i]);
+    for (let i = 0; i < inputs.length; i++) {
+      const { data: rows, total, invalid } = parseHistLegacy(inputs[i]);
       totTotal += total; totInvalid += invalid;
       for (const r of rows) { const k = histDedupKey(r); if (!seen.has(k)) { seen.add(k); all.push(r); } }
-      setProgress(50 + Math.round((i + 1) / csvs.length * 45), names[i] + ': ' + rows.length.toLocaleString('pt-BR') + ' registros');
+      setProgress(50 + Math.round((i + 1) / inputs.length * 45), names[i] + ': ' + rows.length.toLocaleString('pt-BR') + ' registros');
       await new Promise(r => setTimeout(r, 0));
     }
     all.sort((a, b) => a.dh - b.dh);
@@ -331,6 +333,7 @@ export async function loadHist(fileOrFiles) {
     }
     if (_replacing) await clearAuxiliaryData();
     state.raw = result.rows;
+    state._rawVersion++;
     state.files.hist = files.length === 1 ? files[0].name : files.length + ' arquivos';
     (async () => {
       try {
@@ -358,8 +361,8 @@ export async function loadHist(fileOrFiles) {
     setProgress(100, 'Histórico carregado.');
     hideLoading();
     const _qh = state.quality.find(x => x.type === 'Histórico');
-    const _qMsg = _qh && _qh.invalid > 0 ? ` (${fmt(state.filt.length)} de ${fmt(_qh.total)} válidos)` : '';
-    showToast(`Histórico carregado: ${fmt(state.filt.length)} atendimentos${_qMsg}.`, 'ok');
+    const _qMsg = _qh && _qh.invalid > 0 ? ` (${fmt(result.rows.length)} de ${fmt(_qh.total)} válidos)` : '';
+    showToast(`Histórico carregado: ${fmt(result.rows.length)} atendimentos${_qMsg}.`, 'ok');
     if (typeof window.updateSourceChips === 'function') window.updateSourceChips();
     if (typeof window.updateQualityChip === 'function') window.updateQualityChip();
     if (typeof window.updateTtlCountdown === 'function') window.updateTtlCountdown();

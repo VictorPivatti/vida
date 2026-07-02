@@ -20,8 +20,54 @@ export const fmtN = (n, d = 1) => n == null || Number.isNaN(n) ? "-" : Number(n)
 /** Percentage formatter: (n/t)*100 with d decimal places */
 export const pct = (n, t, d = 1) => t ? `${fmtN(n / t * 100, d)}%` : "-";
 
-/** Shorten a name to first two words */
-export const shortName = n => String(n || "").split(/\s+/).filter(Boolean).slice(0, 2).join(" ");
+let _shortNameMap = null;
+
+/** Build disambiguated short labels for a list of full names. */
+export function buildShortNameLookup(names) {
+  const fullList = [...new Map(
+    names.map(n => String(n || '').trim()).filter(Boolean).map(n => [norm(n), n])
+  ).values()];
+  const labelOf = {};
+  fullList.forEach(full => {
+    const w = full.split(/\s+/).filter(Boolean);
+    labelOf[full] = w.slice(0, 2).join(' ') || full;
+  });
+  const byLabel = {};
+  fullList.forEach(full => {
+    const lbl = labelOf[full];
+    (byLabel[lbl] = byLabel[lbl] || []).push(full);
+  });
+  Object.values(byLabel).forEach(group => {
+    if (group.length <= 1) return;
+    group.forEach(full => {
+      const w = full.split(/\s+/).filter(Boolean);
+      const base = w.slice(0, 2).join(' ');
+      labelOf[full] = w.length >= 3 ? `${base} ${w[2].charAt(0)}.` : full;
+    });
+    const sub = {};
+    group.forEach(full => { const l = labelOf[full]; (sub[l] = sub[l] || []).push(full); });
+    Object.values(sub).forEach(sg => {
+      if (sg.length <= 1) return;
+      sg.forEach(full => {
+        const w = full.split(/\s+/).filter(Boolean);
+        labelOf[full] = w.length >= 3 ? `${w.slice(0, 2).join(' ')} ${w[2]}` : full;
+      });
+    });
+  });
+  return new Map(fullList.map(full => [norm(full), labelOf[full]]));
+}
+
+export function refreshShortNameMap(names) {
+  _shortNameMap = buildShortNameLookup(names);
+}
+
+/** Shorten a name to first two words, disambiguated when collisions exist. */
+export const shortName = n => {
+  const full = String(n || '').trim();
+  if (!full) return '';
+  if (_shortNameMap?.has(norm(full))) return _shortNameMap.get(norm(full));
+  return full.split(/\s+/).filter(Boolean).slice(0, 2).join(' ');
+};
 
 /** KPI card HTML builder (pure HTML string, no DOM side-effects) */
 export function kpi(label, value, sub, color, trend = "", cls = "", formula = null) {
@@ -29,4 +75,32 @@ export function kpi(label, value, sub, color, trend = "", cls = "", formula = nu
   const infoBtn = formula ? `<button type="button" class="kpi-info-btn" aria-label="Ver cálculo" onclick="toggleKpiInfo(this)">
 <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></button>` : '';
   return `<div class="card kpi ${cls}"${fAttr} style="--k:${color}"><div class="kpi-stripe"></div>${infoBtn}<div class="k-label">${esc(label)}</div><div class="k-value">${esc(value)}</div><div class="k-sub">${sub}</div>${trend}<div class="kpi-formula-panel" hidden></div></div>`;
+}
+
+/** Primary + compact secondary KPI rows */
+export function kpiBoard(primary, secondary = []) {
+  const sec = secondary.length
+    ? `<div class="kpi-row kpi-row-secondary">${secondary.join('')}</div>`
+    : '';
+  return `<div class="kpi-board"><div class="kpi-row kpi-row-primary">${primary.join('')}</div>${sec}</div>`;
+}
+
+/** Primary tier: larger KPI with optional delta trend. */
+export function kpiPrimary(label, value, sub, color, trend = "", formula = null) {
+  return kpi(label, value, sub, color, trend, 'kpi-primary', formula);
+}
+
+/** Secondary tier: compact supporting KPI. */
+export function kpiSecondary(label, value, sub, color, cls = '', formula = null, trend = '') {
+  return kpi(label, value, sub, color, trend, `kpi-secondary${cls ? ' ' + cls : ''}`, formula);
+}
+
+/** Render primary + secondary KPI tiers into a container (replaces flat grid). */
+export function renderKpiTiers(id, primary, secondary = []) {
+  const el = $(id);
+  if (!el) return;
+  el.className = 'kpi-hierarchy';
+  el.innerHTML =
+    `<div class="grid kpi-tier-primary">${primary.join('')}</div>` +
+    (secondary.length ? `<div class="grid kpi-tier-secondary">${secondary.join('')}</div>` : '');
 }

@@ -4,7 +4,7 @@ import { $, fmt, fmtN, pct, kpi } from '../utils/dom.js';
 import { avg } from '../utils/stats.js';
 import { monthLabel } from '../utils/dates.js';
 import { chart, gridColor, tickColor, axes } from '../ui/charts.js';
-import { DOW } from '../constants.js';
+import { DOW, DOWO } from '../constants.js';
 
 function meta(id) { return Number(document.getElementById(id)?.value) || 0; }
 
@@ -24,6 +24,41 @@ function hourBuckets(rows) {
     if (['AMARELO', 'LARANJA', 'VERMELHO'].includes(r.cor)) x.grave++;
   });
   return Object.values(map).map(x => ({ ...x, n: x.rows.length, triAvg: avg(x.tri, v => v), medAvg: avg(x.med, v => v), totAvg: avg(x.tot, v => v), gravePct: x.rows.length ? x.grave / x.rows.length * 100 : 0, carga: (x.rows.length * (avg(x.tot, v => v) || 0)) / 60 }));
+}
+
+function renderGargalosHeatmap(buckets) {
+  const el = $('heatmapGargalos');
+  if (!el) return;
+  const metric = document.getElementById('gargHeatmapMetric')?.value || 'vol';
+  const map = {};
+  buckets.forEach(b => { map[b.diaSem + '-' + b.hora] = b; });
+  const vals = DOWO.flatMap(dow => Array.from({ length: 24 }, (_, h) => {
+    const b = map[dow + '-' + h];
+    if (!b) return 0;
+    return metric === 'wait' ? (b.medAvg ?? b.triAvg ?? 0) : b.n;
+  }));
+  const max = Math.max(...vals, 1);
+  let html = `<div class="hm-corner"></div>${Array.from({ length: 24 }, (_, h) => `<div class="hm-head">${h}</div>`).join('')}`;
+  DOWO.forEach(dow => {
+    html += `<div class="hm-row">${DOW[dow]}</div>`;
+    for (let h = 0; h < 24; h++) {
+      const b = map[dow + '-' + h];
+      const n = b?.n || 0;
+      const wait = b?.medAvg ?? b?.triAvg;
+      const v = metric === 'wait' ? (wait ?? 0) : n;
+      const a = v / max;
+      const bg = v
+        ? (metric === 'wait'
+          ? `rgba(200,73,62,${.12 + a * .78})`
+          : `rgba(68,128,194,${.12 + a * .78})`)
+        : 'var(--sur2)';
+      const tip = metric === 'wait'
+        ? `${DOW[dow]} ${h}h: ${wait != null ? Math.round(wait) + ' min espera méd.' : 'sem dado'} · ${fmt(n)} atend.`
+        : `${DOW[dow]} ${h}h: ${fmt(n)} atend.${wait != null ? ' · espera méd. ' + Math.round(wait) + ' min' : ''}`;
+      html += `<div class="hm-cell" data-tip="${tip}" style="background:${bg}"></div>`;
+    }
+  });
+  el.innerHTML = html;
 }
 
 export function renderGargalos() {
@@ -98,4 +133,5 @@ export function renderGargalos() {
   chart('chartGargMed', { type: 'bar', data: { labels: medTop.map(label), datasets: [{ data: medTop.map(x => Math.round(x.medAvg)), backgroundColor: medTop.map(x => x.medAvg > meta('metaMed') ? '#c8493e' : '#38ac8b'), borderRadius: 3 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, targetLine: { lines: [{ value: meta('metaMed'), label: 'META' }] } }, scales: axes() } });
   const cargaTop = [...buckets].sort((a, b) => b.carga - a.carga).slice(0, 10).reverse();
   chart('chartCarga', { type: 'bar', data: { labels: cargaTop.map(label), datasets: [{ data: cargaTop.map(x => +x.carga.toFixed(1)), backgroundColor: '#7b61c4', borderRadius: 3 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: axes() } });
+  renderGargalosHeatmap(buckets);
 }

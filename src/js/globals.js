@@ -34,14 +34,14 @@ import { AUDIT_RULES } from './render/auditoria.js';
 import { prevVal } from './metrics/previous-period.js';
 import { togglePresentationMode, initPresentationMode } from './ui/presentation.js';
 import { dismissOnboardingPanel } from './ui/onboarding-panel.js';
-import { returns72, returnsFor } from './metrics/returns.js';
+import { returns72, returnsFor, returnsWithinFiltered } from './metrics/returns.js';
 import { monthlyStats, calcProjecao } from './metrics/monthly.js';
 import { metaManchester, manchesterConformidade } from './metrics/manchester.js';
 import { monthReturnRate } from './metrics/returns.js';
 import { evasaoDisponivel } from './metrics/med.js';
 import { calcularPontos } from './metrics/executive.js';
 import { medRows } from './metrics/med.js';
-import { parseHistLegacy, safeMinutes, parseHist, chooseParsed } from './parsers/hist.js';
+import { parseHistLegacy, safeMinutes, parseHist, chooseParsed, parseDuration } from './parsers/hist.js';
 import { parseTriLegacy } from './parsers/tri.js';
 import { parseCidLegacy, parseCidFromText } from './parsers/cid.js';
 import { parseProcedimentosText } from './parsers/proc.js';
@@ -53,7 +53,7 @@ import { RECEP_KEY, RECEP_OVERRIDE_KEY, UC_KEY } from './state.js';
 import { VidaDB } from './storage/vidadb.js';
 import { showToast } from './ui/toast.js';
 import { showLoading, hideLoading } from './ui/progress.js';
-import { $ } from './utils/dom.js';
+import { $, buildShortNameLookup } from './utils/dom.js';
 import { loadHist, workerRun } from './loaders/hist.js';
 import { loadTri } from './loaders/tri.js';
 import { loadCid } from './loaders/cid.js';
@@ -525,6 +525,8 @@ export function initGlobals() {
     deriveTriFromHist,
     returns72,
     returnsFor,
+    returnsWithinFiltered,
+    buildShortNameLookup,
     monthlyStats,
     calcProjecao,
     metaManchester,
@@ -542,6 +544,7 @@ export function initGlobals() {
     parseProcedimentosText,
     _parseExamesLines,
     safeMinutes,
+    parseDuration,
     CONFIG,
     AUDIT_RULES,
 

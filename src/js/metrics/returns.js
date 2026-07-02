@@ -1,6 +1,7 @@
 // metrics/returns.js — return-visit metrics
 
 import { CONFIG } from '../constants.js';
+import { histDedupKey } from '../parsers/hist.js';
 import { state } from '../state.js';
 
 function _groupByPront(rows) {
@@ -19,10 +20,29 @@ function _collectReturns(byP, hours) {
   Object.entries(byP).forEach(([p, vis]) => {
     for (let i = 1; i < vis.length; i++) {
       const h = (vis[i].dh - vis[i - 1].dh) / 36e5;
+      // h > 0: mesmo timestamp (reavaliação) não gera retorno; Vivver não expõe
+      // campo de reavaliação no histórico parseado — limitação conhecida.
       if (h > 0 && h <= hours) ret.push({ ...vis[i], pront: p, diffH: h, prev: vis[i - 1] });
     }
   });
   return ret;
+}
+
+function _filtKeySet() {
+  return new Set(state.filt.map(histDedupKey));
+}
+
+function _filterReturns(ret) {
+  const keys = _filtKeySet();
+  return ret.filter(r => keys.has(histDedupKey(r)));
+}
+
+function _rawReturns() {
+  if (state._retRawCache && state._retRawCacheKey === state._rawVersion) return state._retRawCache;
+  const result = returnsFor(state.raw);
+  state._retRawCache = result;
+  state._retRawCacheKey = state._rawVersion;
+  return result;
 }
 
 /**
@@ -49,22 +69,35 @@ export function returnsWithin(rows, hours) {
 }
 
 /**
- * Return the ≤72h return cache for state.filt, memoised by _filtVersion.
+ * Return visits within `hours` detected on state.raw, filtered to state.filt.
+ *
+ * @param {number} hours
+ * @returns {object[]}
+ */
+export function returnsWithinFiltered(hours) {
+  return _filterReturns(returnsWithin(state.raw, hours));
+}
+
+/**
+ * Return the ≤72h return cache: pairs from state.raw, display filtered by active filters.
  *
  * @returns {{ byP: object, ret: object[] }}
  */
 export function returns72() {
-  if (state._retCache && state._retCacheKey === state._filtVersion) return state._retCache;
-  const result = returnsFor(state.filt);
+  if (state._retCache && state._retCacheKey === state._filtVersion && state._retCacheRawKey === state._rawVersion) {
+    return state._retCache;
+  }
+  const { ret } = _rawReturns();
+  const result = { byP: _groupByPront(state.filt), ret: _filterReturns(ret) };
   state._retCache = result;
   state._retCacheKey = state._filtVersion;
+  state._retCacheRawKey = state._rawVersion;
   return result;
 }
 
 /**
  * Compute the return rate (%) for a given month from the full filtered dataset.
- * Uses returns72() which reads state.filt — cross-month returns are attributed
- * to the month in which the return visit occurred.
+ * Pair detection uses state.raw; returns are attributed to the month of the return visit.
  *
  * @param {object[]} rows  state.filt (or a compatible array).
  * @param {number} k       anoMes key (e.g. 202606).

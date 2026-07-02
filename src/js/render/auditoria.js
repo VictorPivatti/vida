@@ -2,7 +2,7 @@
 import { state } from '../state.js';
 import { showToast } from '../ui/toast.js';
 import { $, esc, fmt, pct, shortName, kpi } from '../utils/dom.js';
-import { chart, gridColor, tickColor } from '../ui/charts.js';
+import { chart, chartSortedHbar, gridColor, tickColor } from '../ui/charts.js';
 import { CONFIG } from '../constants.js';
 import { returns72, returnsFor } from '../metrics/returns.js';
 
@@ -124,7 +124,8 @@ export function renderAuditoria() {
   const tipoLabels = ['Temporal', 'Outlier', 'Classificação', 'Duplicata', 'Campo'];
   const tipoColors = ['#e8a93b', '#c8493e', '#7b61c4', '#4aa3c9', '#64748b'];
   const tipoData = tipos.map(t => issues.filter(i => i.tipo === t).length);
-  chart('chartAuditTipos', { type: 'doughnut', data: { labels: tipoLabels, datasets: [{ data: tipoData, backgroundColor: tipoColors, borderWidth: 2, borderColor: 'var(--sur)' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tickColor(), usePointStyle: true, padding: 12 } }, tooltip: { callbacks: { label: c => `${c.label}: ${fmt(c.parsed)} (${issues.length ? (c.parsed / issues.length * 100).toFixed(1) : 0}%)` } } } } });
+  const tipoEntries = tipos.map((t, i) => [tipoLabels[i], issues.filter(x => x.tipo === t).length, tipoColors[i]]);
+  chartSortedHbar('chartAuditTipos', tipoEntries);
 
   const errByMed = {};
   issues.forEach(i => { if (!i.row?.prof) return; const sn = shortName(i.row.prof); errByMed[sn] = errByMed[sn] || { alta: 0, media: 0, baixa: 0 }; errByMed[sn][i.sev]++; });

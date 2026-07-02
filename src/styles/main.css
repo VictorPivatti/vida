@@ -1685,6 +1685,39 @@
     .k-trend.okc{color:var(--ok);background:rgba(47,158,126,.1);border-color:rgba(47,158,126,.22)}
     .k-trend.erc{color:var(--er);background:rgba(200,73,62,.08);border-color:rgba(200,73,62,.2)}
 
+    /* KPI hierarchy — primary hero row + compact secondary */
+    .kpi-board{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+    .kpi-row-primary{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));
+      gap:12px
+    }
+    .kpi-row-secondary{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));
+      gap:8px
+    }
+    .kpi-primary{padding:24px 22px 20px}
+    .kpi-primary .k-value{font-size:clamp(26px,3.5vw,34px);font-weight:800;line-height:1.1}
+    .kpi-primary .k-label{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+    .kpi-secondary{padding:12px 14px 10px}
+    .kpi-secondary .k-value{font-size:19px;font-weight:700;line-height:1.15}
+    .kpi-secondary .k-label{font-size:10px}
+    .kpi-secondary .k-sub{font-size:10px;line-height:1.35}
+    .kpi-secondary .k-trend{font-size:9px;padding:2px 6px;margin-top:4px}
+
+    .kpi-hierarchy{margin-bottom:var(--card-gap)}
+    .kpi-hierarchy .grid{margin-bottom:10px}
+    .kpi-hierarchy .grid:last-child{margin-bottom:0}
+    .kpi-tier-primary{--kpi-min:200px}
+    .kpi-tier-primary .kpi-primary .k-value{font-size:clamp(32px,3.2vw,42px)}
+    .kpi-tier-primary .kpi-primary .k-label{font-size:11px}
+    .kpi-tier-secondary{--kpi-min:140px}
+    .kpi-tier-secondary .kpi-secondary{padding:14px 16px 12px}
+    .kpi-tier-secondary .kpi-secondary .k-value{font-size:22px;font-weight:700}
+    .kpi-tier-secondary .kpi-secondary .k-label{font-size:10px;margin-bottom:8px}
+    .kpi-tier-secondary .kpi-secondary .k-sub{font-size:11px;margin-top:6px}
+
     /* Card title */
     .card-title{
       font-size:11px;color:var(--txt);text-transform:uppercase;

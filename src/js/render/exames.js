@@ -1,7 +1,7 @@
 // render/exames.js — Exames pane rendering
 import { state } from '../state.js';
 import { $, esc, fmt, pct, norm, shortName, kpi } from '../utils/dom.js';
-import { chart, gridColor, tickColor, axes } from '../ui/charts.js';
+import { chart, chartSortedHbar, gridColor, tickColor, axes } from '../ui/charts.js';
 
 function grupoExame(n) {
   n = n.toUpperCase();
@@ -94,7 +94,11 @@ export function renderExames() {
   recs.forEach(r => r.exames.forEach(e => { const g = grupoExame(e); gpCnt[g] = (gpCnt[g] || 0) + 1; }));
   const gpArr = Object.entries(gpCnt).sort((a, b) => b[1] - a[1]);
   const gpColors = ['#185FA5', '#1D9E75', '#BA7517', '#A32D2D', '#534AB7', '#0F6E56', '#993C1D', '#3B6D11', '#888780', '#442C89'];
-  chart('chartExamesGrupos', { type: 'doughnut', data: { labels: gpArr.map(([n]) => n), datasets: [{ data: gpArr.map(([, v]) => v), backgroundColor: gpColors, borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tickColor(), usePointStyle: true, font: { size: 10 } } } } } });
+  if (gpArr.length > 4) {
+    chartSortedHbar('chartExamesGrupos', gpArr, { colors: gpColors });
+  } else {
+    chart('chartExamesGrupos', { type: 'doughnut', data: { labels: gpArr.map(([n]) => n), datasets: [{ data: gpArr.map(([, v]) => v), backgroundColor: gpColors, borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tickColor(), usePointStyle: true, font: { size: 10 } } } } } });
+  }
 
   const maxG = ranking[0]?.guias || 1;
   const crossTh = hasVivver ? `<th title="Atendimentos no histórico Vivver">Atend. Vivver</th><th title="% pacientes com exame solicitado">% Solic.</th><th title="Custo de exames por atendimento">R$/atend.</th>` : '';

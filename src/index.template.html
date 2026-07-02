@@ -469,9 +469,9 @@
         <div class="grid" id="kpisGeral"></div>
         <div id="projGeralNotice" style="margin-bottom:12px"></div>
         <div class="chart-grid">
-          <div class="card full"><div class="card-title">Volume mensal</div><p class="card-desc">Atendimentos concluídos por mês no filtro ativo</p><div class="chart"><canvas id="chartMensal" role="img" aria-label="Gráfico de barras: volume mensal de atendimentos"></canvas></div></div>
+          <div class="card full"><div class="card-title">Volume mensal</div><p class="card-desc">Atendimentos concluídos por mês no filtro ativo</p><div class="chart"><canvas id="chartMensal" role="img" aria-label="Gráfico de barras: volume mensal de atendimentos"></canvas></div><p class="proj-note">Volumes mensais usam data civil (calendário Vivver/e-SUS). Madrugada 00–07h agrupa no plantão noturno anterior em mapas de calor, gargalos e filtro de período.</p></div>
           <div class="card"><div class="card-title">Dia da semana</div><p class="card-desc">Distribuição da demanda ao longo da semana</p><div class="chart" style="height:200px"><canvas id="chartDow" role="img" aria-label="Gráfico de barras: atendimentos por dia da semana"></canvas></div></div>
-          <div class="card"><div class="card-title">Pico horário</div><p class="card-desc">Concentração de atendimentos por hora do dia</p><div class="chart small"><canvas id="chartHora" role="img" aria-label="Gráfico de linha: pico horário de atendimentos"></canvas></div></div>
+          <div class="card"><div class="card-title">Pico horário</div><p class="card-desc">Concentração de atendimentos por hora do dia</p><div class="chart small"><canvas id="chartHora" role="img" aria-label="Gráfico de barras: pico horário de atendimentos"></canvas></div></div>
           <div class="card full"><div class="card-title">Mapa de calor — dia da semana × hora</div><p class="card-desc">Pressão simultânea por dia e faixa horária</p><div class="scroll-x-wrap"><div class="heatmap mono" id="heatmap"></div></div></div>
         </div>
       </section>
@@ -507,6 +507,20 @@
         <div class="grid" id="kpisGargalos"></div>
         <div id="alertaVermelho" style="margin-bottom:16px"></div>
         <div class="chart-grid">
+          <div class="card full">
+            <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <span>Mapa de calor — dia × hora (7×24)</span>
+              <label class="mono" style="font-size:11px;color:var(--mut);display:flex;align-items:center;gap:6px">
+                Métrica
+                <select id="gargHeatmapMetric" class="field" style="font-size:11px;padding:4px 8px" onchange="renderGargalos()">
+                  <option value="vol">Volume</option>
+                  <option value="wait">Espera médica</option>
+                </select>
+              </label>
+            </div>
+            <p class="card-desc">Pressão por dia da semana e hora — 168 células</p>
+            <div class="scroll-x-wrap"><div class="heatmap mono" id="heatmapGargalos"></div></div>
+          </div>
           <div class="card full"><div class="card-title">Ranking de gargalos por dia e hora</div><div class="table-wrap"><table class="table" id="tableGargalos"></table></div></div>
           <div class="card full"><div class="card-title">VERMELHO fora do protocolo (&gt;10 min) por mês</div><div class="chart small"><canvas id="chartVermelhoMes" role="img" aria-label="Gráfico de barras: vermelhos fora do protocolo por mês"></canvas></div></div>
           <div class="card"><div class="card-title">Espera médica por faixa crítica</div><div class="chart small"><canvas id="chartGargMed" role="img" aria-label="Gráfico de barras: espera médica por faixa crítica"></canvas></div></div>
@@ -620,8 +634,8 @@
       <section class="pane" id="pane-retornos">
         <div class="page-header"><h1 class="page-title">Retornos ≤72h</h1><p class="page-desc">Reincidência precoce e casos críticos potencialmente evitáveis</p></div>
         <div class="dash-insight">Monitore taxa de retorno e identifique padrões que indicam falha de resolutividade ou continuidade do cuidado.</div>
-        <div class="grid" id="kpisRet"></div>
-        <div class="grid" id="kpisRetAdv"></div>
+        <div class="kpi-hierarchy" id="kpisRet"></div>
+        <div class="grid hidden" id="kpisRetAdv" aria-hidden="true"></div>
         <div class="chart-grid">
           <div class="card full"><div class="card-title">Retornos críticos e potencialmente evitáveis</div><div class="table-wrap"><table class="table" id="tableRetCrit"></table></div></div>
           <div class="card full" id="cardRetCid" class="hidden"><div class="card-title">Retorno ≤72h com mesmo diagnóstico — falha diagnóstica potencial</div><div class="grid" id="kpisRetCid"></div><div class="table-wrap" style="margin-top:8px"><table class="table" id="tableRetMesmoCid"></table></div></div>
@@ -658,7 +672,7 @@
           <div class="section-title-inset">Enfermeiros</div>
           <div class="chart-grid">
             <div class="card"><div class="card-title">Triagens por enfermeiro</div><div class="chart tall"><canvas id="chartEnfTriagem" role="img" aria-label="Gráfico de barras: triagens e procedimentos por enfermeiro"></canvas></div></div>
-            <div class="card"><div class="card-title">Perfil de procedimentos</div><div class="chart tall"><canvas id="chartEnfProcPerfil" role="img" aria-label="Gráfico de rosca: perfil de procedimentos dos enfermeiros"></canvas></div></div>
+            <div class="card"><div class="card-title">Perfil de procedimentos</div><div class="chart tall"><canvas id="chartEnfProcPerfil" role="img" aria-label="Gráfico de barras: perfil de procedimentos dos enfermeiros"></canvas></div></div>
             <div class="card full"><div class="card-title">Ranking de enfermeiros</div><div class="table-wrap"><table class="table" id="tableEnfRanking"></table></div></div>
           </div>
 
@@ -666,7 +680,7 @@
           <div class="section-title-inset">Técnicos de Enfermagem</div>
           <div class="chart-grid">
             <div class="card"><div class="card-title">Volume por técnico</div><div class="chart tall"><canvas id="chartTecProd" role="img" aria-label="Gráfico de barras: volume por técnico de enfermagem"></canvas></div></div>
-            <div class="card"><div class="card-title">Vias de administração</div><div class="chart tall"><canvas id="chartTecVias" role="img" aria-label="Gráfico de rosca: vias de administração dos técnicos"></canvas></div></div>
+            <div class="card"><div class="card-title">Vias de administração</div><div class="chart tall"><canvas id="chartTecVias" role="img" aria-label="Gráfico de barras: vias de administração dos técnicos"></canvas></div></div>
             <div class="card full"><div class="card-title">Ranking de técnicos</div><div class="table-wrap"><table class="table" id="tableTecRanking"></table></div></div>
           </div>
         </div>
@@ -693,7 +707,7 @@
           <div id="examesCrossNote" class="hidden" style="margin-bottom:10px;padding:10px 14px;background:rgba(19,87,166,.06);border:1px solid var(--ac);border-radius:8px;font-size:12px;color:var(--mut)"></div>
           <div class="chart-grid">
             <div class="card"><div class="card-title">Top 12 exames solicitados</div><div class="chart tall"><canvas id="chartExamesTop" role="img" aria-label="Gráfico de barras: top 12 exames solicitados"></canvas></div></div>
-            <div class="card"><div class="card-title">Grupos clínicos</div><div class="chart tall"><canvas id="chartExamesGrupos" role="img" aria-label="Gráfico de rosca: grupos clínicos de exames"></canvas></div></div>
+            <div class="card"><div class="card-title">Grupos clínicos</div><div class="chart tall"><canvas id="chartExamesGrupos" role="img" aria-label="Gráfico de barras: grupos clínicos de exames"></canvas></div></div>
             <div class="card full"><div class="card-title">Ranking por médico solicitante</div><div class="table-wrap"><table class="table" id="tableExames"></table></div></div>
           </div>
           <div id="examesValidacao" style="font-size:11px;color:var(--mut);padding:6px 10px;background:var(--sur2);border-radius:6px;margin-top:4px"></div>
@@ -706,7 +720,7 @@
         <div id="projEvolucao" style="margin-bottom:14px"></div>
         <div class="chart-grid">
           <div class="card full"><div class="card-title">Indicadores que mais mudaram entre os dois últimos meses do filtro</div><div class="table-wrap"><table class="table" id="tableEvolucao"></table></div></div>
-          <div class="card full"><div class="card-title">Tendência mensal dos principais indicadores</div><div class="chart"><canvas id="chartEvolucao" role="img" aria-label="Gráfico de linha: tendência mensal dos indicadores"></canvas></div></div>
+          <div class="card full"><div class="card-title">Tendência mensal dos principais indicadores</div><div class="chart"><canvas id="chartEvolucao" role="img" aria-label="Gráfico de linha: tendência mensal dos indicadores"></canvas></div><p class="proj-note">Volumes e taxas mensais seguem calendário civil; plantão noturno (00–07h) usa dia operacional em análises de turno e gargalo.</p></div>
         </div>
         <div class="secAnoAano" id="secAnoAano">
           <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px">

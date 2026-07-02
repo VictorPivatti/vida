@@ -1,13 +1,13 @@
 // render/geral.js — Visão Geral, Executive, Heatmap pane rendering
 import { state } from '../state.js';
-import { $, esc, fmt, fmtN, pct, norm, shortName, kpi } from '../utils/dom.js';
+import { $, esc, fmt, fmtN, pct, norm, shortName, kpi, kpiPrimary, kpiSecondary, renderKpiTiers } from '../utils/dom.js';
 import { avg } from '../utils/stats.js';
 import { monthKey, monthLabel } from '../utils/dates.js';
 import { chart, gridColor, tickColor, axes } from '../ui/charts.js';
 import { CONFIG, EXEC_SCORE, DOW, DOWO } from '../constants.js';
 import { monthlyStats, calcProjecao } from '../metrics/monthly.js';
 import { metaManchester } from '../metrics/manchester.js';
-import { returns72 } from '../metrics/returns.js';
+import { returns72, returnsFor } from '../metrics/returns.js';
 import { evasaoDisponivel } from '../metrics/med.js';
 import { previousRows, prevVal, periodDelta } from '../metrics/previous-period.js';
 import { renderOnboardingPanel } from '../ui/onboarding-panel.js';
@@ -152,7 +152,7 @@ export function renderGeral() {
   const temRecepGeral = mesesGeral.some(m => state.recepcionados[m] != null);
   let evasaoKpi;
   if (_evasaoDisp) {
-    evasaoKpi = kpi('Taxa de evasão', evasoes > 0 ? fmtN(evasaoRate, 1) + '%' : '0%', `${fmt(evasoes)} saídas sem atendimento`, evasoes > 0 ? '#c8493e' : 'var(--ok)');
+    evasaoKpi = kpiPrimary('Taxa de evasão', evasoes > 0 ? fmtN(evasaoRate, 1) + '%' : '0%', `${fmt(evasoes)} saídas sem atendimento`, evasoes > 0 ? '#c8493e' : 'var(--ok)');
   } else if (temRecepGeral) {
     let totRec = 0, totBr = 0, totAt = 0;
     mesesGeral.forEach(m => {
@@ -167,26 +167,35 @@ export function renderGeral() {
     });
     const totEv = totRec - totBr - totAt;
     const totTx = totRec > 0 ? totEv / totRec * 100 : null;
-    evasaoKpi = kpi('Taxa de evasão',
+    evasaoKpi = kpiPrimary('Taxa de evasão',
       totTx != null ? (totTx < 0 ? '<0%' : totTx.toFixed(1) + '%') : '—',
       totEv >= 0 ? `${fmt(Math.max(0, totEv))} evasões · ${fmt(totRec)} recepcionados` : 'Revisar dados',
       totTx != null && totTx > 5 ? '#c8493e' : totTx != null && totTx > 2 ? '#e8a93b' : 'var(--ok)');
   } else {
-    evasaoKpi = kpi('Evasão', 'N/D', 'insira recepcionados em Configurações → Metas para calcular', 'var(--mut)');
+    evasaoKpi = kpiPrimary('Evasão', 'N/D', 'insira recepcionados em Configurações → Metas para calcular', 'var(--mut)', '', null);
   }
-  $('kpisGeral').innerHTML = [
-    kpi('Atendimentos', fmt(total), `${days} dias no período`, '#1357a6', metricDelta(total, prevVal(prev.length, prev, m_g, pm_g.length), ''), '', { expr: `${fmt(total)} registros no período filtrado`, linhas: [['registros totais', fmt(total)], ['dias distintos', days], ['resultado', fmt(total) + ' atendimentos']] }),
-    kpi('Média diária', fmt(curDaily), 'atendimentos/dia', '#38ac8b', metricDelta(curDaily, prevVal(prevDaily, prev, m_g, pm_g.length), ''), '', { expr: `${fmt(total)} ÷ ${days} dias = ${fmt(curDaily)}/dia`, linhas: [['atendimentos no período', fmt(total)], ['dias com atendimento', days], ['média diária', fmt(curDaily) + '/dia']] }),
+  const tMed = avg(d, r => r.tEspMed), tTri = avg(d, r => r.tEspTri);
+  const prevTMed = prevVal(avg(prev, r => r.tEspMed), prev, m_g, pm_g.length);
+  const prevTTri = prevVal(avg(prev, r => r.tEspTri), prev, m_g, pm_g.length);
+  const prevRetRate = prevVal(prev.length ? returnsFor(prev).ret.length / prev.length * 100 : null, prev, m_g, pm_g.length);
+  renderKpiTiers('kpisGeral', [
+    kpiPrimary('Atendimentos', fmt(total), `${days} dias no período`, '#1357a6', metricDelta(total, prevVal(prev.length, prev, m_g, pm_g.length), ''), { expr: `${fmt(total)} registros no período filtrado`, linhas: [['registros totais', fmt(total)], ['dias distintos', days], ['resultado', fmt(total) + ' atendimentos']] }),
+    kpiPrimary('Média diária', fmt(curDaily), 'atendimentos/dia', '#38ac8b', metricDelta(curDaily, prevVal(prevDaily, prev, m_g, pm_g.length), ''), { expr: `${fmt(total)} ÷ ${days} dias = ${fmt(curDaily)}/dia`, linhas: [['atendimentos no período', fmt(total)], ['dias com atendimento', days], ['média diária', fmt(curDaily) + '/dia']] }),
+    kpiPrimary('Tempo total médio', curTotalTime != null ? Math.round(curTotalTime) + ' min' : '-', 'recepção até alta', '#e8a93b', metricDelta(curTotalTime, prevVal(prevTotalTime, prev, m_g, pm_g.length), 'min', true), curTotalTime != null ? (() => { const _n = d.filter(r => r.tTotal != null).length; return { expr: `média(recepção → alta) — ${fmt(_n)} de ${fmt(total)} registros`, linhas: [['com tempo total registrado', fmt(_n)], ['sem dado de tempo', fmt(total - _n)], ['tempo médio calculado', Math.round(curTotalTime) + ' min']] }; })() : null),
     evasaoKpi,
-    kpi('Tempo total médio', curTotalTime != null ? Math.round(curTotalTime) + ' min' : '-', 'recepção até alta', '#e8a93b', metricDelta(curTotalTime, prevVal(prevTotalTime, prev, m_g, pm_g.length), 'min', true), '', curTotalTime != null ? (() => { const _n = d.filter(r => r.tTotal != null).length; return { expr: `média(recepção → alta) — ${fmt(_n)} de ${fmt(total)} registros`, linhas: [['com tempo total registrado', fmt(_n)], ['sem dado de tempo', fmt(total - _n)], ['tempo médio calculado', Math.round(curTotalTime) + ' min']] }; })() : null)
-  ].join('');
+  ], [
+    kpiSecondary('Retorno ≤72h', fmtN(retRate, 1) + '%', `${fmt(ret.length)} eventos — meta < ${meta('metaRet')}%`, '#c8493e', '', null, metricDelta(retRate, prevRetRate, 'pp', true)),
+    kpiSecondary('Espera triagem', tTri != null ? Math.round(tTri) + ' min' : '-', `meta ≤ ${meta('metaTri')} min`, '#1357a6', '', null, metricDelta(tTri, prevTTri, 'min', true)),
+    kpiSecondary('Espera médico', tMed != null ? Math.round(tMed) + ' min' : '-', `meta ≤ ${meta('metaMed')} min`, '#e8a93b', '', null, metricDelta(tMed, prevTMed, 'min', true)),
+    kpiSecondary('Casos amarelo+', fmtN(graveRate, 1) + '%', `${fmt(grave)} atendimentos`, graveRate > 35 ? '#c8493e' : '#7b61c4'),
+  ]);
   const byM = group(d, r => r.anoMes), keys = Object.keys(byM).map(Number).sort();
   const volVals = keys.map(k => byM[k]);
   chart('chartMensal', { type: 'bar', data: { labels: keys.map(monthLabel), datasets: [{ data: volVals, backgroundColor: '#1357a6', borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, targetLine: { lines: [{ value: meta('metaVol'), label: 'META VOLUME' }] } }, scales: { ...axes(), y: { ...axes().y, suggestedMax: Math.max(meta('metaVol'), ...volVals, 1) * 1.15 } } } });
   const byDow = group(d, r => r.diaSem);
   chart('chartDow', { type: 'bar', data: { labels: DOWO.map(i => DOW[i]), datasets: [{ data: DOWO.map(i => byDow[i] || 0), backgroundColor: '#2f9e7e', borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: axes() } });
   const byH = group(d, r => r.hora);
-  chart('chartHora', { type: 'line', data: { labels: Array.from({ length: 24 }, (_, i) => i + 'h'), datasets: [{ data: Array.from({ length: 24 }, (_, i) => byH[i] || 0), borderColor: '#7b61c4', backgroundColor: 'rgba(123,97,196,.12)', fill: true, tension: .35, pointRadius: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: axes() } });
+  chart('chartHora', { type: 'bar', data: { labels: Array.from({ length: 24 }, (_, i) => i + 'h'), datasets: [{ data: Array.from({ length: 24 }, (_, i) => byH[i] || 0), backgroundColor: '#7b61c4', borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: axes() } });
   renderHeatmap(d);
   const _pj = calcProjecao(d), pgn = $('projGeralNotice');
   if (pgn) {

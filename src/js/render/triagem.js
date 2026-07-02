@@ -1,10 +1,30 @@
 // render/triagem.js — Triagem pane rendering
 import { state } from '../state.js';
-import { $, esc, fmt, fmtN, pct, shortName, kpi } from '../utils/dom.js';
+import { $, esc, fmt, fmtN, pct, shortName, kpi, kpiPrimary, kpiSecondary, renderKpiTiers } from '../utils/dom.js';
 import { avg } from '../utils/stats.js';
 import { monthLabel } from '../utils/dates.js';
 import { chart, gridColor, tickColor, axes } from '../ui/charts.js';
 import { RISK_ORDER, RISK_COLOR } from '../constants.js';
+
+import { previousRows, prevVal, rowsInRange } from '../metrics/previous-period.js';
+import { dateRange } from '../filters.js';
+import { monthlyStats } from '../metrics/monthly.js';
+
+function previousTriRows() {
+  const { s, e } = dateRange();
+  if (!s || !e) return [];
+  const span = e.getTime() - s.getTime();
+  const prevEnd = new Date(s.getTime() - 1);
+  const prevStart = new Date(prevEnd.getTime() - span);
+  return rowsInRange(state.triRaw, prevStart, prevEnd);
+}
+
+function metricDelta(cur, prev, unit = '', inverse = false) {
+  if (cur == null || prev == null || !Number.isFinite(cur) || !Number.isFinite(prev) || prev === 0) return '';
+  const diff = cur - prev, pctDiff = diff / Math.abs(prev) * 100, good = inverse ? diff <= 0 : diff >= 0;
+  const sign = diff > 0 ? '+' : '';
+  return `<div class="k-trend ${good ? 'okc' : 'erc'}">${sign}${unit === 'pp' ? fmtN(diff, 1) + ' p.p.' : Math.round(diff) + (unit ? ` ${unit}` : '')} (${sign}${fmtN(pctDiff, 1)}%) vs período anterior</div>`;
+}
 
 function meta(id) { return Number(document.getElementById(id)?.value) || 0; }
 function group(arr, fn) { return arr.reduce((m, r) => { const k = fn(r); m[k] = (m[k] || 0) + 1; return m; }, {}); }
@@ -22,21 +42,31 @@ export function renderTriagem() {
     : `<div class="tri-source-banner ok"><strong>✓ Planilha de triagem carregada</strong> — todos os campos disponíveis, incluindo nome do triador.</div>`;
   $('triSourceBanner').innerHTML = sourceBadge;
 
-  $('kpisTri').innerHTML = [
-    kpi('Triagens', fmt(total), `${fmt(state.filt.length)} atendimentos médicos no período`, '#1357a6'),
-    kpi('Gap triagem-médico', fmt(Math.max(total - branco - state.filt.length, 0)), 'triados não brancos sem atendimento médico aparente', '#e8a93b'),
-    kpi('Espera média', avg(d, r => r.tEsp) != null ? Math.round(avg(d, r => r.tEsp)) + ' min' : '-', `meta ≤ ${meta('metaTri')} min`, '#e8a93b'),
+  const prevTri = previousTriRows();
+  const pm = monthlyStats(state.filt), ptm = monthlyStats(prevTri);
+  const espAvg = avg(d, r => r.tEsp);
+  const prevEsp = prevVal(avg(prevTri, r => r.tEsp), prevTri, pm.length, ptm.length);
+  const gap = Math.max(total - branco - state.filt.length, 0);
+  const prevGap = Math.max(prevTri.length - prevTri.filter(r => r.cor === 'BRANCO').length - previousRows().length, 0);
+
+  renderKpiTiers('kpisTri', [
+    kpiPrimary('Triagens', fmt(total), `${fmt(state.filt.length)} atendimentos médicos no período`, '#1357a6', metricDelta(total, prevVal(prevTri.length, prevTri, pm.length, ptm.length), '')),
+    kpiPrimary('Espera média', espAvg != null ? Math.round(espAvg) + ' min' : '-', `meta ≤ ${meta('metaTri')} min`, '#e8a93b', metricDelta(espAvg, prevEsp, 'min', true)),
+    kpiPrimary('Gap triagem-médico', fmt(gap), 'triados não brancos sem atendimento médico aparente', '#e8a93b', metricDelta(gap, prevVal(prevGap, prevTri, pm.length, ptm.length), '', true)),
+  ], [
     fromHist
-      ? kpi('Triadores', '—', 'carregue planilha de triagem', '#94a3b8')
-      : kpi('Triadores', fmt(triadores), 'profissionais distintos', '#7b61c4')
-  ].join('');
+      ? kpiSecondary('Triadores', '—', 'carregue planilha de triagem', '#94a3b8')
+      : kpiSecondary('Triadores', fmt(triadores), 'profissionais distintos', '#7b61c4'),
+    kpiSecondary('Brancos', fmt(branco), pct(branco, total) + ' das triagens', '#94a3b8'),
+    kpiSecondary('Não brancos', fmt(total - branco), pct(total - branco, total) + ' encaminhados', '#38ac8b'),
+  ]);
 
   const byH = group(d, r => r.hora), esp = {};
   d.forEach(r => { if (r.tEsp == null) return; (esp[r.hora] = esp[r.hora] || []).push(r.tEsp); });
   chart('chartTriHora', { type: 'bar', data: { labels: Array.from({ length: 24 }, (_, i) => i + 'h'), datasets: [
-    { type: 'bar', label: 'Triagens', data: Array.from({ length: 24 }, (_, i) => byH[i] || 0), backgroundColor: 'rgba(79,142,247,.55)', yAxisID: 'y' },
-    { type: 'line', label: 'Espera (min)', data: Array.from({ length: 24 }, (_, i) => esp[i] ? avg(esp[i], v => v) : null), borderColor: '#e8a93b', yAxisID: 'y1', spanGaps: true, tension: .3, pointRadius: 3 }
-  ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tickColor(), usePointStyle: true } }, targetLine: { lines: [{ value: meta('metaTri'), label: 'META ESPERA' }] } }, scales: { x: { grid: { color: gridColor() }, ticks: { color: tickColor() } }, y: { position: 'left', grid: { color: gridColor() }, ticks: { color: tickColor() } }, y1: { position: 'right', grid: { display: false }, ticks: { color: '#e8a93b', callback: v => v + ' min' } } } } });
+    { type: 'bar', label: 'Triagens', data: Array.from({ length: 24 }, (_, i) => byH[i] || 0), backgroundColor: 'rgba(79,142,247,.55)', yAxisID: 'y', borderRadius: 3 },
+    { label: 'Espera média (min)', data: Array.from({ length: 24 }, (_, i) => esp[i] ? +avg(esp[i], v => v).toFixed(1) : 0), backgroundColor: 'rgba(232,169,59,.55)', yAxisID: 'y1', borderRadius: 3 }
+  ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tickColor(), usePointStyle: true } }, targetLine: { lines: [{ value: meta('metaTri'), label: 'META ESPERA', axis: 'y1' }] } }, scales: { x: { grid: { color: gridColor() }, ticks: { color: tickColor() } }, y: { position: 'left', grid: { color: gridColor() }, ticks: { color: tickColor() }, beginAtZero: true }, y1: { position: 'right', grid: { display: false }, ticks: { color: '#e8a93b', callback: v => v + ' min' }, beginAtZero: true } } } });
 
   const risks = group(d, r => r.cor), rkeys = RISK_ORDER.filter(k => risks[k]).reverse();
   chart('chartTriRisco', { type: 'bar', data: { labels: rkeys, datasets: [{ data: rkeys.map(k => risks[k]), backgroundColor: rkeys.map(k => RISK_COLOR[k] || '#64748b'), borderRadius: 3 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${fmt(c.parsed.x)} triagens (${pct(c.parsed.x, total)})` } } }, scales: { x: { grid: { color: gridColor() }, ticks: { color: tickColor() } }, y: { grid: { color: gridColor() }, ticks: { color: tickColor(), font: { size: 10 } } } } } });
@@ -138,14 +168,16 @@ export function renderEvasao(triFilt) {
   const totEvasoes = totRecep != null ? totRecep - totBrancos - totAtendidos : null;
   const totTaxa = totRecep && totRecep > 0 ? totEvasoes / totRecep * 100 : null;
   const noRecepMsg = '— inserir recepcionados';
-  $('kpisEvasao').innerHTML = [
-    kpi('Triados', fmt(totTriados), 'passaram pela triagem', '#1357a6'),
-    kpi('Brancos', fmt(totBrancos), 'redirecionados — excluidos do calculo', '#94a3b8'),
-    kpi('Atendidos', fmt(totAtendidos), 'atendimento medico registrado', '#38ac8b'),
-    kpi('Recepcionados', totRecep != null ? fmt(totRecep) : noRecepMsg, 'total registrado na recepcao', '#7b61c4', '', totRecep == null ? 'kpi-warn' : ''),
-    kpi('Evasoes', totEvasoes != null ? (totEvasoes < 0 ? '<0 (revisar)' : fmt(totEvasoes)) : noRecepMsg, 'saíram sem atendimento (excl. brancos)', '#c8493e', '', totEvasoes == null ? 'kpi-warn' : ''),
-    kpi('Taxa de evasão', totTaxa != null ? (totTaxa < 0 ? '<0%' : fmtN(totTaxa, 1) + '%') : noRecepMsg, '(Recep - Brancos - Atend.) / Recep', '#e8a93b', '', totTaxa == null ? 'kpi-warn' : '')
-  ].join('');
+  const evasaoWarn = totRecep == null ? 'kpi-warn' : '';
+  renderKpiTiers('kpisEvasao', [
+    kpiPrimary('Taxa de evasão', totTaxa != null ? (totTaxa < 0 ? '<0%' : fmtN(totTaxa, 1) + '%') : noRecepMsg, '(Recep - Brancos - Atend.) / Recep', '#e8a93b', '', null),
+    kpiPrimary('Evasoes', totEvasoes != null ? (totEvasoes < 0 ? '<0 (revisar)' : fmt(totEvasoes)) : noRecepMsg, 'saíram sem atendimento (excl. brancos)', '#c8493e', '', null),
+  ], [
+    kpiSecondary('Triados', fmt(totTriados), 'passaram pela triagem', '#1357a6'),
+    kpiSecondary('Brancos', fmt(totBrancos), 'redirecionados — excluidos do calculo', '#94a3b8'),
+    kpiSecondary('Atendidos', fmt(totAtendidos), 'atendimento medico registrado', '#38ac8b'),
+    kpiSecondary('Recepcionados', totRecep != null ? fmt(totRecep) : noRecepMsg, 'total registrado na recepcao', '#7b61c4', evasaoWarn),
+  ]);
   const comTaxa = mData.filter(r => r.taxa != null);
   if (comTaxa.length >= 1) {
     const mesesAll = [...new Set(state.triRaw.map(r => r.anoMes))].filter(Boolean).sort();
@@ -166,7 +198,7 @@ export function renderEvasao(triFilt) {
     if (trendWithData.length >= 2) {
       chart('chartEvasaoTrend', { type: 'line', data: { labels: trendData.map(x => x.label), datasets: [{ label: 'Taxa de evasão (%)', data: trendData.map(x => x.taxa), borderColor: '#c8493e', backgroundColor: 'rgba(200,73,62,.08)', fill: true, tension: .35, pointRadius: 4, pointBackgroundColor: '#c8493e', spanGaps: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, targetLine: { lines: [{ value: metaEv, label: `META ${fmtN(metaEv,1)}%` }] } }, scales: { x: { grid: { color: gridColor() }, ticks: { color: tickColor() } }, y: { grid: { color: gridColor() }, ticks: { color: tickColor(), callback: v => v + '%' }, suggestedMin: 0, suggestedMax: Math.max(metaEv * 1.5, ...trendData.map(x => x.taxa || 0), 15) } } } });
     }
-    chart('chartEvasaoRecep', { type: 'line', data: { labels: mData.map(r => r.label), datasets: [{ label: 'Taxa de Evasao (%)', data: mData.map(r => r.taxa), borderColor: '#c8493e', backgroundColor: 'rgba(200,73,62,.12)', fill: true, tension: .35, pointRadius: 4, pointBackgroundColor: '#c8493e', yAxisID: 'y' }, { label: 'Evasoes', data: mData.map(r => r.evasoes), borderColor: '#e8a93b', backgroundColor: 'transparent', tension: .35, pointRadius: 3, pointBackgroundColor: '#e8a93b', borderDash: [5, 4], yAxisID: 'y1' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tickColor(), usePointStyle: true, padding: 16 } }, tooltip: { callbacks: { label: c => c.dataset.yAxisID === 'y' ? `Evasão: ${c.parsed.y != null ? fmtN(c.parsed.y, 1) + '%' : '-'}` : c.dataset.yAxisID === 'y1' ? `Evasoes: ${c.parsed.y != null ? fmt(c.parsed.y) : '-'}` : '' } } }, scales: { x: { grid: { color: gridColor() }, ticks: { color: tickColor() } }, y: { position: 'left', grid: { color: gridColor() }, ticks: { color: tickColor(), callback: v => v + '%' }, beginAtZero: true }, y1: { position: 'right', grid: { display: false }, ticks: { color: '#e8a93b', callback: v => Math.round(v) }, beginAtZero: true } } } });
+    chart('chartEvasaoRecep', { type: 'line', data: { labels: mData.map(r => r.label), datasets: [{ label: 'Taxa de Evasao (%)', data: mData.map(r => r.taxa), borderColor: '#c8493e', backgroundColor: 'rgba(200,73,62,.12)', fill: true, tension: .35, pointRadius: 4, pointBackgroundColor: '#c8493e', yAxisID: 'y' }, { label: 'Evasoes', data: mData.map(r => r.evasoes), borderColor: '#e8a93b', backgroundColor: 'transparent', tension: .35, pointRadius: 3, pointBackgroundColor: '#e8a93b', borderDash: [5, 4], yAxisID: 'y1' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: tickColor(), usePointStyle: true, padding: 16 } }, targetLine: { lines: [{ value: metaEv, label: `META ${fmtN(metaEv, 1)}%` }] }, tooltip: { callbacks: { label: c => c.dataset.yAxisID === 'y' ? `Evasão: ${c.parsed.y != null ? fmtN(c.parsed.y, 1) + '%' : '-'}` : c.dataset.yAxisID === 'y1' ? `Evasoes: ${c.parsed.y != null ? fmt(c.parsed.y) : '-'}` : '' } } }, scales: { x: { grid: { color: gridColor() }, ticks: { color: tickColor() } }, y: { position: 'left', grid: { color: gridColor() }, ticks: { color: tickColor(), callback: v => v + '%' }, beginAtZero: true }, y1: { position: 'right', grid: { display: false }, ticks: { color: '#e8a93b', callback: v => Math.round(v) }, beginAtZero: true } } } });
   }
   $('tableEvasao').innerHTML = `<thead><tr><th>Mes</th><th>Recepcionados</th><th>Triados</th><th>Brancos</th><th>Atendidos</th><th>Evasoes</th><th>Taxa</th></tr></thead><tbody>${mData.map(r => {
     const taxaStr = r.taxa != null ? (r.taxa < 0 ? '<span class="erc">&lt;0% (revisar)</span>' : `<span class="${r.taxa > 5 ? 'erc' : r.taxa > 2 ? 'wnc' : 'okc'}">${fmtN(r.taxa, 1)}%</span>`) : '-';

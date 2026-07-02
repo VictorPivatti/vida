@@ -28,6 +28,10 @@ export const state = {
   triSource: 'none',
   _retCache: null,
   _retCacheKey: -1,
+  _retCacheRawKey: -1,
+  _retRawCache: null,
+  _retRawCacheKey: -1,
+  _rawVersion: 0,
   _filtVersion: 0,
   recepcionados: {},
 };
@@ -53,6 +57,10 @@ export function resetState() {
   state.triSource = 'none';
   state._retCache = null;
   state._retCacheKey = -1;
+  state._retCacheRawKey = -1;
+  state._retRawCache = null;
+  state._retRawCacheKey = -1;
+  state._rawVersion = 0;
   state._filtVersion = 0;
   state.recepcionados = {};
 }

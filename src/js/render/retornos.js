@@ -1,10 +1,10 @@
 // render/retornos.js — Retornos pane rendering
 import { state } from '../state.js';
-import { $, esc, fmt, fmtN, pct, norm, shortName, kpi } from '../utils/dom.js';
+import { $, esc, fmt, fmtN, pct, norm, shortName, kpi, kpiPrimary, kpiSecondary, renderKpiTiers } from '../utils/dom.js';
 import { avg } from '../utils/stats.js';
 import { monthLabel } from '../utils/dates.js';
 import { chart, gridColor, tickColor, axes } from '../ui/charts.js';
-import { returnsFor, returnsWithin, returns72, monthReturnRate } from '../metrics/returns.js';
+import { returnsFor, returnsWithinFiltered, returns72, monthReturnRate } from '../metrics/returns.js';
 import { previousRows, prevVal } from '../metrics/previous-period.js';
 import { monthlyStats } from '../metrics/monthly.js';
 
@@ -28,19 +28,24 @@ export function renderRetornos() {
   const retRate = d.length ? ret.length / d.length * 100 : null;
   const rawPrevRate = prev.length ? prevRet.length / prev.length * 100 : null;
   const prevRate = prevVal(rawPrevRate, prev, m.length, pm.length);
-  $('kpisRet').innerHTML = [
-    kpi('Retornos ≤72h', fmt(ret.length), `${pct(ret.length, d.length)} eventos/atend. — meta < ${meta('metaRet')}%`, '#c8493e', metricDelta(retRate, prevRate, 'pp', true)),
-    kpi('Pacientes unicos', fmt(patients), 'prontuários distintos', '#1357a6'),
-    kpi('Multiplas visitas', fmt(multi), pct(multi, patients) + ' dos pacientes', '#7b61c4')
-  ].join('');
+  const prevR24 = prevRet.filter(r => r.diffH <= 24);
+  const prevR48 = prevRet.filter(r => r.diffH <= 48);
+  const prevR24Rate = prev.length ? prevR24.length / prev.length * 100 : null;
+  const prevR48Rate = prev.length ? prevR48.length / prev.length * 100 : null;
   const r24 = ret.filter(r => r.diffH <= 24), r48 = ret.filter(r => r.diffH <= 48);
-  const ret7 = returnsWithin(d, 168), retCrit = ret.filter(r => ['AMARELO', 'LARANJA', 'VERMELHO'].includes(r.cor)), retPiora = ret.filter(r => riskWeight(r.cor) > riskWeight(r.prev?.cor));
-  $('kpisRetAdv').innerHTML = [
-    kpi('Retorno <=24h', fmt(r24.length), pct(r24.length, d.length), '#c8493e'),
-    kpi('Retorno <=48h', fmt(r48.length), pct(r48.length, d.length), '#e8a93b'),
-    kpi('Retorno <=7 dias', fmt(ret7.length), pct(ret7.length, d.length), '#7b61c4'),
-    kpi('Retorno critico', fmt(retCrit.length), 'retornou amarelo/laranja/vermelho', '#e8a93b')
-  ].join('');
+  const ret7 = returnsWithinFiltered(168), retCrit = ret.filter(r => ['AMARELO', 'LARANJA', 'VERMELHO'].includes(r.cor)), retPiora = ret.filter(r => riskWeight(r.cor) > riskWeight(r.prev?.cor));
+  renderKpiTiers('kpisRet', [
+    kpiPrimary('Retornos ≤72h', fmt(ret.length), `${pct(ret.length, d.length)} eventos/atend. — meta < ${meta('metaRet')}%`, '#c8493e', metricDelta(retRate, prevRate, 'pp', true)),
+    kpiPrimary('Retorno ≤24h', fmt(r24.length), pct(r24.length, d.length), '#c8493e', metricDelta(d.length ? r24.length / d.length * 100 : null, prevVal(prevR24Rate, prev, m.length, pm.length), 'pp', true)),
+    kpiPrimary('Pacientes unicos', fmt(patients), 'prontuários distintos', '#1357a6', metricDelta(patients, prevVal(Object.keys(returnsFor(prev).byP).length, prev, m.length, pm.length), '')),
+  ], [
+    kpiSecondary('Multiplas visitas', fmt(multi), pct(multi, patients) + ' dos pacientes', '#7b61c4'),
+    kpiSecondary('Retorno ≤48h', fmt(r48.length), pct(r48.length, d.length), '#e8a93b', '', null, metricDelta(d.length ? r48.length / d.length * 100 : null, prevVal(prevR48Rate, prev, m.length, pm.length), 'pp', true)),
+    kpiSecondary('Retorno ≤7 dias', fmt(ret7.length), pct(ret7.length, d.length), '#7b61c4'),
+    kpiSecondary('Retorno critico', fmt(retCrit.length), 'retornou amarelo/laranja/vermelho', '#e8a93b'),
+  ]);
+  const advEl = $('kpisRetAdv');
+  if (advEl) advEl.innerHTML = '';
   const totalM = group(d, r => r.anoMes), retM = group(ret, r => r.anoMes), keys = Object.keys(totalM).map(Number).sort(), retVals = keys.map(k => +(((retM[k] || 0) / totalM[k]) * 100).toFixed(1));
   chart('chartRetMes', { type: 'bar', data: { labels: keys.map(monthLabel), datasets: [{ data: retVals, backgroundColor: keys.map(k => ((retM[k] || 0) / totalM[k] * 100) > meta('metaRet') ? '#c8493e' : '#38ac8b'), borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, targetLine: { lines: [{ value: meta('metaRet'), label: 'META RETORNO' }] } }, scales: { ...axes(), y: { grid: { color: gridColor() }, ticks: { color: tickColor(), callback: v => v + '%' }, suggestedMax: Math.max(meta('metaRet'), ...retVals, 1) * 1.25 } } } });
   const byH = group(ret, r => r.hora);

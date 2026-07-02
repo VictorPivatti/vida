@@ -7,7 +7,7 @@ import { state } from './state.js';
 import { parseDate } from './parsers/hist.js';
 import { norm } from './parsers/workbook.js';
 import { ymd } from './utils/dates.js';
-import { $, esc, shortName } from './utils/dom.js';
+import { $, esc, shortName, refreshShortNameMap } from './utils/dom.js';
 import { renderAll } from './render/index.js';
 import { syncTopbarStatus } from './ui/topbar-status.js';
 
@@ -61,7 +61,8 @@ export function applyFilters() {
 export function populateMedicoFilter() {
   const dl = $('filtroMedicoList');
   if (!dl) return;
-  // dedup por norm() antes de exibir shortName
+  const profs = state.raw.filter(r => r.prof).map(r => r.prof);
+  refreshShortNameMap(profs);
   const seen = new Set();
   const medicos = state.raw
     .filter(r => r.prof)

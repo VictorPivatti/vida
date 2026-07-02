@@ -261,11 +261,12 @@ try {
   // monthReturnRate(state.filt, 202606) deve ser 100% — a única row de junho É o retorno
   var dh_mai = new Date(2026, 4, 31, 20, 0);
   var dh_jun = new Date(2026, 5,  2, 10, 0);  // 38h depois
-  state.filt = [
+  state.raw = [
     {pront:'P999', dh:dh_mai, dateKey:'2026-05-31', anoMes:202605, tEspMed:30, tEspTri:5, tTotal:60, cor:'VERDE',   turno:'N'},
     {pront:'P999', dh:dh_jun, dateKey:'2026-06-02', anoMes:202606, tEspMed:25, tEspTri:5, tTotal:55, cor:'VERDE',   turno:'D'},
     {pront:'P001', dh:new Date(2026,4,15,10,0), dateKey:'2026-05-15', anoMes:202605, tEspMed:40, tEspTri:5, tTotal:60, cor:'AMARELO', turno:'D'},
   ];
+  state.filt = state.raw.slice();
   state._retCache = null; state._retCacheKey = -1; state._filtVersion++;
   var rMai = monthReturnRate(state.filt, 202605);
   var rJun = monthReturnRate(state.filt, 202606);
@@ -342,6 +343,33 @@ try {
   if (pts4 !== 8) throw new Error('LARANJA/1ano esperado 8, obtido ' + pts4);
   __ok('calcularPontos — pontuação por cor e faixa etária correta');
 } catch(e) { __fail('calcularPontos — pontuação conhecida', e.message); }
+
+// ─── Caso 14: returns72 — filtro jun-only, índice em maio ───────────────
+try {
+  var dhMaiIdx = new Date(2026, 4, 31, 20, 0);
+  var dhJunRet = new Date(2026, 5,  1, 10, 0);
+  state.raw = [
+    {pront:'P777', dh:dhMaiIdx, dateKey:'2026-05-31', anoMes:202605, prof:'DR A'},
+    {pront:'P777', dh:dhJunRet, dateKey:'2026-06-01', anoMes:202606, prof:'DR B'}
+  ];
+  state.filt = [state.raw[1]];
+  state._rawVersion = (state._rawVersion || 0) + 1;
+  state._filtVersion = (state._filtVersion || 0) + 1;
+  state._retCache = null;
+  var res14 = returns72();
+  if (res14.ret.length !== 1) throw new Error('esperado 1 retorno com filtro jun-only, obtido ' + res14.ret.length);
+  if (res14.ret[0].anoMes !== 202606) throw new Error('anoMes retorno esperado 202606');
+  __ok('returns72 — filtro jun-only detecta retorno c/ índice fora do período');
+} catch(e) { __fail('returns72 — filtro jun-only detecta retorno c/ índice fora do período', e.message); }
+
+// ─── Caso 15: buildShortNameLookup — colisão JOÃO CARLOS ───────────────
+try {
+  var map15 = buildShortNameLookup(['JOÃO CARLOS SILVA', 'JOÃO CARLOS SOUZA', 'MARIA SANTOS']);
+  var labels15 = Array.from(map15.values()).filter(function(l){ return l.indexOf('JOÃO') >= 0; });
+  if (labels15.length !== 2) throw new Error('esperado 2 labels JOÃO, obtido ' + labels15.length);
+  if (labels15[0] === labels15[1]) throw new Error('colisão não resolvida: ' + labels15[0]);
+  __ok('buildShortNameLookup — desambigua JOÃO CARLOS SILVA vs SOUZA');
+} catch(e) { __fail('buildShortNameLookup — desambigua colisão', e.message); }
 
 </script>`;
 

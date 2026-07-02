@@ -411,6 +411,7 @@ export async function _execLoadFromDB(s) {
     rows.sort((a, b) => (a.dh?.getTime() || 0) - (b.dh?.getTime() || 0));
 
     state.raw = rows;
+    state._rawVersion++;
     state.files.hist = `banco local (${s.atendimentos.toLocaleString('pt-BR')} registros)`;
 
     if (triRows.length) {

@@ -1,37 +1,44 @@
-// Worker: lê File → CSV (XLSX.js via importScripts) → parse hist ou CID
+// Worker: lê File → sheet rows (XLSX.js via importScripts) → parse hist ou CID
 // Injetado em __HIST_WORKER_CODE__ por scripts/build.cjs (prefixo importScripts XLSX).
 import { parseHistLegacy, histDedupKey } from '../parsers/hist.js';
 import { parseCidFromText } from '../parsers/cid.js';
 import { rowToCsv } from '../utils/csv-escape.js';
 
-function bufToCsv(ab) {
-  const hdr = new Uint8Array(ab, 0, 4);
-  const isBin = (hdr[0] === 0xD0 && hdr[1] === 0xCF) || (hdr[0] === 0x50 && hdr[1] === 0x4B);
+function _fileMagic(ab) {
+  const u8 = new Uint8Array(ab);
+  return u8.length >= 2 ? [u8[0], u8[1]] : u8.length === 1 ? [u8[0], 0] : [0, 0];
+}
+
+function bufToSheetData(ab) {
+  const [a, b] = _fileMagic(ab);
+  const isBin = (a === 0xD0 && b === 0xCF) || (a === 0x50 && b === 0x4B);
   if (isBin) {
     if (typeof XLSX === 'undefined') throw new Error('XLSX nao disponivel para arquivo binario'); // eslint-disable-line no-undef
     // eslint-disable-next-line no-undef
     const wb = XLSX.read(new Uint8Array(ab), { type: 'array', raw: false });
     const sh = wb.Sheets[wb.SheetNames[0]];
     // eslint-disable-next-line no-undef
-    const arr = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: false });
-    return arr.map(r => rowToCsv(r)).join('\n');
+    const rows = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: false });
+    return { rows, csv: rows.map(r => rowToCsv(r)).join('\n') };
   }
   const utf8 = new TextDecoder('utf-8', { fatal: false }).decode(ab);
-  if (!(utf8.match(/�/g) || []).length || utf8.length < 100) return utf8;
-  return new TextDecoder('windows-1252').decode(ab);
+  const csv = (!(utf8.match(/�/g) || []).length || utf8.length < 100)
+    ? utf8
+    : new TextDecoder('windows-1252').decode(ab);
+  return { csv };
 }
 
-function parseHistCsvs(csvs, names) {
+function parseHistInputs(inputs, names) {
   const all = [], seen = new Set();
   let total = 0, invalid = 0;
-  for (let i = 0; i < csvs.length; i++) {
-    const { data: rows, total: t, invalid: inv } = parseHistLegacy(csvs[i]);
+  for (let i = 0; i < inputs.length; i++) {
+    const { data: rows, total: t, invalid: inv } = parseHistLegacy(inputs[i]);
     total += t; invalid += inv;
     for (const r of rows) {
       const k = histDedupKey(r);
       if (!seen.has(k)) { seen.add(k); all.push(r); }
     }
-    self.postMessage({ type: 'progress', i: i + 1, n: csvs.length, name: names[i], count: rows.length });
+    self.postMessage({ type: 'progress', i: i + 1, n: inputs.length, name: names[i], count: rows.length });
   }
   all.sort((a, b) => a.dh - b.dh);
   return { rows: all, total, invalid };
@@ -137,40 +144,41 @@ async function readFileAb(file) {
   );
 }
 
-function parseCsvs(csvs, names, mode) {
-  return mode === 'cid' ? parseCidCsvs(csvs, names) : parseHistCsvs(csvs, names);
-}
-
 self.onmessage = async function(e) {
   try {
-    const { files, csvs, names, mode = 'hist' } = e.data;
+    const { files, inputs, csvs, names, mode = 'hist' } = e.data;
 
     if (files && files.length) {
-      const csvList = [], nameList = [];
+      const inputList = [], nameList = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         self.postMessage({ type: 'read', i: i + 1, n: files.length, name: file.name, phase: 'lendo' });
         const ab = await readFileAb(file);
         self.postMessage({ type: 'read', i: i + 1, n: files.length, name: file.name, phase: 'convertendo', bytes: ab.byteLength });
-        const csv = bufToCsv(ab);
-        const headerLine = (csv || '').split(/\r?\n/)[0] || '';
+        const { rows, csv } = bufToSheetData(ab);
+        const headerLine = rows?.[0] ? rowToCsv(rows[0]) : ((csv || '').split(/\r?\n/)[0] || '');
         self.postMessage({ type: 'fingerprint', name: file.name, headerLine, mode });
-        csvList.push(csv);
+        inputList.push(rows || csv);
         nameList.push(file.name);
       }
       self.postMessage({ type: 'stage', stage: 'parsing' });
-      const result = parseCsvs(csvList, nameList, mode);
+      const result = mode === 'cid'
+        ? parseCidCsvs(inputList.map(x => typeof x === 'string' ? x : x.map(rowToCsv).join('\n')), nameList)
+        : parseHistInputs(inputList, nameList);
       self.postMessage({ type: 'done', ...result });
       return;
     }
 
-    if (csvs && names) {
-      const result = parseCsvs(csvs, names, mode);
+    const histInputs = inputs || csvs;
+    if (histInputs && names) {
+      const result = mode === 'cid'
+        ? parseCidCsvs(histInputs, names)
+        : parseHistInputs(histInputs, names);
       self.postMessage({ type: 'done', ...result });
       return;
     }
 
-    throw new Error('Worker: payload invalido (esperado files ou csvs)');
+    throw new Error('Worker: payload invalido (esperado files ou inputs/csvs)');
   } catch (err) {
     self.postMessage({ type: 'error', message: err.message || String(err) });
   }

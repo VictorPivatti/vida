@@ -24,6 +24,7 @@ import { toggleTheme, applyTheme } from './ui/theme.js';
 
 import * as Render from './render/index.js';
 import { loadUnitConfig, autoLoadFromDB, bindEvents, checkDeps, showPrivacyNotice } from './bootstrap.js';
+import { startTtlCountdown } from './ui/ttl.js';
 import { refreshDbStats } from './storage/dbstats.js';
 import { initPresentationMode } from './ui/presentation.js';
 
@@ -35,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
   bindEvents();
   refreshDbStats().catch?.(() => {});
   checkDeps();
+  startTtlCountdown();
   try { showPrivacyNotice(); } catch (e) { console.warn('[VIDA] privacy:', e); }
   autoLoadFromDB().catch(() => {});
 });

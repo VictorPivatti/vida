@@ -1,5 +1,6 @@
 // parsers/workbook.js — low-level I/O and encoding helpers
 import { rowToCsv } from '../utils/csv-escape.js';
+import { parseCsvToRows } from '../utils/csv-parse.js';
 // NOTE: smartDecode, xlsxExtract, sheetData, readWorkbook depend on browser APIs
 // (TextDecoder, FileReader, DecompressionStream, XLSX CDN global).
 
@@ -14,13 +15,14 @@ function _dbgTimeEnd(label) { if (VIDA_DEBUG) console.timeEnd(label); }
 export const norm = s =>
   String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
-/** Decode named + numeric XML entities. */
+/** Decode named + numeric XML entities (&amp; must be last). */
 export function decodeXmlEntities(s) {
   return s
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"').replace(/&apos;/g, "'")
     .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))
-    .replace(/&#([0-9]+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)));
+    .replace(/&#([0-9]+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)))
+    .replace(/&amp;/g, '&');
 }
 
 /**
@@ -124,57 +126,142 @@ export function smartDecode(buf) {
   return new TextDecoder('windows-1252').decode(buf);
 }
 
+function _findEocdOffset(dv, length) {
+  const minEocd = 22;
+  const maxComment = 0xFFFF;
+  const start = Math.max(0, length - minEocd - maxComment);
+  for (let i = length - minEocd; i >= start; i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) return i;
+  }
+  return -1;
+}
+
+function _readUint64(dv, off) {
+  const lo = dv.getUint32(off, true);
+  const hi = dv.getUint32(off + 4, true);
+  return hi * 0x100000000 + lo;
+}
+
+function _parseZip64Extra(buf, extraOff, extraLen) {
+  let pos = extraOff;
+  const end = extraOff + extraLen;
+  const out = {};
+  while (pos + 4 <= end) {
+    const tag = buf[pos] | (buf[pos + 1] << 8);
+    const size = buf[pos + 2] | (buf[pos + 3] << 8);
+    pos += 4;
+    if (pos + size > end) break;
+    if (tag === 0x0001 && size >= 8) {
+      let p = pos;
+      if (size >= 8) { out.uSize = _readUint64(new DataView(buf.buffer, buf.byteOffset + p, 8), 0); p += 8; }
+      if (p - pos + 8 <= size) { out.cSize = _readUint64(new DataView(buf.buffer, buf.byteOffset + p, 8), 0); p += 8; }
+      if (p - pos + 8 <= size) { out.offset = _readUint64(new DataView(buf.buffer, buf.byteOffset + p, 8), 0); }
+    }
+    pos += size;
+  }
+  return out;
+}
+
+async function _inflateZip(compressed, method) {
+  if (method === 0) return new TextDecoder('utf-8').decode(compressed);
+  const ds = new DecompressionStream('deflate-raw');
+  const writer = ds.writable.getWriter();
+  const reader = ds.readable.getReader();
+  writer.write(new Uint8Array(compressed));
+  writer.close();
+  const parts = [];
+  while (true) { const { done, value } = await reader.read(); if (done) break; parts.push(value); }
+  const out = new Uint8Array(parts.reduce((s, p) => s + p.length, 0));
+  let pos = 0;
+  for (const p of parts) { out.set(p, pos); pos += p.length; }
+  return new TextDecoder('utf-8').decode(out);
+}
+
+/** Normaliza linha de cabeçalho para comparação de fingerprint. */
+export function fpHeaderNorm(line) {
+  return String(line ?? '').trim().replace(/;+$/, '');
+}
+
+/** Valida cabeçalho extraído contra fingerprint salvo (_fp_hist etc.). */
+export function matchesLayoutFingerprint(type, csvOrHeader) {
+  if (typeof localStorage === 'undefined') return true;
+  try {
+    const stored = localStorage.getItem('_fp_' + type);
+    if (!stored) return true;
+    const headerLine = String(csvOrHeader ?? '').split(/\r?\n/)[0] || String(csvOrHeader ?? '');
+    return fpHeaderNorm(stored) === fpHeaderNorm(headerLine);
+  } catch { return true; }
+}
+
 /**
- * Read a named file entry from a ZIP ArrayBuffer using DecompressionStream.
- * Browser-only.
+ * Read a named file entry from a ZIP ArrayBuffer via central directory.
+ * Funciona com data descriptors (bit 3) e ZIP64.
+ * Browser-only (DecompressionStream).
  */
 export async function readZipEntry(arrayBuf, targetName) {
   _dbg('[VIDA:zip] readZipEntry | alvo:', targetName, '| buf:', arrayBuf.byteLength, 'bytes');
   _dbgTime('[VIDA:zip] readZipEntry ' + targetName);
   const buf = new Uint8Array(arrayBuf);
   const dv = new DataView(arrayBuf);
-  let off = 0, idx = 0;
-  while (off < buf.length - 30) {
-    if (dv.getUint32(off, true) !== 0x04034B50) break;
-    const gpFlag = dv.getUint16(off + 6, true);
-    const method = dv.getUint16(off + 8, true);
-    const cSize = dv.getUint32(off + 18, true);
-    const nameLen = dv.getUint16(off + 26, true);
-    const extraLen = dv.getUint16(off + 28, true);
-    const name = new TextDecoder().decode(buf.slice(off + 30, off + 30 + nameLen));
-    _dbg('[VIDA:zip] entrada #' + idx + ' | nome:', name, '| cSize:', cSize,
-      '| gpFlag: 0x' + gpFlag.toString(16), '| bit3(data-descriptor):', !!(gpFlag & 8),
-      '| method:', method);
-    if (cSize === 0 && (gpFlag & 8)) console.warn('[VIDA:zip] ATENCAO: cSize=0 + bit3 set (ZIP streaming) -- DecompressionStream pode travar');
-    if (cSize === 0xFFFFFFFF) console.warn('[VIDA:zip] ATENCAO: cSize=0xFFFFFFFF (ZIP64) -- loop ira travar');
+  const len = buf.length;
+  const eocdOff = _findEocdOffset(dv, len);
+  if (eocdOff < 0) {
+    _dbg('[VIDA:zip] EOCD não encontrado');
+    _dbgTimeEnd('[VIDA:zip] readZipEntry ' + targetName);
+    return null;
+  }
+  let cdSize = dv.getUint32(eocdOff + 12, true);
+  let cdOffset = dv.getUint32(eocdOff + 16, true);
+  if (cdOffset === 0xFFFFFFFF || cdSize === 0xFFFFFFFF) {
+    for (let i = eocdOff - 20; i >= Math.max(0, eocdOff - 65557); i--) {
+      if (dv.getUint32(i, true) === 0x07064b64) {
+        const z64Off = _readUint64(dv, i + 8);
+        const z64Dv = new DataView(arrayBuf, z64Off, 56);
+        if (z64Dv.getUint32(0, true) === 0x06064b50) {
+          cdSize = Number(_readUint64(z64Dv, 40));
+          cdOffset = Number(_readUint64(z64Dv, 48));
+        }
+        break;
+      }
+    }
+  }
+  let off = cdOffset;
+  const cdEnd = cdOffset + cdSize;
+  let idx = 0;
+  while (off + 46 <= cdEnd && off + 4 <= len) {
+    if (dv.getUint32(off, true) !== 0x02014b50) break;
+    const method = dv.getUint16(off + 10, true);
+    let cSize = dv.getUint32(off + 20, true);
+    const nameLen = dv.getUint16(off + 28, true);
+    const extraLen = dv.getUint16(off + 30, true);
+    const commentLen = dv.getUint16(off + 32, true);
+    let localHeaderOffset = dv.getUint32(off + 42, true);
+    const name = new TextDecoder().decode(buf.subarray(off + 46, off + 46 + nameLen));
+    if (cSize === 0xFFFFFFFF || localHeaderOffset === 0xFFFFFFFF) {
+      const z = _parseZip64Extra(buf, off + 46 + nameLen, extraLen);
+      if (z.cSize != null) cSize = z.cSize;
+      if (z.offset != null) localHeaderOffset = z.offset;
+    }
+    _dbg('[VIDA:zip] CD #' + idx + ' |', name, '| cSize:', cSize, '| method:', method);
     idx++;
-    const dataOff = off + 30 + nameLen + extraLen;
     if (name === targetName) {
-      _dbg('[VIDA:zip] alvo encontrado | descomprimindo | cSize efetivo:', cSize);
+      const lhNameLen = dv.getUint16(localHeaderOffset + 26, true);
+      const lhExtraLen = dv.getUint16(localHeaderOffset + 28, true);
+      const dataOff = localHeaderOffset + 30 + lhNameLen + lhExtraLen;
       const compressed = arrayBuf.slice(dataOff, dataOff + cSize);
-      if (method === 0) {
-        const result = new TextDecoder('utf-8').decode(compressed);
-        _dbg('[VIDA:zip] method=stored | tamanho:', result.length, 'chars');
+      try {
+        const result = await _inflateZip(compressed, method);
         _dbgTimeEnd('[VIDA:zip] readZipEntry ' + targetName);
         return result;
+      } catch (err) {
+        console.warn('[VIDA:zip] falha ao descomprimir', targetName, err.message);
+        _dbgTimeEnd('[VIDA:zip] readZipEntry ' + targetName);
+        return null;
       }
-      const ds = new DecompressionStream('deflate-raw');
-      const writer = ds.writable.getWriter();
-      const reader = ds.readable.getReader();
-      writer.write(new Uint8Array(compressed));
-      writer.close();
-      const parts = [];
-      while (true) { const { done, value } = await reader.read(); if (done) break; parts.push(value); }
-      const out = new Uint8Array(parts.reduce((s, p) => s + p.length, 0));
-      let pos = 0; for (const p of parts) { out.set(p, pos); pos += p.length; }
-      const result = new TextDecoder('utf-8').decode(out);
-      _dbg('[VIDA:zip] descomprimido | tamanho:', result.length, 'chars');
-      _dbgTimeEnd('[VIDA:zip] readZipEntry ' + targetName);
-      return result;
     }
-    off = dataOff + cSize;
+    off += 46 + nameLen + extraLen + commentLen;
   }
-  _dbg('[VIDA:zip] alvo nao encontrado:', targetName, '| entradas lidas:', idx);
+  _dbg('[VIDA:zip] alvo não encontrado:', targetName, '| entradas CD:', idx);
   _dbgTimeEnd('[VIDA:zip] readZipEntry ' + targetName);
   return null;
 }
@@ -183,7 +270,7 @@ export async function readZipEntry(arrayBuf, targetName) {
  * Extract CSV from xlsx by reading sharedStrings.xml directly (avoids XLSX.read).
  * Browser-only.
  */
-export async function xlsxExtract(ab) {
+export async function xlsxExtract(ab, fpType = 'hist') {
   _dbg('[VIDA:xlsx] xlsxExtract | buf:', ab.byteLength, 'bytes');
   _dbgTime('[VIDA:xlsx] xlsxExtract');
   const xml = await readZipEntry(ab, 'xl/sharedStrings.xml');
@@ -204,8 +291,18 @@ export async function xlsxExtract(ab) {
     strings.push(fixMojibake(decodeXmlEntities(seg)).normalize('NFC'));
   }
   _dbg('[VIDA:xlsx] <si> processados:', strings.length);
+  if (strings.length <= 1) {
+    _dbgTimeEnd('[VIDA:xlsx] xlsxExtract');
+    return null;
+  }
+  const csv = strings.join('\n');
+  if (!csv.includes(';') || !matchesLayoutFingerprint(fpType, csv)) {
+    _dbg('[VIDA:xlsx] xlsxExtract rejeitado — sem ; ou fingerprint diverge');
+    _dbgTimeEnd('[VIDA:xlsx] xlsxExtract');
+    return null;
+  }
   _dbgTimeEnd('[VIDA:xlsx] xlsxExtract');
-  return strings.length > 1 ? strings.join('\n') : null;
+  return csv;
 }
 
 /**
@@ -253,14 +350,7 @@ export function readWorkbook(file) {
  * Works in both browser and Node.
  */
 export function parseCsvDirect(text) {
-  const lines = text.split(/\r?\n/);
-  const sep = lines[0] && lines[0].includes(';') ? ';' : ',';
-  const rows = [];
-  for (const line of lines) {
-    if (!line.trim()) continue;
-    rows.push(line.split(sep));
-  }
-  return { rows, csv: text };
+  return parseCsvToRows(text);
 }
 
 /**

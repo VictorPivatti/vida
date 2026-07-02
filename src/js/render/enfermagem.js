@@ -1,7 +1,7 @@
 // render/enfermagem.js — Enfermagem pane rendering
 import { state } from '../state.js';
 import { $, esc, fmt, shortName, kpi } from '../utils/dom.js';
-import { chart, gridColor, tickColor, axes } from '../ui/charts.js';
+import { chart, chartSortedHbar, gridColor, tickColor, axes } from '../ui/charts.js';
 import { catOfEsp, procTipoKey, procTipoLabel } from '../parsers/proc.js';
 
 function sum(arr, fn) { return arr.reduce((s, r) => s + (fn(r) || 0), 0); }
@@ -47,7 +47,11 @@ export function renderEnfermagem() {
   const tiposEnf = {};
   enfRows.forEach(r => { const t = procTipoLabel(r.proc); tiposEnf[t] = (tiposEnf[t] || 0) + r.qde; });
   const tiposEnfArr = Object.entries(tiposEnf).sort((a, b) => b[1] - a[1]);
-  chart('chartEnfProcPerfil', { type: 'doughnut', data: { labels: tiposEnfArr.map(x => x[0]), datasets: [{ data: tiposEnfArr.map(x => x[1]), backgroundColor: ['#7b61c4', '#1357a6', '#0f4789', '#4480c2', '#38ac8b', '#e8a93b', '#c8493e', '#4aa3c9'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: tickColor(), usePointStyle: true, font: { size: 10 } } } } } });
+  if (tiposEnfArr.length > 4) {
+    chartSortedHbar('chartEnfProcPerfil', tiposEnfArr, { colors: ['#7b61c4', '#1357a6', '#0f4789', '#4480c2', '#38ac8b', '#e8a93b', '#c8493e', '#4aa3c9'] });
+  } else {
+    chart('chartEnfProcPerfil', { type: 'doughnut', data: { labels: tiposEnfArr.map(x => x[0]), datasets: [{ data: tiposEnfArr.map(x => x[1]), backgroundColor: ['#7b61c4', '#1357a6', '#0f4789', '#4480c2', '#38ac8b', '#e8a93b', '#c8493e', '#4aa3c9'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: tickColor(), usePointStyle: true, font: { size: 10 } } } } } });
+  }
 
   $('tableEnfRanking').innerHTML = `<thead><tr><th>#</th><th>Enfermeiro</th><th>Total proc.</th><th>Triagens</th><th>EV</th><th>IM</th><th>VO</th><th>Outros</th></tr></thead><tbody>${enfList.map((r, i) => `<tr>
     <td class="mono muted">${i + 1}</td>
@@ -72,9 +76,9 @@ export function renderEnfermagem() {
   chart('chartTecProd', { type: 'bar', data: { labels: top8tec.map(r => shortName(r.prof)), datasets: [{ data: top8tec.map(r => r.total), backgroundColor: '#1357a6', borderRadius: 3 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: axes() } });
 
   const viasLabels = ['EV', 'IM', 'VO', 'SC', 'Neb', 'Curativo', 'Sondagem', 'Outros'];
-  const viasCores = ['#4480c2', '#e8a93b', '#38ac8b', '#7b61c4', '#4aa3c9', '#e8a93b', '#ec4899', '#64748b'];
-  const viasData = viasLabels.map(v => tecRows.filter(r => procTipoLabel(r.proc) === v).reduce((s, r) => s + r.qde, 0));
-  chart('chartTecVias', { type: 'doughnut', data: { labels: viasLabels, datasets: [{ data: viasData, backgroundColor: viasCores, borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: tickColor(), usePointStyle: true, font: { size: 10 } } } } } });
+  const viasCores = ['#4480c2', '#e8a93b', '#38ac8b', '#7b61c4', '#4aa3c9', '#d97706', '#ec4899', '#64748b'];
+  const viasEntries = viasLabels.map((v, i) => [v, tecRows.filter(r => procTipoLabel(r.proc) === v).reduce((s, r) => s + r.qde, 0), viasCores[i]]);
+  chartSortedHbar('chartTecVias', viasEntries);
 
   $('tableTecRanking').innerHTML = `<thead><tr><th>#</th><th>Técnico</th><th>Total</th><th>EV</th><th>IM</th><th>VO</th><th>SC</th><th>Neb</th><th>Outros</th></tr></thead><tbody>${tecList.map((r, i) => `<tr>
     <td class="mono muted">${i + 1}</td>

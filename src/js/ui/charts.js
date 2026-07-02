@@ -49,13 +49,12 @@ export const targetLinePlugin = {
     const lines = opts?.lines || [];
     if (!lines.length) return;
     const { ctx, chartArea: { left, right, top, bottom }, scales } = chart;
-    const yScale = scales.y;
-    if (!yScale) return;
-
     const visible = [];
     lines.forEach(line => {
       if (line.value == null || Number.isNaN(line.value)) return;
-      const py = yScale.getPixelForValue(line.value);
+      const scale = line.axis === 'y1' ? scales.y1 : scales.y;
+      if (!scale) return;
+      const py = scale.getPixelForValue(line.value);
       if (py < top || py > bottom) return;
       const color = '#9aa6b6';
       visible.push({ line, py, color, label: line.label || 'meta' });
@@ -105,6 +104,31 @@ export const targetLinePlugin = {
 export function gridColor(){return state.theme==="dark"?"rgba(255,255,255,.06)":"rgba(0,0,0,.07)"}
 export function tickColor(){return state.theme==="dark"?"#7a8da3":"#66758a"}
 export function axes(){return{x:{grid:{color:gridColor()},ticks:{color:tickColor()}},y:{grid:{color:gridColor()},ticks:{color:tickColor()}}}}
+
+/** Horizontal bar chart from [label, value] or [label, value, color] pairs, sorted descending. */
+export function chartSortedHbar(id, entries, { colors, tooltipUnit = '' } = {}) {
+  const normalized = entries.map(e => Array.isArray(e) ? e : [e.label, e.value, e.color]);
+  const sorted = [...normalized].sort((a, b) => b[1] - a[1]).reverse();
+  const palette = colors || ['#1357a6', '#38ac8b', '#7b61c4', '#e8a93b', '#4480c2', '#4aa3c9', '#c8493e', '#64748b'];
+  const bg = sorted.map((row, i) => row[2] || palette[i % palette.length]);
+  chart(id, {
+    type: 'bar',
+    data: {
+      labels: sorted.map(row => row[0]),
+      datasets: [{ data: sorted.map(row => row[1]), backgroundColor: bg, borderRadius: 3 }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => `${c.label}: ${c.parsed.x}${tooltipUnit ? ' ' + tooltipUnit : ''}` } }
+      },
+      scales: axes()
+    }
+  });
+}
 
 export function chart(id,cfg){
   if(state.charts[id]){ state.charts[id].destroy(); delete state.charts[id]; }
