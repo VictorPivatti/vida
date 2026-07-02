@@ -177,9 +177,14 @@ async function _inflateZip(compressed, method) {
   return new TextDecoder('utf-8').decode(out);
 }
 
-/** Normaliza linha de cabeçalho para comparação de fingerprint. */
+/** Normaliza linha de cabeçalho para comparação de fingerprint (BOM, aspas, espaços em ;). */
 export function fpHeaderNorm(line) {
-  return String(line ?? '').trim().replace(/;+$/, '');
+  return String(line ?? '')
+    .replace(/^\uFEFF/, '')
+    .replace(/^["']+|["']+$/g, '')
+    .trim()
+    .replace(/;+$/, '')
+    .replace(/\s*;\s*/g, ';');
 }
 
 /** Valida cabeçalho extraído contra fingerprint salvo (_fp_hist etc.). */
@@ -191,6 +196,16 @@ export function matchesLayoutFingerprint(type, csvOrHeader) {
     const headerLine = String(csvOrHeader ?? '').split(/\r?\n/)[0] || String(csvOrHeader ?? '');
     return fpHeaderNorm(stored) === fpHeaderNorm(headerLine);
   } catch { return true; }
+}
+
+/** Aviso quando o export Vivver não é o histórico Manchester padrão (ex.: Tempo Médio ATM). */
+export function histLayoutWarning(headerLine) {
+  const h = fpHeaderNorm(headerLine).toLowerCase();
+  if (/media_recepcao_triagem|media_tempo_atendimento|total_pacientes/.test(h) &&
+      !/cod_classif|cor_rgb|classificacao/.test(h)) {
+    return 'Arquivo parece ser relatório de Tempo Médio (sem classificação Manchester). No Vivver, prefira Histórico de Atendimentos; o VIDA tentará leitura por cabeçalho.';
+  }
+  return null;
 }
 
 /**

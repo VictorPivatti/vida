@@ -1,6 +1,7 @@
 import { splitCsvLine, csvRowsFromText } from '../../src/js/utils/csv-parse.js';
 import { rowToCsv } from '../../src/js/utils/csv-escape.js';
-import { csvRows, parseHistLegacy, histInputToLines, histParseInput, isSheetRowMatrix } from '../../src/js/parsers/hist.js';
+import { csvRows, parseHistLegacy, histInputToLines, histParseInput, isSheetRowMatrix, pickHistParse } from '../../src/js/parsers/hist.js';
+import { fpHeaderNorm } from '../../src/js/parsers/workbook.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -66,6 +67,21 @@ ok('parseHistLegacy: Date object col 9', parseHistLegacy(dateMatrix).data.length
 // CSV string path (xlsxExtract / arquivo .csv)
 ok('histParseInput: csv quando sem matriz', typeof histParseInput(null, HIST_MIN) === 'string');
 ok('histParseInput csv: 5 rows', parseHistLegacy(histParseInput(null, HIST_MIN)).data.length === 5);
+
+// Regressão: cabeçalho Vivver alternativo (dh_recepcao col 7, sem cor Manchester)
+const atmHeader = 'codunidade;nomunidade;numprontuario;nompaciente;idade;tipo_entrada;id_recepcao;dh_recepcao;dh_acolhimento;dh_atendimento;codespecialidade;nomespecialidade;codprofissional;nomprofissional;recepcao_triagem;triagem_atendimento;recepcao_alta';
+const atmRow = Array(17).fill('');
+atmRow[2] = '1001';
+atmRow[3] = 'PACIENTE TESTE';
+atmRow[5] = 'NORMAL';
+atmRow[7] = '15/01/2026 10:00:00';
+atmRow[9] = '15/01/2026 11:00:00';
+atmRow[13] = 'DR SILVA';
+const atmCsv = atmHeader + '\n' + atmRow.join(';');
+const atmPick = pickHistParse(atmCsv);
+ok('pickHistParse: layout ATM dh col 7', atmPick.data.length === 1 && atmPick.data[0].prof === 'DR SILVA');
+
+ok('fpHeaderNorm: ignora BOM e espaços em ;', fpHeaderNorm('\uFEFFa; b;c') === 'a;b;c');
 
 if (failed > 0) { console.error(failed + ' test(s) failed'); process.exit(1); }
 console.log('csv-parse.test.mjs: all OK');

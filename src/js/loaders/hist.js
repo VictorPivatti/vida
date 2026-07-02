@@ -4,9 +4,10 @@
 //       This module coexists with it during the cutover phase.
 
 import { state } from '../state.js';
-import { parseHistLegacy, safeMinutes, histDedupKey, histParseInput } from '../parsers/hist.js';
+import { parseHistLegacy, safeMinutes, histDedupKey, histParseInput, pickHistParse } from '../parsers/hist.js';
 import { parseCidFromText } from '../parsers/cid.js';
 import { bufferToHistData, bufferToCsv } from '../parsers/buffer-to-csv.js';
+import { fpHeaderNorm, histLayoutWarning } from '../parsers/workbook.js';
 import { rowToCsv } from '../utils/csv-escape.js';
 import { showToast } from '../ui/toast.js';
 import { showLoading, hideLoading, setProgress } from '../ui/progress.js';
@@ -28,15 +29,17 @@ function _checkLayoutFingerprint(type, csv, name) {
   if (typeof localStorage === 'undefined') return;
   try {
     const key = '_fp_' + type;
-    const headerLine = (csv || '').split(/\r?\n/)[0].trim().replace(/;+$/, '');
+    const headerLine = fpHeaderNorm((csv || '').split(/\r?\n/)[0]);
     if (!headerLine) return;
     const stored = localStorage.getItem(key);
     if (!stored) { localStorage.setItem(key, headerLine); return; }
-    if (stored.replace(/;+$/, '') !== headerLine) {
+    if (fpHeaderNorm(stored) !== headerLine) {
       console.warn('[fingerprint] Layout de ' + type + ' mudou em "' + name + '". Esperado:\n' + stored + '\nRecebido:\n' + headerLine);
       showToast('⚠ Layout de ' + type + ' diferente do esperado em "' + name + '". Verifique se o arquivo é do formato correto.', 'warn');
       localStorage.setItem(key, headerLine);
     }
+    const hint = type === 'hist' ? histLayoutWarning(headerLine) : null;
+    if (hint) showToast(hint, 'warn', 8000);
   } catch (e) {}
 }
 
@@ -171,7 +174,7 @@ export async function workerRun(type, payload) {
     let totTotal = 0, totInvalid = 0;
     const all = [], seen = new Set();
     for (let i = 0; i < inputs.length; i++) {
-      const { data: rows, total, invalid } = parseHistLegacy(inputs[i]);
+      const { data: rows, total, invalid } = pickHistParse(inputs[i]);
       totTotal += total; totInvalid += invalid;
       for (const r of rows) { const k = histDedupKey(r); if (!seen.has(k)) { seen.add(k); all.push(r); } }
       setProgress(50 + Math.round((i + 1) / inputs.length * 45), names[i] + ': ' + rows.length.toLocaleString('pt-BR') + ' registros');

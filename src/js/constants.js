@@ -62,7 +62,7 @@ export const ALIAS = {
   hist: {
     pront:    ["numprontuario","prontuario","prontuário","cod paciente","codigo paciente"],
     paciente: ["nompaciente","paciente","nome paciente","nome"],
-    cor:      ["classificacao","classificação","cor","risco","classificacao risco","nomunidade"],
+    cor:      ["classificacao","classificação","cor","risco","classificacao risco"],
     prof:     ["nomprofissional","medico","médico","profissional","profissional atendimento"],
     tipo:     ["tipo_entrada","ipo_entrada","tipo entrada","entrada","procedencia","procedência"],
     idade:    ["tidade","idade"],

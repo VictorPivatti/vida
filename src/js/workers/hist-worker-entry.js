@@ -1,6 +1,6 @@
 // Worker: lê File → sheet rows (XLSX.js via importScripts) → parse hist ou CID
 // Injetado em __HIST_WORKER_CODE__ por scripts/build.cjs (prefixo importScripts XLSX).
-import { parseHistLegacy, histDedupKey, histParseInput } from '../parsers/hist.js';
+import { parseHistLegacy, histDedupKey, histParseInput, pickHistParse } from '../parsers/hist.js';
 import { parseCidFromText } from '../parsers/cid.js';
 import { xlsxExtract } from '../parsers/workbook.js';
 import { rowToCsv } from '../utils/csv-escape.js';
@@ -35,7 +35,7 @@ function parseHistInputs(inputs, names) {
   const all = [], seen = new Set();
   let total = 0, invalid = 0;
   for (let i = 0; i < inputs.length; i++) {
-    const { data: rows, total: t, invalid: inv } = parseHistLegacy(inputs[i]);
+    const { data: rows, total: t, invalid: inv } = pickHistParse(inputs[i]);
     total += t; invalid += inv;
     for (const r of rows) {
       const k = histDedupKey(r);

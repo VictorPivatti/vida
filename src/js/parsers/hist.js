@@ -295,6 +295,35 @@ export function parseHistLegacy(csvOrRows) {
   return { data: rows.sort((a, b) => a.dh - b.dh), total: Math.max(lines.length - 1, 0), invalid, msg: `Modo compatibilidade: ${invalid} linhas sem data válida foram ignoradas.` };
 }
 
+/** Escolhe legacy vs cabeçalho sem gravar em state.quality (worker / loader). */
+export function pickHistParse(input) {
+  const lines = histInputToLines(input);
+  const legacy = parseHistLegacy(input);
+  const modernData = parseHist(lines, false);
+  const total = Math.max(lines.length - 1, 0);
+  const modern = {
+    data: modernData,
+    total,
+    invalid: Math.max(0, total - modernData.length),
+    msg: `${Math.max(0, total - modernData.length)} linhas sem data válida (cabeçalho).`,
+  };
+  function fieldFilled(r, field) {
+    const v = r[field];
+    if (v == null || !String(v).trim()) return false;
+    if (field === 'cor' && String(v).trim().toUpperCase() === 'SEM CLASSIFICACAO') return false;
+    return true;
+  }
+  function completeness(rows) {
+    if (!rows.length) return 0;
+    const sample = rows.slice(0, 200);
+    const criticals = ['dh', 'prof', 'cor'];
+    const filled = sample.reduce((s, r) => s + criticals.filter(f => fieldFilled(r, f)).length, 0);
+    return (filled / (sample.length * criticals.length)) * 0.7 + (rows.length / Math.max(modern.total, legacy.total, 1)) * 0.3;
+  }
+  const mScore = completeness(modern.data), lScore = completeness(legacy.data);
+  return mScore >= lScore ? modern : legacy;
+}
+
 /**
  * Parse historical attendance using header-based column detection.
  * Returns array of row objects (sorted by dh).
