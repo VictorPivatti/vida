@@ -1,7 +1,8 @@
 // Worker: lê File → sheet rows (XLSX.js via importScripts) → parse hist ou CID
 // Injetado em __HIST_WORKER_CODE__ por scripts/build.cjs (prefixo importScripts XLSX).
-import { parseHistLegacy, histDedupKey } from '../parsers/hist.js';
+import { parseHistLegacy, histDedupKey, histParseInput } from '../parsers/hist.js';
 import { parseCidFromText } from '../parsers/cid.js';
+import { xlsxExtract } from '../parsers/workbook.js';
 import { rowToCsv } from '../utils/csv-escape.js';
 
 function _fileMagic(ab) {
@@ -9,16 +10,18 @@ function _fileMagic(ab) {
   return u8.length >= 2 ? [u8[0], u8[1]] : u8.length === 1 ? [u8[0], 0] : [0, 0];
 }
 
-function bufToSheetData(ab) {
+async function bufToSheetData(ab) {
   const [a, b] = _fileMagic(ab);
   const isBin = (a === 0xD0 && b === 0xCF) || (a === 0x50 && b === 0x4B);
   if (isBin) {
+    const extracted = await xlsxExtract(ab, 'hist');
+    if (extracted && extracted.includes(';')) return { csv: extracted };
     if (typeof XLSX === 'undefined') throw new Error('XLSX nao disponivel para arquivo binario'); // eslint-disable-line no-undef
     // eslint-disable-next-line no-undef
-    const wb = XLSX.read(new Uint8Array(ab), { type: 'array', raw: false });
+    const wb = XLSX.read(new Uint8Array(ab), { type: 'array', raw: true });
     const sh = wb.Sheets[wb.SheetNames[0]];
     // eslint-disable-next-line no-undef
-    const rows = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: false });
+    const rows = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: true });
     return { rows, csv: rows.map(r => rowToCsv(r)).join('\n') };
   }
   const utf8 = new TextDecoder('utf-8', { fatal: false }).decode(ab);
@@ -155,10 +158,10 @@ self.onmessage = async function(e) {
         self.postMessage({ type: 'read', i: i + 1, n: files.length, name: file.name, phase: 'lendo' });
         const ab = await readFileAb(file);
         self.postMessage({ type: 'read', i: i + 1, n: files.length, name: file.name, phase: 'convertendo', bytes: ab.byteLength });
-        const { rows, csv } = bufToSheetData(ab);
+        const { rows, csv } = await bufToSheetData(ab);
         const headerLine = rows?.[0] ? rowToCsv(rows[0]) : ((csv || '').split(/\r?\n/)[0] || '');
         self.postMessage({ type: 'fingerprint', name: file.name, headerLine, mode });
-        inputList.push(rows || csv);
+        inputList.push(histParseInput(rows, csv));
         nameList.push(file.name);
       }
       self.postMessage({ type: 'stage', stage: 'parsing' });

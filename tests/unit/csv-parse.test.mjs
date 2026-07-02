@@ -1,6 +1,12 @@
 import { splitCsvLine, csvRowsFromText } from '../../src/js/utils/csv-parse.js';
 import { rowToCsv } from '../../src/js/utils/csv-escape.js';
-import { csvRows, parseHistLegacy } from '../../src/js/parsers/hist.js';
+import { csvRows, parseHistLegacy, histInputToLines, histParseInput, isSheetRowMatrix } from '../../src/js/parsers/hist.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const HIST_MIN = fs.readFileSync(path.join(__dirname, '../../fixtures/hist_min.csv'), 'utf-8');
 
 let failed = 0;
 function ok(name, cond) {
@@ -35,6 +41,31 @@ ok('csvRows: nome com ; intacto', viaCsvRows[1][6] === 'João; Maria');
 const legacyRows = [viaCsvRows[0], viaCsvRows[1]];
 const fromRows = parseHistLegacy(legacyRows);
 ok('parseHistLegacy: aceita string[][]', fromRows.data.length === 1 && fromRows.data[0]._nomeRaw.includes(';'));
+
+// Regressão Phase 1: array de strings (linhas CSV) não pode zerar parse
+const rawLines = HIST_MIN.split(/\r?\n/).filter(l => l.trim());
+const mistaken = parseHistLegacy(rawLines);
+ok('parseHistLegacy: array de linhas CSV → 5 rows', mistaken.data.length === 5);
+
+// XLSX Vivver: linha inteira em uma célula
+const singleCell = rawLines.map(l => [l]);
+ok('histInputToLines: expande célula única', histInputToLines(singleCell)[1].length >= 20);
+ok('parseHistLegacy: célula única com ; → 5 rows', parseHistLegacy(singleCell).data.length === 5);
+
+// Preferir matriz multi-coluna (sheet_to_json) sobre CSV serializado — preserva Date/serial Excel
+const properRows = csvRows(HIST_MIN);
+const quotedCsv = properRows.map(rowToCsv).join('\n');
+ok('isSheetRowMatrix: multi-col', isSheetRowMatrix(properRows));
+ok('histParseInput: prefere matriz multi-col', Array.isArray(histParseInput(properRows, quotedCsv)));
+ok('histParseInput matrix: 5 rows', parseHistLegacy(histParseInput(properRows, quotedCsv)).data.length === 5);
+
+const dateMatrix = [properRows[0], properRows[1].slice()];
+dateMatrix[1][9] = new Date(2026, 0, 15, 10, 0, 0);
+ok('parseHistLegacy: Date object col 9', parseHistLegacy(dateMatrix).data.length === 1);
+
+// CSV string path (xlsxExtract / arquivo .csv)
+ok('histParseInput: csv quando sem matriz', typeof histParseInput(null, HIST_MIN) === 'string');
+ok('histParseInput csv: 5 rows', parseHistLegacy(histParseInput(null, HIST_MIN)).data.length === 5);
 
 if (failed > 0) { console.error(failed + ' test(s) failed'); process.exit(1); }
 console.log('csv-parse.test.mjs: all OK');

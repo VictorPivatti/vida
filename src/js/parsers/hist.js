@@ -6,7 +6,7 @@
 
 import { CONFIG, ALIAS, FALLBACK } from '../constants.js';
 import { norm, fixMojibake, fixMojibakeMac } from './workbook.js';
-import { csvRowsFromText } from '../utils/csv-parse.js';
+import { csvRowsFromText, splitCsvLine } from '../utils/csv-parse.js';
 function fixStr(s) { const t = fixMojibake(s); return t !== s ? t : fixMojibakeMac(s); }
 import { ymd, monthKey } from '../utils/dates.js';
 import { state } from '../state.js';
@@ -26,6 +26,59 @@ export function histDedupKey(r) {
 /** Safe string coercion for legacy positional fields. */
 export function legacyText(v) { return String(v ?? ''); }
 
+/** Coerce a sheet cell (string, Date, Excel rich-text object, etc.) for legacy parsing. */
+export function legacyCell(row, idx) {
+  const v = row?.[idx];
+  if (v == null || v === '') return '';
+  if (v instanceof Date) return v;
+  if (typeof v === 'object') {
+    if (Array.isArray(v.richText)) return v.richText.map(t => t.text ?? '').join('');
+    if (Array.isArray(v)) return v.map(t => (t && t.text) ?? t).join('');
+  }
+  return v;
+}
+
+/**
+ * Normalize hist worker/main input to row matrix for parseHistLegacy.
+ * Handles CSV text, string[][], mistaken string[] (raw lines), and single-cell XLSX rows.
+ */
+export function histInputToLines(input) {
+  if (!Array.isArray(input)) return csvRows(input);
+  if (!input.length) return [];
+  const first = input[0];
+  const probe = input[1] ?? first;
+  if (typeof first === 'string' && first.includes(';') &&
+      (input.length === 1 || typeof input[1] === 'string')) {
+    return csvRows(input.join('\n'));
+  }
+  if (Array.isArray(probe) && probe.length === 1 && typeof probe[0] === 'string' && probe[0].includes(';')) {
+    return input.map(row => {
+      const line = Array.isArray(row) ? row[0] : row;
+      return (typeof line === 'string' && line.includes(';')) ? splitCsvLine(line) : row;
+    });
+  }
+  return input;
+}
+
+/** True when rows come from sheet_to_json (multi-column), not mistaken string[] or single-cell Vivver. */
+export function isSheetRowMatrix(rows) {
+  if (!Array.isArray(rows) || !rows.length) return false;
+  const probe = rows.find(r => Array.isArray(r) && r.some(c => c != null && c !== '')) ?? rows[0];
+  if (!Array.isArray(probe)) return false;
+  if (probe.length === 1 && typeof probe[0] === 'string' && probe[0].includes(';')) return false;
+  return probe.length > 1;
+}
+
+/**
+ * Choose hist worker input: prefer multi-column sheet matrix (preserves Date/Excel serial cells).
+ * CSV text is used for xlsxExtract, plain CSV files, and single-cell Vivver exports.
+ */
+export function histParseInput(rows, csv) {
+  if (isSheetRowMatrix(rows)) return rows;
+  if (typeof csv === 'string' && csv.includes(';')) return csv;
+  return rows ?? csv ?? '';
+}
+
 // ── Date / duration parsers ─────────────────────────────────────────────────
 
 /**
@@ -34,17 +87,31 @@ export function legacyText(v) { return String(v ?? ''); }
  * NOTE: Excel serial numbers require XLSX.SSF which is a browser CDN global.
  * In Node (tests), Excel serial numbers won't be encountered via fixtures.
  */
+function _dateFromExcelSerial(n) {
+  try {
+    // XLSX is a CDN global — only available in browser/worker
+    // eslint-disable-next-line no-undef
+    if (typeof XLSX === 'undefined' || !XLSX.SSF) return null;
+    // eslint-disable-next-line no-undef
+    const d = XLSX.SSF.parse_date_code(n);
+    return d ? new Date(d.y, d.m - 1, d.d, d.H || 0, d.M || 0, Math.floor(d.S || 0)) : null;
+  } catch { return null; }
+}
+
 export function parseDate(v) {
   if (v instanceof Date) return isNaN(v) ? null : v;
   if (typeof v === 'number' && Number.isFinite(v) && v > 1) {
-    try {
-      // XLSX is a CDN global — only available in browser
-      // eslint-disable-next-line no-undef
-      const d = XLSX.SSF.parse_date_code(v);
-      return d ? new Date(d.y, d.m - 1, d.d, d.H || 0, d.M || 0, Math.floor(d.S || 0)) : null;
-    } catch { return null; }
+    const d = _dateFromExcelSerial(v);
+    if (d) return d;
   }
   const s = String(v ?? '').trim();
+  if (s && !/[\/\-]/.test(s)) {
+    const n = Number(s.replace(',', '.'));
+    if (Number.isFinite(n) && n > 1000 && n < 200000) {
+      const d = _dateFromExcelSerial(n);
+      if (d) return d;
+    }
+  }
   if (!s || s === '-' || s === '0' || s === '00:00:00') return null;
   // DD/MM/AAAA HH:MM or DD/MM/AA
   let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})(?:[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
@@ -198,30 +265,30 @@ function indexHeaders(header, type, rows) {
  * Returns {data, total, invalid, msg}.
  */
 export function parseHistLegacy(csvOrRows) {
-  const rows = [], lines = Array.isArray(csvOrRows) ? csvOrRows : csvRows(csvOrRows); let invalid = 0;
+  const rows = [], lines = histInputToLines(csvOrRows); let invalid = 0;
   for (let i = 1; i < lines.length; i++) {
-    const p = lines[i]; if (p.length < 20) continue;
-    const dh = parseDate(p[9]); if (!dh) { invalid++; continue; }
-    const dhAcol = parseDate(p[10]), dhAtend = parseDate(p[11]);
-    const _tDurTri = safeMinutes(parseDuration(p[17]), 90);
-    const _p18 = parseDuration(p[18]);
+    const p = lines[i]; if (!p || p.length < 20) continue;
+    const dh = parseDate(legacyCell(p, 9)); if (!dh) { invalid++; continue; }
+    const dhAcol = parseDate(legacyCell(p, 10)), dhAtend = parseDate(legacyCell(p, 11));
+    const _tDurTri = safeMinutes(parseDuration(legacyCell(p, 17)), 90);
+    const _p18 = parseDuration(legacyCell(p, 18));
     let tEspMed = null;
     if (_p18 != null) { tEspMed = safeMinutes(_p18, CONFIG.MAX_MINUTES); }
     else if (dhAcol && dhAtend) { tEspMed = safeMinutes((dhAtend - dhAcol) / 60000 - (_tDurTri ?? 0), CONFIG.MAX_MINUTES); }
     const _turnoL = dh.getHours() >= 7 && dh.getHours() < 19 ? 'D' : 'N';
     const _dhAjL = (_turnoL === 'N' && dh.getHours() < 7) ? new Date(dh.getTime() - 864e5) : dh;
     rows.push({
-      sourceLine: i + 1, pront: String(p[5] || '').trim(), cor: cleanRisk(legacyText(p[3])),
-      _nomeRaw: fixStr(legacyText(p[6]).trim()).normalize('NFC'),
-      prof: fixStr(legacyText(p[15]).trim()).normalize('NFC').toUpperCase(), tipo: legacyText(p[8]).trim(),
-      evadido: isEvasao(legacyText(p[8]).trim(), legacyText(p[15]).trim()),
-      idade: Number.parseFloat(String(p[7]).replace(',', '.')) || null,
+      sourceLine: i + 1, pront: String(legacyCell(p, 5) || '').trim(), cor: cleanRisk(legacyText(legacyCell(p, 3))),
+      _nomeRaw: fixStr(legacyText(legacyCell(p, 6)).trim()).normalize('NFC'),
+      prof: fixStr(legacyText(legacyCell(p, 15)).trim()).normalize('NFC').toUpperCase(), tipo: legacyText(legacyCell(p, 8)).trim(),
+      evadido: isEvasao(legacyText(legacyCell(p, 8)).trim(), legacyText(legacyCell(p, 15)).trim()),
+      idade: Number.parseFloat(String(legacyCell(p, 7)).replace(',', '.')) || null,
       dh, dhAcol, dhAtend, dateKey: ymd(_dhAjL), ano: dh.getFullYear(), mes: dh.getMonth() + 1,
       anoMes: monthKey(dh), hora: dh.getHours(), diaSem: _dhAjL.getDay(), turno: _turnoL,
-      tEspTri: safeMinutes(parseDuration(p[16]), 300),
+      tEspTri: safeMinutes(parseDuration(legacyCell(p, 16)), 300),
       tDurTri: _tDurTri,
-      tTotal: safeMinutes(parseDuration(p[20]), CONFIG.MAX_MINUTES),
-      tConsulta: safeMinutes(parseDuration(p[19]), 300),
+      tTotal: safeMinutes(parseDuration(legacyCell(p, 20)), CONFIG.MAX_MINUTES),
+      tConsulta: safeMinutes(parseDuration(legacyCell(p, 19)), 300),
       tEspMed,
     });
   }

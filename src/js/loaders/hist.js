@@ -4,7 +4,7 @@
 //       This module coexists with it during the cutover phase.
 
 import { state } from '../state.js';
-import { parseHistLegacy, safeMinutes, histDedupKey } from '../parsers/hist.js';
+import { parseHistLegacy, safeMinutes, histDedupKey, histParseInput } from '../parsers/hist.js';
 import { parseCidFromText } from '../parsers/cid.js';
 import { bufferToHistData, bufferToCsv } from '../parsers/buffer-to-csv.js';
 import { rowToCsv } from '../utils/csv-escape.js';
@@ -137,7 +137,7 @@ export async function workerRun(type, payload) {
       const { rows, csv } = await bufferToHistData(buf, name, { onConverting: () => setUploadStage('converting', name) });
       const fpLine = rows?.[0] ? rowToCsv(rows[0]) : (csv || '').split(/\r?\n/)[0] || '';
       _checkLayoutFingerprint('hist', fpLine + '\n', name);
-      inputs.push(rows || csv); names.push(name);
+      inputs.push(histParseInput(rows, csv)); names.push(name);
     }
     setUploadStage('parsing');
     // Fase B: tenta Worker real (desbloqueia UI); cai para main thread em ambientes sem Worker

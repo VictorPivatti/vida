@@ -42,10 +42,10 @@ export async function bufferToHistData(buf, name, opts = {}) {
     opts.onConverting?.();
     try {
       // eslint-disable-next-line no-undef
-      const wb = XLSX.read(new Uint8Array(buf), { type: 'array', raw: false });
+      const wb = XLSX.read(new Uint8Array(buf), { type: 'array', raw: true });
       const sh = wb.Sheets[wb.SheetNames[0]];
       // eslint-disable-next-line no-undef
-      rows = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: false });
+      rows = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '', raw: true });
       csv = rows.map(r => rowToCsv(r)).join('\n');
       console.log('[VIDA:hist] XLSX.read OK | arquivo:', name, '| rows:', rows.length);
     } catch (xlsErr) { console.warn('[workerRun] XLSX.read falhou:', xlsErr.message); }
